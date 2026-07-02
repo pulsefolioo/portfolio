@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PulseFolio — Portfolio na PulseChain</title>
+<title>PulseFolio — Portfolio on PulseChain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -54,7 +54,7 @@
   header nav{ display:flex; align-items:center; gap:16px; color: var(--text-secondary); }
   header nav i{ font-size:18px; }
 
-  /* ---------- portfolio bar (zapisane portfolio) ---------- */
+  /* ---------- portfolio bar (saved portfolio) ---------- */
   .portfolio-bar{
     display:none;
     align-items:center; justify-content:space-between;
@@ -283,6 +283,12 @@
   .bottom-nav i.active{ color: var(--text-primary); }
 
   .empty-state{ margin-top:60px; text-align:center; color: var(--text-secondary); font-size:13px; }
+  .privacy-note{
+    margin-top: 40px; padding-top: 16px;
+    border-top: 1px solid var(--border);
+    text-align:center; color: var(--text-muted); font-size:11px; line-height:1.5;
+  }
+  .privacy-note i{ font-size:13px; vertical-align:-2px; margin-right:4px; }
   .pulse-line{ width:100%; height:2px; background: var(--surface-2); position:relative; overflow:hidden; margin: 20px 0; border-radius:2px; }
   .pulse-line::after{
     content:''; position:absolute; top:0; left:-30%; width:30%; height:100%;
@@ -315,49 +321,49 @@
 
   <div class="search-card" id="searchCard">
     <div class="search-card-head">
-      <div class="search-label">Adresy portfeli — PulseChain</div>
-      <button class="btn-collapse" id="collapseSearchBtn" type="button" title="Zwiń — wróć do zapisanego portfolio" aria-label="Zwiń"><i class="ti ti-chevron-up" aria-hidden="true"></i></button>
+      <div class="search-label">Wallet addresses — PulseChain</div>
+      <button class="btn-collapse" id="collapseSearchBtn" type="button" title="Collapse — back to saved portfolio" aria-label="Collapse"><i class="ti ti-chevron-up" aria-hidden="true"></i></button>
     </div>
     <div class="addr-rows" id="addrRows">
       <div class="addr-row">
         <input class="addr-input" type="text" placeholder="0x..." autocomplete="off" />
-        <button class="addr-remove" type="button" title="Usuń adres" aria-label="Usuń adres" disabled>×</button>
+        <button class="addr-remove" type="button" title="Remove address" aria-label="Remove address" disabled>×</button>
       </div>
     </div>
     <div class="addr-actions">
-      <button class="btn-add-addr" id="addAddrBtn" type="button"><i class="ti ti-plus" aria-hidden="true"></i> Dodaj adres</button>
-      <button class="btn-grad" id="loadBtn">Sprawdź</button>
+      <button class="btn-add-addr" id="addAddrBtn" type="button"><i class="ti ti-plus" aria-hidden="true"></i> Add address</button>
+      <button class="btn-grad" id="loadBtn">Check</button>
     </div>
     <div class="hint-row">
-      <div class="hint-chip" data-demo="1">Użyj adresu demo</div>
+      <div class="hint-chip" data-demo="1">Use demo address</div>
     </div>
   </div>
 
   <div class="loading" id="loading">
     <div class="spinner"></div>
-    <span id="loadingText">Łączenie z PulseChain…</span>
+    <span id="loadingText">Connecting to PulseChain…</span>
   </div>
 
   <div class="notice" id="notice">
-    Dane Wczytane!
+    Data loaded!
   </div>
 
   <div class="portfolio-summary" id="summary">
-    <div class="p-label" id="summaryLabel">Wartość portfela</div>
+    <div class="p-label" id="summaryLabel">Portfolio value</div>
     <div class="p-value" id="totalValue">$0</div>
     <div class="p-change pos" id="totalChange">+0%</div>
   </div>
 
   <div class="tabs" id="tabs">
-    <div class="tab active" data-tab="tokens">Tokeny</div>
-    <div class="tab" data-tab="farms">Farmy i staking</div>
+    <div class="tab active" data-tab="tokens">Tokens</div>
+    <div class="tab" data-tab="farms">Farms &amp; staking</div>
   </div>
 
   <div class="farm-mode-row" id="farmModeRow">
-    <span class="farm-mode-label">Tokeny z farm</span>
+    <span class="farm-mode-label">Farm tokens</span>
     <div class="farm-mode-toggle">
-      <button class="fm-btn active" data-mode="separate" type="button">Osobno</button>
-      <button class="fm-btn" data-mode="merge" type="button">Sumuj z portfelem</button>
+      <button class="fm-btn active" data-mode="separate" type="button">Separate</button>
+      <button class="fm-btn" data-mode="merge" type="button">Merge with portfolio</button>
     </div>
   </div>
 
@@ -365,15 +371,19 @@
   <div class="list" id="farmList"></div>
 
   <div class="empty-state" id="emptyState">
-    Wklej adres portfela na sieci PulseChain, aby zobaczyć podsumowanie — salda tokenów oraz pozycje w farmach i stakingu.
+    Paste a PulseChain wallet address to see a summary — token balances and farm/staking positions.
   </div>
   <div class="portfolio-bar" id="portfolioBar">
-  <div class="portfolio-bar-label" id="portfolioBarLabel">Zapisane portfolio</div>
+  <div class="portfolio-bar-label" id="portfolioBarLabel">Saved portfolio</div>
   <div class="portfolio-bar-actions">
-    <button class="btn-bar" id="editPortfolioBtn" type="button"><i class="ti ti-pencil" aria-hidden="true"></i> Edytuj portfolio</button>
-    <button class="btn-bar" id="newPortfolioBtn" type="button"><i class="ti ti-plus" aria-hidden="true"></i> Stwórz nowe</button>
+    <button class="btn-bar" id="editPortfolioBtn" type="button"><i class="ti ti-pencil" aria-hidden="true"></i> Edit portfolio</button>
+    <button class="btn-bar" id="newPortfolioBtn" type="button"><i class="ti ti-plus" aria-hidden="true"></i> Create new</button>
   </div>
 </div>
+
+  <div class="privacy-note">
+    <i class="ti ti-lock" aria-hidden="true"></i>Wallet addresses are stored only locally in your browser (localStorage) — they are never sent to or saved on any server.
+  </div>
 </main>
 
 <div class="bottom-nav">
@@ -391,7 +401,7 @@
 const CONFIG = {
   RPC_URL: 'https://rpc.pulsechain.com',
   RPC_FALLBACK: 'https://rpc.pulsechainstats.com',
-  EXPLORER_API: 'https://api.scan.pulsechain.com/api', // zachowane jako fallback, patrz fetchTokenListBlockscout()
+  EXPLORER_API: 'https://api.scan.pulsechain.com/api', // kept as a fallback, see fetchTokenListBlockscout()
   DEXSCREENER_API: 'https://api.dexscreener.com/tokens/v1/pulsechain',
   WPLS: '0xA1077a294dDE1B09bB078844df40758a5D0f9a27',
   HEX: '0x2b591e99afE9f32eAA6214f7B7629768c40Eeb39',
@@ -402,9 +412,9 @@ const CONFIG = {
   MIN_USD_DISPLAY: 0.5,
 };
 
-// Lista tokenów sprawdzanych przez RPC + Multicall (zamiast auto-discovery z Blockscout).
-// To jest "biała lista" — dopisz tu adres, żeby PulseFolio zaczął go widzieć.
-// Adresy poniżej zweryfikowane (PulseX / PulseChainStats, maj 2026).
+// List of tokens checked via RPC + Multicall (instead of auto-discovery from Blockscout).
+// This is a "whitelist" — add an address here to make PulseFolio pick it up.
+// Addresses below verified (PulseX / PulseChainStats, May 2026).
 const KNOWN_TOKENS = [
   { address: '0xA1077a294dDE1B09bB078844df40758a5D0f9a27', symbol: 'WPLS', name: 'Wrapped Pulse', decimals: 18 },
   { address: '0x95B303987A60C71504D99Aa1b13B4DA07b0790ab', symbol: 'PLSX', name: 'PulseX', decimals: 18 },
@@ -462,7 +472,7 @@ let provider;
 let portfolioData = { tokens: [], farms: [], totalUsd: 0, weightedChange: null };
 const DEFAULT_EMPTY_TEXT = document.getElementById('emptyState').textContent.trim();
 // 'separate' = tokeny z farm pokazywane jako osobne, oznaczone pozycje;
-// 'merge' = ich ilości/wartości USD są dodawane do odpowiadających tokenów portfela.
+// 'merge' = their amounts/USD values are added to the matching wallet tokens.
 let farmDisplayMode = 'separate';
 
 const fmtUSD = n => Number(n || 0).toLocaleString('en-US', { style:'currency', currency:'USD', maximumFractionDigits: n >= 100 ? 0 : 2 });
@@ -524,8 +534,8 @@ function setLoading(text) {
   document.getElementById('loadingText').textContent = text;
 }
 
-// Wariant Blockscout — zachowany jako opcjonalny fallback / punkt odniesienia.
-// Nieużywany domyślnie od czasu przejścia na RPC + Multicall (patrz fetchTokenBalancesViaMulticall).
+// Blockscout variant — kept as an optional fallback / reference point.
+// Not used by default since switching to RPC + Multicall (see fetchTokenBalancesViaMulticall).
 async function fetchTokenListBlockscout(address) {
   const url = `${CONFIG.EXPLORER_API}?module=account&action=tokenlist&address=${address}`;
   const response = await fetch(url);
@@ -535,10 +545,10 @@ async function fetchTokenListBlockscout(address) {
   return data.result;
 }
 
-// Odczytuje salda tokenów z KNOWN_TOKENS jednym zapytaniem RPC (Multicall3.aggregate3),
-// zamiast pytać zewnętrzne API o listę tokenów danego adresu.
-// Zwraca dane w tym samym kształcie co fetchTokenListBlockscout (contractAddress/decimals/balance/symbol/name),
-// więc reszta kodu (loadPortfolio) nie musi się zmieniać.
+// Reads token balances from KNOWN_TOKENS with a single RPC call (Multicall3.aggregate3),
+// instead of asking an external API for the token list of a given address.
+// Returns data in the same shape as fetchTokenListBlockscout (contractAddress/decimals/balance/symbol/name),
+// so the rest of the code (loadPortfolio) doesn't need to change.
 async function fetchTokenBalancesViaMulticall(address) {
   if (!KNOWN_TOKENS.length) return [];
 
@@ -562,7 +572,7 @@ async function fetchTokenBalancesViaMulticall(address) {
       try {
         [balance] = erc20Iface.decodeFunctionResult('balanceOf', res.returnData);
       } catch (err) {
-        console.warn(`Nie udało się zdekodować balanceOf dla ${meta.symbol}`, err);
+        console.warn(`Failed to decode balanceOf for ${meta.symbol}`, err);
         return;
       }
 
@@ -636,7 +646,7 @@ async function getHexStakes(address, hexPrice) {
     const stakeCount = stakeCountBn.toNumber();
     const currentDay = currentDayBn.toNumber();
 
-    // Odczytaj wszystkie stake'y równolegle (paczkami), zamiast jeden po drugim.
+    // Read all stakes in parallel (in chunks) instead of one at a time.
     const indices = Array.from({ length: stakeCount }, (_, i) => i);
     const rawStakes = (
       await Promise.all(
@@ -697,8 +707,8 @@ async function getPairMeta(lpToken, provider) {
   return { token0, token1, sym0, sym1, symbol };
 }
 
-// Wycena pozycji LP z rozbiciem na 2 tokeny składowe (potrzebne, żeby pokazać
-// je osobno lub zsumować z saldami portfela na liście tokenów).
+// LP position valuation split into its 2 underlying tokens (needed to show
+// them separately or merged with wallet balances in the token list).
 async function getLpBreakdown(lpToken, lpAmountBn, meta, priceMap, provider) {
   if (lpAmountBn.isZero()) return { usd: 0, parts: [] };
 
@@ -739,8 +749,8 @@ async function getPulseXFarms(address, priceMap) {
     const chef = new ethers.Contract(CONFIG.MASTERCHEF, MASTERCHEF_ABI, p);
     const poolLength = (await chef.poolLength()).toNumber();
 
-    // Krok 1: sprawdź userInfo dla WSZYSTKICH pul naraz (paczkami), zamiast
-    // po jednym zapytaniu na pulę w pętli — to był główny powód wolnego ładowania.
+    // Step 1: check userInfo for ALL pools at once (in chunks), instead of
+    // one request per pool in a loop — this was the main cause of slow loading.
     const pids = Array.from({ length: poolLength }, (_, i) => i);
     const userEntries = (
       await Promise.all(
@@ -754,7 +764,7 @@ async function getPulseXFarms(address, priceMap) {
 
     const nonEmpty = userEntries.filter(({ user }) => !user.amount.isZero());
 
-    // Krok 2: poolInfo tylko dla pul, gdzie faktycznie coś jest — też równolegle.
+    // Step 2: poolInfo only for pools that actually hold a balance — also in parallel.
     const activePools = await Promise.all(
       nonEmpty.map(async ({ pid, user }) => ({
         pid,
@@ -763,7 +773,7 @@ async function getPulseXFarms(address, priceMap) {
       }))
     );
 
-    // Krok 3: metadane par (token0/token1/symbol) równolegle.
+    // Step 3: pair metadata (token0/token1/symbol) in parallel.
     await Promise.all(activePools.map(async entry => {
       entry.meta = await getPairMeta(entry.pool.lpToken, p);
     }));
@@ -780,7 +790,7 @@ async function getPulseXFarms(address, priceMap) {
       Object.assign(priceMap, extraPrices);
     }
 
-    // Krok 4: wycena LP (z rozbiciem na 2 tokeny składowe) dla aktywnych pozycji równolegle.
+    // Step 4: LP valuation (split into 2 underlying tokens) for active positions, in parallel.
     const farms = await Promise.all(activePools.map(async ({ pool, user, meta }) => {
       const breakdown = await getLpBreakdown(pool.lpToken, user.amount, meta, priceMap, p);
       const style = tokenStyle(meta.sym0);
@@ -806,7 +816,7 @@ async function getPulseXFarms(address, priceMap) {
 
 async function loadPortfolio(address) {
   if (!ethers.utils.isAddress(address)) {
-    throw new Error('Nieprawidłowy adres portfela (wymagany format 0x…)');
+    throw new Error('Invalid wallet address (format 0x… required)');
   }
 
   const normalized = ethers.utils.getAddress(address);
@@ -841,7 +851,7 @@ async function loadPortfolio(address) {
       usd,
       change: plsChange,
       // PLS natywny jest wyceniany przez adres WPLS — to samo pole address
-      // pozwala scalić z komponentem WPLS pochodzącym z farmy.
+      // allows merging with the WPLS component coming from a farm.
       address: CONFIG.WPLS.toLowerCase(),
       ...style,
     });
@@ -896,16 +906,16 @@ async function loadPortfolio(address) {
   return { tokens, farms: allFarms, totalUsd, weightedChange };
 }
 
-// Ładuje jeden lub więcej adresów i sumuje je w jedno portfolio.
-// Każdy adres jest pobierany niezależnie (Promise.all) — jeśli jeden padnie,
-// cały multi-load się nie uda; błąd zawiera info który adres zawiódł.
+// Loads one or more addresses and combines them into a single portfolio.
+// Each address is fetched independently (Promise.all) — if one fails,
+// the whole multi-load fails; the error states which address failed.
 async function loadMultiPortfolio(addresses) {
   if (addresses.length === 1) {
     setLoading('Pobieranie sald przez RPC (Multicall)…');
     return loadPortfolio(addresses[0]);
   }
 
-  setLoading(`Pobieranie sald ${addresses.length} adresów przez RPC (Multicall)…`);
+  setLoading(`Fetching balances for ${addresses.length} addresses via RPC (Multicall)…`);
   const results = await Promise.all(
     addresses.map(addr =>
       loadPortfolio(addr).catch(err => {
@@ -916,12 +926,12 @@ async function loadMultiPortfolio(addresses) {
   return mergePortfolios(results);
 }
 
-// Sumuje kilka wyników loadPortfolio w jedno portfolio:
-// - tokeny o tym samym adresie kontraktu są łączone (ilości i USD sumowane,
-//   zmiana 24h uśredniona wagowo po wartości USD);
-// - farmy/staking są po prostu łączone w jedną listę (każda pozycja to osobny wpis,
-//   oznaczony adresem źródłowego portfela w loadPortfolio());
-// - totalUsd i weightedChange liczone tak samo jak w loadPortfolio, na scalonych danych.
+// Merges several loadPortfolio results into a single portfolio:
+// - tokens with the same contract address are merged (amounts and USD summed,
+//   24h change weighted-averaged by USD value);
+// - farms/staking are simply merged into one list (each position is a separate entry,
+//   tagged with the source wallet address from loadPortfolio());
+// - totalUsd and weightedChange calculated the same way as in loadPortfolio, on the merged data.
 function mergePortfolios(results) {
   const tokenMap = new Map();
 
@@ -964,7 +974,7 @@ function mergePortfolios(results) {
   return { tokens, farms, totalUsd, weightedChange };
 }
 
-// Zbiera tokeny składowe wszystkich farm LP (pomija HEX staking — to jeden token, nie para).
+// Collects the underlying tokens of all LP farms (skips HEX staking — a single token, not a pair).
 function collectFarmTokenParts(farms) {
   const parts = [];
   for (const f of farms) {
@@ -976,9 +986,9 @@ function collectFarmTokenParts(farms) {
   return parts;
 }
 
-// Buduje listę tokenów do wyświetlenia zależnie od wybranego trybu:
+// Builds the list of tokens to display depending on the selected mode:
 // 'separate' — tokeny portfela + osobne, oznaczone pozycje z farm;
-// 'merge' — tokeny z farm doliczone (ilość i USD) do pasujących tokenów portfela po adresie kontraktu.
+// 'merge' — farm tokens added (amount and USD) to matching wallet tokens by contract address.
 function buildDisplayTokens(data, mode) {
   const farmParts = collectFarmTokenParts(data.farms);
 
@@ -1017,8 +1027,8 @@ function buildDisplayTokens(data, mode) {
   }
 
   // separate: tokeny portfela + tokeny z farm jako osobne pozycje,
-  // ale zsumowane między sobą, jeśli ten sam token powtarza się w kilku farmach/adresach
-  // (np. PLSX ze stakingu HEX na jednym portfelu + z farmy LP na drugim).
+  // but summed together if the same token appears in several farms/addresses
+  // (e.g. PLSX from HEX staking on one wallet + from an LP farm on another).
   const farmMap = new Map();
 
   for (const part of farmParts) {
@@ -1062,7 +1072,7 @@ function renderTokens(tokens) {
   const list = document.getElementById('tokenList');
 
   if (!tokens.length) {
-    list.innerHTML = '<div class="empty-state" style="margin-top:24px">Brak tokenów z rozpoznaną wartością USD dla tego adresu.</div>';
+    list.innerHTML = '<div class="empty-state" style="margin-top:24px">No tokens with a recognized USD value for this address.</div>';
     return;
   }
 
@@ -1070,7 +1080,7 @@ function renderTokens(tokens) {
     const changeHtml = t.change === null || t.change === undefined
       ? '<div class="row-change">—</div>'
       : `<div class="row-change ${t.change >= 0 ? 'pos' : 'neg'}">${fmtPct(t.change)}</div>`;
-    const farmBadge = t.fromFarm ? '<span class="farm-badge">z farmy</span>' : '';
+    const farmBadge = t.fromFarm ? '<span class="farm-badge">from farm</span>' : '';
 
     return `
       <div class="row">
@@ -1094,16 +1104,16 @@ function shortAddr(addr) {
 }
 
 // ---------- zapisane portfolio (localStorage) ----------
-// Uwaga: to działa w przeglądarce po otwarciu/hostowaniu pliku normalnie.
-// W podglądzie artefaktu wewnątrz Claude.ai localStorage bywa piaskownicowany
-// i może nie przetrwać odświeżenia — po pobraniu pliku działa bez ograniczeń.
+// Note: this works in the browser once the file is opened/hosted normally.
+// In the artifact preview inside Claude.ai, localStorage may be sandboxed
+// and may not survive a refresh — once the file is downloaded it works without limitations.
 const STORAGE_KEY = 'pulsefolio_saved_addresses';
 
 function saveAddressesToStorage(addresses) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(addresses));
   } catch (err) {
-    console.warn('Nie udało się zapisać adresów w pamięci podręcznej:', err);
+    console.warn('Failed to save addresses to local storage:', err);
   }
 }
 
@@ -1114,7 +1124,7 @@ function loadAddressesFromStorage() {
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) && parsed.length ? parsed : null;
   } catch (err) {
-    console.warn('Nie udało się odczytać zapisanych adresów:', err);
+    console.warn('Failed to read saved addresses:', err);
     return null;
   }
 }
@@ -1123,24 +1133,24 @@ function clearAddressesFromStorage() {
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch (err) {
-    console.warn('Nie udało się wyczyścić zapisanych adresów:', err);
+    console.warn('Failed to clear saved addresses:', err);
   }
 }
 
-// Przełącza widok między formularzem wprowadzania adresów (edycja/nowe portfolio)
-// a skróconym paskiem "zapisane portfolio" z przyciskami Edytuj / Stwórz nowe.
+// Toggles the view between the address input form (edit/new portfolio)
+// and the compact "saved portfolio" bar with Edit / Create new buttons.
 function setPortfolioBarVisible(visible, addresses = []) {
   document.getElementById('searchCard').style.display = visible ? 'none' : 'block';
   document.getElementById('portfolioBar').style.display = visible ? 'flex' : 'none';
 
   if (visible) {
     const label = addresses.length > 1
-      ? `Zapisane portfolio — ${addresses.length} adresy`
-      : `Zapisany adres — ${shortAddr(addresses[0] || '')}`;
+      ? `Saved portfolio — ${addresses.length} addresses`
+      : `Saved address — ${shortAddr(addresses[0] || '')}`;
     document.getElementById('portfolioBarLabel').textContent = label;
   } else {
-    // Przycisk "Zwiń" w formularzu ma sens tylko wtedy, gdy jest do czego wracać
-    // (czyli mamy już zapisane, wcześniej wczytane portfolio).
+    // The "Collapse" button in the form only makes sense when there is something to go back to
+    // (i.e. we already have a saved, previously loaded portfolio).
     const hasSaved = !!loadAddressesFromStorage();
     document.getElementById('collapseSearchBtn').classList.toggle('show', hasSaved);
   }
@@ -1156,7 +1166,7 @@ function createAddrRow(value = '') {
   row.className = 'addr-row';
   row.innerHTML = `
     <input class="addr-input" type="text" placeholder="0x..." autocomplete="off" />
-    <button class="addr-remove" type="button" title="Usuń adres" aria-label="Usuń adres">×</button>
+    <button class="addr-remove" type="button" title="Remove address" aria-label="Remove address">×</button>
   `;
   row.querySelector('.addr-input').value = value;
 
@@ -1165,7 +1175,7 @@ function createAddrRow(value = '') {
     updateRemoveButtons();
   });
 
-  // Wklejenie kilku adresów naraz (np. z notatnika) rozbija je na osobne wiersze.
+  // Pasting several addresses at once (e.g. from a notepad) splits them into separate rows.
   row.querySelector('.addr-input').addEventListener('paste', (e) => {
     const pasted = (e.clipboardData || window.clipboardData).getData('text');
     const parts = splitAddresses(pasted);
@@ -1213,7 +1223,7 @@ function renderFarms(farms) {
   const list = document.getElementById('farmList');
 
   if (!farms.length) {
-    list.innerHTML = '<div class="empty-state" style="margin-top:24px">Brak aktywnych pozycji w farmach lub stakingu HEX.</div>';
+    list.innerHTML = '<div class="empty-state" style="margin-top:24px">No active positions in farms or HEX staking.</div>';
     return;
   }
 
@@ -1229,8 +1239,8 @@ function renderFarms(farms) {
         </div>
         <div class="farm-type">${escapeHtml(f.type)}</div>
       </div>
-      <div class="farm-row"><span>Wartość</span><b>${fmtUSD(f.principal)}</b></div>
-      <div class="farm-row"><span>Udziały</span><b>${escapeHtml(f.shares)}</b></div>
+      <div class="farm-row"><span>Value</span><b>${fmtUSD(f.principal)}</b></div>
+      <div class="farm-row"><span>Shares</span><b>${escapeHtml(f.shares)}</b></div>
       ${Array.isArray(f.tokenParts) && f.tokenParts.length ? `
         <div class="farm-parts">
           ${f.tokenParts.map(part => `
@@ -1243,7 +1253,7 @@ function renderFarms(farms) {
         </div>
       ` : ''}
       <div class="farm-row"><span>APY</span><b class="farm-apy">${f.apy === null ? '—' : `${f.apy}%`}</b></div>
-      ${f.daysLeft > 0 ? `<div class="farm-row"><span>Koniec stakingu</span><b>za ${f.daysLeft} dni</b></div>` : ''}
+      ${f.daysLeft > 0 ? `<div class="farm-row"><span>Staking ends</span><b>in ${f.daysLeft} days</b></div>` : ''}
       <div class="farm-progress"><div class="farm-progress-fill" style="width:${f.progress}%;"></div></div>
     </div>
   `).join('');
@@ -1257,7 +1267,7 @@ function showResults(data, addressCount = 1) {
   document.getElementById('tabs').classList.add('show');
 
   document.getElementById('summaryLabel').textContent =
-    addressCount > 1 ? `Wartość portfela (${addressCount} adresy)` : 'Wartość portfela';
+    addressCount > 1 ? `Portfolio value (${addressCount} addresses)` : 'Portfolio value';
   document.getElementById('totalValue').textContent = fmtUSD(data.totalUsd);
 
   const changeEl = document.getElementById('totalChange');
@@ -1294,12 +1304,12 @@ async function handleLoad() {
     return;
   }
 
-  // Walidacja + deduplikacja (case-insensitive, np. te same adresy w różnym casingu).
+  // Validation + deduplication (case-insensitive, e.g. the same address in different casing).
   const seen = new Set();
   const addresses = [];
   for (const value of raw) {
     if (!ethers.utils.isAddress(value)) {
-      showError(`Nieprawidłowy adres portfela: ${value}`);
+      showError(`Invalid wallet address: ${value}`);
       return;
     }
     const normalized = ethers.utils.getAddress(value);
@@ -1314,7 +1324,7 @@ async function handleLoad() {
   btn.disabled = true;
   loading.classList.add('show');
   document.getElementById('emptyState').style.display = 'none';
-  setLoading('Łączenie z PulseChain…');
+  setLoading('Connecting to PulseChain…');
 
   try {
     const data = await loadMultiPortfolio(addresses);
@@ -1326,7 +1336,7 @@ async function handleLoad() {
     setPortfolioBarVisible(true, addresses);
   } catch (err) {
     console.error(err);
-    showError(err.message || 'Nie udało się pobrać danych portfela.');
+    showError(err.message || 'Failed to fetch portfolio data.');
   } finally {
     loading.classList.remove('show');
     btn.disabled = false;
@@ -1335,7 +1345,7 @@ async function handleLoad() {
 
 document.getElementById('loadBtn').addEventListener('click', handleLoad);
 
-// Delegacja zdarzeń — Enter działa w dowolnym polu adresu, także dodanym dynamicznie.
+// Event delegation — Enter works in any address field, including dynamically added ones.
 document.getElementById('addrRows').addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.target.classList.contains('addr-input')) handleLoad();
 });
@@ -1346,12 +1356,12 @@ document.querySelector('.hint-chip').addEventListener('click', () => {
 });
 
 document.getElementById('editPortfolioBtn').addEventListener('click', () => {
-  // Wiersze adresów już są wypełnione (z zapisu lub ostatniego ładowania) — po prostu odsłaniamy formularz.
+  // Address rows are already filled (from storage or last load) — we just reveal the form.
   setPortfolioBarVisible(false);
 });
 
 document.getElementById('collapseSearchBtn').addEventListener('click', () => {
-  // Zwija formularz bez ponownego wczytywania — wraca do już wyrenderowanego portfolio.
+  // Collapses the form without reloading — returns to the already rendered portfolio.
   const saved = loadAddressesFromStorage();
   if (saved && saved.length) {
     setPortfolioBarVisible(true, saved);
@@ -1363,7 +1373,7 @@ document.getElementById('newPortfolioBtn').addEventListener('click', () => {
   resetAddrRows();
   setPortfolioBarVisible(false);
 
-  // Reset widoku wyników do stanu początkowego.
+  // Reset the results view to its initial state.
   portfolioData = { tokens: [], farms: [], totalUsd: 0, weightedChange: null };
   document.getElementById('notice').classList.remove('show');
   document.getElementById('summary').classList.remove('show');
@@ -1377,8 +1387,8 @@ document.getElementById('newPortfolioBtn').addEventListener('click', () => {
   document.querySelector('.addr-input').focus();
 });
 
-// Przy starcie: jeśli w pamięci podręcznej jest zapisane portfolio, wypełniamy nim
-// wiersze adresów (przydatne przy edycji), zwijamy formularz i wczytujemy dane automatycznie.
+// On startup: if a saved portfolio exists in local storage, we use it to fill
+// the address rows (useful for editing), collapse the form and load the data automatically.
 // W przeciwnym razie po prostu normalizujemy pojedynczy pusty wiersz z HTML.
 const savedAddresses = loadAddressesFromStorage();
 if (savedAddresses && savedAddresses.length) {
