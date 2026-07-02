@@ -12,7 +12,7 @@ A lightweight, single-file portfolio tracker for wallets on [PulseChain](https:/
 - **Token balances** — reads a curated whitelist of tokens directly via RPC using `Multicall3`, so it works even without an indexer/explorer API.
 - **Live pricing** — fetches USD prices and 24h change from [DexScreener](https://dexscreener.com/).
 - **HEX staking** — lists your active HEX stakes with progress and unlock countdown.
-- **PulseX farms** — reads your `MasterChef` LP farm positions and breaks each one down into its two underlying tokens.
+- **PulseX farms** — reads your `MasterChef` LP farm positions, breaks each one down into its two underlying tokens, and calculates a live APY from on-chain reward emission and pool TVL.
 - **Flexible display** — toggle whether farm tokens are shown separately or merged into your token balances.
 - **Locally saved portfolio** — your address list is remembered in the browser so you don't have to re-enter it every visit.
 - **Zero backend** — a single `index.html` file; all reads happen client-side against the PulseChain RPC and public APIs.
@@ -57,6 +57,7 @@ All balance/price lookups happen directly from your browser to the PulseChain RP
 - **Prices**: token prices and 24h changes come from the DexScreener API, filtered to PulseChain pairs.
 - **HEX staking**: reads `stakeCount` / `stakeLists` / `currentDay` from the HEX contract to compute active stakes, progress, and days remaining.
 - **PulseX farms**: reads `userInfo` / `poolInfo` from the `MasterChef` contract for every pool, then values each LP position by splitting it into its two underlying tokens using on-chain reserves.
+- **Farm APY**: computed on-chain, not fetched from a third party. For each pool, PulseFolio reads the MasterChef's `incPerSecond` and `totalAllocPoint` to get that pool's share of INC emissions, prices it in USD, and divides by the pool's total value locked (the USD value of *all* LP tokens deposited in that pool, not just yours) to get an annualized rate.
 - **RPC fallback**: if the primary RPC endpoint fails, requests automatically retry against a fallback endpoint.
 
 ## Adding tokens

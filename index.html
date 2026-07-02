@@ -472,6 +472,7 @@ const CONFIG = {
   DEXSCREENER_API: 'https://api.dexscreener.com/tokens/v1/pulsechain',
   WPLS: '0xA1077a294dDE1B09bB078844df40758a5D0f9a27',
   HEX: '0x2b591e99afE9f32eAA6214f7B7629768c40Eeb39',
+  INC: '0x2fa878Ab3F87CC1C9737Fc071108F904c0B0C95d',
   MASTERCHEF: '0xB2Ca4A66d3e57a5a9A12043B6bAD28249fE302d4',
   // Multicall3 — ten sam adres na ~250 sieciach EVM, w tym PulseChain (chainId 369).
   MULTICALL3: '0xcA11bde05977b3631167028862bE2a173976CA11',
@@ -501,6 +502,10 @@ const MASTERCHEF_ABI = [
   'function poolLength() view returns (uint256)',
   'function poolInfo(uint256) view returns (address lpToken, uint256 allocPoint, uint256 lastRewardTime, uint256 accIncPerShare)',
   'function userInfo(uint256, address) view returns (uint256 amount, uint256 rewardDebt)',
+  // Used for APY: total INC emitted per second (project-wide) and each pool's
+  // share of it, proportional to allocPoint / totalAllocPoint.
+  'function incPerSecond() view returns (uint256)',
+  'function totalAllocPoint() view returns (uint256)',
 ];
 
 const PAIR_ABI = [
@@ -838,10 +843,48 @@ async function getLpBreakdown(lpToken, lpAmountBn, meta, priceMap, provider) {
   };
 }
 
+// APY of one MasterChef pool:
+//   yearly INC rewards for the pool (in USD) / total value locked in the pool (USD) * 100
+// Reward share of the pool = incPerSecond * (pool.allocPoint / totalAllocPoint).
+// TVL of the pool = USD value of ALL LP tokens deposited in the MasterChef
+// for that pair (not just the connected wallet's share).
+async function getPoolApy(pool, meta, priceMap, incPerSecondBn, totalAllocPointBn, provider) {
+  try {
+    if (!incPerSecondBn || !totalAllocPointBn || totalAllocPointBn.isZero()) return null;
+    if (!pool.allocPoint || pool.allocPoint.isZero()) return 0;
+
+    const incPrice = priceMap[CONFIG.INC.toLowerCase()]?.price ?? null;
+    if (!incPrice) return null;
+
+    const lpContract = new ethers.Contract(pool.lpToken, ERC20_ABI, provider);
+    const chefLpBalance = await lpContract.balanceOf(CONFIG.MASTERCHEF);
+    const poolTvl = await getLpBreakdown(pool.lpToken, chefLpBalance, meta, priceMap, provider);
+    if (!poolTvl.usd || poolTvl.usd <= 0) return null;
+
+    const poolIncPerSecondBn = incPerSecondBn.mul(pool.allocPoint).div(totalAllocPointBn);
+    const poolIncPerSecond = parseFloat(ethers.utils.formatEther(poolIncPerSecondBn));
+    const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
+    const yearlyRewardUsd = poolIncPerSecond * SECONDS_PER_YEAR * incPrice;
+
+    const apy = (yearlyRewardUsd / poolTvl.usd) * 100;
+    return Math.round(apy * 100) / 100;
+  } catch (e) {
+    return null;
+  }
+}
+
 async function getPulseXFarms(address, priceMap) {
   return withFallback(async (p) => {
     const chef = new ethers.Contract(CONFIG.MASTERCHEF, MASTERCHEF_ABI, p);
-    const poolLength = (await chef.poolLength()).toNumber();
+
+    // Global reward-emission data needed for APY (read once, in parallel with
+    // poolLength). If the contract doesn't expose these (e.g. RPC hiccup),
+    // APY simply falls back to '—' further down.
+    const [poolLength, incPerSecondBn, totalAllocPointBn] = await Promise.all([
+      chef.poolLength().then(v => v.toNumber()),
+      chef.incPerSecond().catch(() => null),
+      chef.totalAllocPoint().catch(() => null),
+    ]);
 
     // Step 1: check userInfo for ALL pools at once (in chunks), instead of
     // one request per pool in a loop — this was the main cause of slow loading.
@@ -878,6 +921,11 @@ async function getPulseXFarms(address, priceMap) {
       underlyingTokens.add(entry.meta.token1.toLowerCase());
     }
 
+    // INC price is also needed for APY (reward token), even if the wallet
+    // holds none of it.
+    const incAddr = CONFIG.INC.toLowerCase();
+    if (incPerSecondBn) underlyingTokens.add(incAddr);
+
     const missingPrices = [...underlyingTokens].filter(addr => !priceMap[addr]);
     if (missingPrices.length) {
       const extraPrices = await fetchPrices(missingPrices);
@@ -888,13 +936,14 @@ async function getPulseXFarms(address, priceMap) {
     const farms = await Promise.all(activePools.map(async ({ pool, user, meta }) => {
       const breakdown = await getLpBreakdown(pool.lpToken, user.amount, meta, priceMap, p);
       const style = tokenStyle(meta.sym0);
+      const apy = await getPoolApy(pool, meta, priceMap, incPerSecondBn, totalAllocPointBn, p);
 
       return {
         proto: `PulseX Farm — ${meta.sym0}/${meta.sym1}`,
         type: 'LP Farm',
         principal: breakdown.usd,
         shares: `${formatTokenAmount(parseFloat(ethers.utils.formatEther(user.amount)))} LP`,
-        apy: null,
+        apy,
         progress: 100,
         daysLeft: 0,
         letter: style.letter,
@@ -1506,7 +1555,7 @@ function renderFarms(farms) {
           `).join('')}
         </div>
       ` : ''}
-      <div class="farm-row"><span>APY</span><b class="farm-apy">${f.apy === null ? '—' : `${f.apy}%`}</b></div>
+      <div class="farm-row"><span>APY</span><b class="farm-apy">${f.apy === null ? '—' : `${f.apy.toLocaleString('en-US', { maximumFractionDigits: f.apy < 100 ? 2 : 0 })}%`}</b></div>
       ${f.daysLeft > 0 ? `<div class="farm-row"><span>Staking ends</span><b>in ${f.daysLeft} days</b></div>` : ''}
       <div class="farm-progress"><div class="farm-progress-fill" style="width:${f.progress}%;"></div></div>
     </div>
