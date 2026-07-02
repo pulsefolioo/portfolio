@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PulseFolio — Portfolio na PulseChain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #07070a;
+    --surface: #111117;
+    --surface-2: #17171f;
+    --border: #24242e;
+    --text-primary: #f4f4f6;
+    --text-secondary: #8a8a96;
+    --text-muted: #55555f;
+    --magenta: #ff2e93;
+    --purple: #8b3bff;
+    --cyan: #00d4ff;
+    --green: #35d68b;
+    --red: #ff5470;
+    --grad: linear-gradient(90deg, var(--magenta), var(--purple), var(--cyan));
+    --radius: 14px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  .display{ font-family:'Space Grotesk', sans-serif; }
+
+  /* ---------- header ---------- */
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo{
+    display:flex; align-items:center; gap:10px;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700; font-size:20px; letter-spacing:-0.02em;
+  }
+  .logo .pulse-mark{ width:26px; height:26px; }
+  .logo .grad-text{
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  header nav{ display:flex; align-items:center; gap:16px; color: var(--text-secondary); }
+  header nav i{ font-size:18px; }
+
+  /* ---------- portfolio bar (zapisane portfolio) ---------- */
+  .portfolio-bar{
+    display:none;
+    align-items:center; justify-content:space-between;
+    gap:12px; flex-wrap:wrap;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .portfolio-bar-label{ font-size:12px; color: var(--text-secondary); font-family:'Inter', monospace; }
+  .portfolio-bar-actions{ display:flex; gap:8px; }
+  .btn-bar{
+    display:flex; align-items:center; gap:6px;
+    border:1px solid var(--border); background: var(--surface-2);
+    color: var(--text-primary); font-size:12px; font-weight:500;
+    padding:8px 12px; border-radius:8px; cursor:pointer;
+    white-space:nowrap;
+  }
+  .btn-bar i{ font-size:14px; }
+  .btn-bar:hover{ border-color: var(--purple); }
+  #newPortfolioBtn:hover{ border-color:#ff2e93; color:#ff2e93; }
+
+  main{ max-width: 460px; margin: 0 auto; padding: 0 20px 100px; }
+
+  /* ---------- address input ---------- */
+  .search-card{
+    margin-top: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .search-label{ font-size:12px; color: var(--text-secondary); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.06em; }
+  .search-card-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .search-card-head .search-label{ margin-bottom:0; }
+  .btn-collapse{
+    display:none;
+    flex-shrink:0; width:28px; height:28px;
+    align-items:center; justify-content:center;
+    border:1px solid var(--border); background: var(--surface-2);
+    color: var(--text-secondary); border-radius:8px; cursor:pointer; font-size:14px;
+  }
+  .btn-collapse.show{ display:flex; }
+  .btn-collapse:hover{ border-color: var(--purple); color: var(--text-primary); }
+  .addr-rows{ display:flex; flex-direction:column; gap:8px; }
+  .addr-row{ display:flex; gap:8px; }
+  .addr-row input{
+    flex:1;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: 'Inter', monospace;
+    outline: none;
+  }
+  .addr-row input::placeholder{ color: var(--text-muted); }
+  .addr-row input:focus{ border-color: var(--purple); }
+  .addr-remove{
+    flex-shrink:0; width:44px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text-secondary);
+    font-size:18px; line-height:1;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .addr-remove:hover:not(:disabled){ border-color:#ff2e93; color:#ff2e93; }
+  .addr-remove:disabled{ opacity:0.3; cursor:default; }
+  .addr-actions{ display:flex; gap:8px; margin-top:10px; }
+  .btn-add-addr{
+    flex:1;
+    border:1px dashed var(--border);
+    border-radius:10px;
+    background:transparent;
+    color: var(--text-secondary);
+    font-size:13px; font-weight:500;
+    padding:0 12px; height:44px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .btn-add-addr:hover{ border-color: var(--purple); color: var(--text-primary); }
+  .addr-actions .btn-grad{ height:44px; min-width:110px; }
+  .btn-grad{
+    border:none; border-radius:10px; padding: 0 18px;
+    background: var(--grad);
+    color:#07070a; font-weight:600; font-size:14px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    white-space:nowrap;
+  }
+  .btn-grad:disabled{ opacity:0.6; cursor:default; }
+  .hint-row{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .hint-chip{
+    font-size:11px; color: var(--text-secondary);
+    background: var(--surface-2); border:1px solid var(--border);
+    border-radius:20px; padding:5px 10px; cursor:pointer;
+  }
+  .hint-chip:hover{ border-color: var(--purple); color: var(--text-primary); }
+
+  /* ---------- notice ---------- */
+  .notice{
+    margin-top:16px; font-size:13px; color: var(--text-secondary);
+    line-height:1.5; display:none;
+  }
+  .notice.show{ display:block; }
+
+  /* ---------- portfolio total ---------- */
+  .portfolio-summary{ margin-top: 32px; display:none; }
+  .portfolio-summary.show{ display:block; }
+  .p-label{ font-size:13px; color: var(--text-secondary); margin-bottom:6px; }
+  .p-value{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:44px; letter-spacing:-0.02em; display:flex; align-items:baseline; }
+  .p-value span.cents{ font-size:22px; color: var(--text-secondary); }
+  .p-change{ font-size:14px; font-weight:600; margin-top:6px; }
+  .p-change.pos{ color: var(--green); }
+  .p-change.neg{ color: var(--red); }
+
+  /* ---------- section tabs ---------- */
+  .tabs{ display:flex; gap:6px; margin-top:28px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:4px; display:none; }
+  .tabs.show{ display:flex; }
+  .tab{
+    flex:1; text-align:center; padding:9px 0; border-radius:9px;
+    font-size:13px; font-weight:600; color: var(--text-secondary); cursor:pointer;
+    transition: all .15s ease;
+  }
+  .tab.active{ background: var(--surface-2); color: var(--text-primary); }
+
+  /* ---------- token list ---------- */
+  .list{ margin-top: 18px; display:none; }
+  .list.show{ display:block; }
+  .row{
+    display:flex; align-items:center; gap:12px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .row:last-child{ border-bottom:none; }
+  .icon{
+    width:40px; height:40px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:14px;
+    color:#07070a; flex-shrink:0;
+  }
+  .row-info{ flex:1; min-width:0; }
+  .row-name{ font-weight:600; font-size:15px; display:flex; align-items:center; gap:6px; }
+  .row-sub{ font-size:12px; color: var(--text-secondary); margin-top:1px; }
+  .row-right{ text-align:right; }
+  .row-amount{ font-weight:600; font-size:15px; font-variant-numeric: tabular-nums; }
+  .row-change{ font-size:12px; margin-top:1px; }
+  .row-change.pos{ color: var(--green); }
+  .row-change.neg{ color: var(--red); }
+  .farm-badge{
+    font-size:10px; font-weight:600; color: var(--purple);
+    background: rgba(139,59,255,0.14); border:1px solid rgba(139,59,255,0.35);
+    padding:2px 7px; border-radius:20px; white-space:nowrap;
+  }
+
+  /* ---------- farm token display mode ---------- */
+  .farm-mode-row{
+    display:none; align-items:center; justify-content:space-between;
+    margin-top:16px;
+  }
+  .farm-mode-row.show{ display:flex; }
+  .farm-mode-label{ font-size:12px; color: var(--text-secondary); }
+  .farm-mode-toggle{
+    display:flex; background: var(--surface); border:1px solid var(--border);
+    border-radius:20px; padding:3px; gap:2px;
+  }
+  .fm-btn{
+    border:none; background:transparent; color: var(--text-secondary);
+    font-size:11px; font-weight:600; padding:6px 11px; border-radius:16px;
+    cursor:pointer; font-family:'Inter', sans-serif; transition: all .15s ease;
+  }
+  .fm-btn.active{ background: var(--surface-2); color: var(--text-primary); }
+
+  /* ---------- farms ---------- */
+  .farm-card{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .farm-head{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .farm-head .icon{ width:32px; height:32px; font-size:12px; }
+  .farm-proto-col{ display:flex; flex-direction:column; gap:2px; }
+  .farm-proto{ font-weight:600; font-size:14px; }
+  .farm-wallet{ font-size:10px; color: var(--text-muted); font-family:'Inter', monospace; }
+  .farm-type{ font-size:11px; color: var(--text-secondary); background: var(--surface-2); padding: 2px 8px; border-radius: 20px; margin-left:auto; }
+  .farm-row{ display:flex; justify-content:space-between; font-size:13px; padding: 6px 0; color: var(--text-secondary); }
+  .farm-row b{ color: var(--text-primary); font-weight:600; font-variant-numeric: tabular-nums; }
+  .farm-apy{ color: var(--green); font-weight:600; }
+  .farm-progress{ height:4px; background: var(--surface-2); border-radius:4px; margin-top:10px; overflow:hidden; }
+  .farm-progress-fill{ height:100%; background: var(--grad); }
+
+  /* ---------- loading ---------- */
+  .loading{ display:none; align-items:center; gap:10px; margin-top:24px; color: var(--text-secondary); font-size:13px; }
+  .loading.show{ display:flex; }
+  .spinner{
+    width:16px; height:16px; border-radius:50%;
+    border: 2px solid var(--border); border-top-color: var(--purple);
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
+  /* ---------- bottom nav ---------- */
+  .bottom-nav{
+    position: fixed; bottom:0; left:0; right:0;
+    background: rgba(7,7,10,0.92); backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border);
+    display:flex; justify-content:space-around;
+    padding: 14px 0 20px;
+  }
+  .bottom-nav i{ font-size:20px; color: var(--text-muted); }
+  .bottom-nav i.active{ color: var(--text-primary); }
+
+  .empty-state{ margin-top:60px; text-align:center; color: var(--text-secondary); font-size:13px; }
+  .pulse-line{ width:100%; height:2px; background: var(--surface-2); position:relative; overflow:hidden; margin: 20px 0; border-radius:2px; }
+  .pulse-line::after{
+    content:''; position:absolute; top:0; left:-30%; width:30%; height:100%;
+    background: var(--grad);
+    animation: sweep 1.8s ease-in-out infinite;
+  }
+  @keyframes sweep{ 0%{ left:-30%; } 100%{ left:100%; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg class="pulse-mark" viewBox="0 0 26 26" fill="none">
+      <circle cx="13" cy="13" r="12" stroke="url(#g)" stroke-width="1.5"/>
+      <path d="M4 13H8L10.5 6L14.5 20L17 13H22" stroke="url(#g)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <defs><linearGradient id="g" x1="0" y1="0" x2="26" y2="26"><stop stop-color="#ff2e93"/><stop offset="0.5" stop-color="#8b3bff"/><stop offset="1" stop-color="#00d4ff"/></linearGradient></defs>
+    </svg>
+    Pulse<span class="grad-text">Folio</span>
+  </div>
+  <nav>
+    <i class="ti ti-brand-x" aria-hidden="true"></i>
+    <i class="ti ti-menu-2" aria-hidden="true"></i>
+  </nav>
+</header>
+
+<div class="portfolio-bar" id="portfolioBar">
+  <div class="portfolio-bar-label" id="portfolioBarLabel">Zapisane portfolio</div>
+  <div class="portfolio-bar-actions">
+    <button class="btn-bar" id="editPortfolioBtn" type="button"><i class="ti ti-pencil" aria-hidden="true"></i> Edytuj portfolio</button>
+    <button class="btn-bar" id="newPortfolioBtn" type="button"><i class="ti ti-plus" aria-hidden="true"></i> Stwórz nowe</button>
+  </div>
+</div>
+
+<main>
+
+  <div class="search-card" id="searchCard">
+    <div class="search-card-head">
+      <div class="search-label">Adresy portfeli — PulseChain</div>
+      <button class="btn-collapse" id="collapseSearchBtn" type="button" title="Zwiń — wróć do zapisanego portfolio" aria-label="Zwiń"><i class="ti ti-chevron-up" aria-hidden="true"></i></button>
+    </div>
+    <div class="addr-rows" id="addrRows">
+      <div class="addr-row">
+        <input class="addr-input" type="text" placeholder="0x..." autocomplete="off" />
+        <button class="addr-remove" type="button" title="Usuń adres" aria-label="Usuń adres" disabled>×</button>
+      </div>
+    </div>
+    <div class="addr-actions">
+      <button class="btn-add-addr" id="addAddrBtn" type="button"><i class="ti ti-plus" aria-hidden="true"></i> Dodaj adres</button>
+      <button class="btn-grad" id="loadBtn">Sprawdź</button>
+    </div>
+    <div class="hint-row">
+      <div class="hint-chip" data-demo="1">Użyj adresu demo</div>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <span id="loadingText">Łączenie z PulseChain…</span>
+  </div>
+
+  <div class="notice" id="notice">
+    Dane na żywo z PulseChain RPC (Multicall) i DexScreener. Farmy PulseX V2 odczytywane z MasterChef.
+  </div>
+
+  <div class="portfolio-summary" id="summary">
+    <div class="p-label" id="summaryLabel">Wartość portfela</div>
+    <div class="p-value" id="totalValue">$0</div>
+    <div class="p-change pos" id="totalChange">+0%</div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-tab="tokens">Tokeny</div>
+    <div class="tab" data-tab="farms">Farmy i staking</div>
+  </div>
+
+  <div class="farm-mode-row" id="farmModeRow">
+    <span class="farm-mode-label">Tokeny z farm</span>
+    <div class="farm-mode-toggle">
+      <button class="fm-btn active" data-mode="separate" type="button">Osobno</button>
+      <button class="fm-btn" data-mode="merge" type="button">Sumuj z portfelem</button>
+    </div>
+  </div>
+
+  <div class="list" id="tokenList"></div>
+  <div class="list" id="farmList"></div>
+
+  <div class="empty-state" id="emptyState">
+    Wklej adres portfela na sieci PulseChain, aby zobaczyć podsumowanie — salda tokenów oraz pozycje w farmach i stakingu.
+  </div>
+
+</main>
+
+<div class="bottom-nav">
+  <i class="ti ti-home active" aria-hidden="true"></i>
+  <i class="ti ti-flame" aria-hidden="true"></i>
+  <i class="ti ti-chart-pie" aria-hidden="true"></i>
+  <i class="ti ti-arrows-exchange" aria-hidden="true"></i>
+  <i class="ti ti-shopping-cart" aria-hidden="true"></i>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+
+<script>
+const CONFIG = {
+  RPC_URL: 'https://rpc.pulsechain.com',
+  RPC_FALLBACK: 'https://rpc.pulsechainstats.com',
+  EXPLORER_API: 'https://api.scan.pulsechain.com/api', // zachowane jako fallback, patrz fetchTokenListBlockscout()
+  DEXSCREENER_API: 'https://api.dexscreener.com/tokens/v1/pulsechain',
+  WPLS: '0xA1077a294dDE1B09bB078844df40758a5D0f9a27',
+  HEX: '0x2b591e99afE9f32eAA6214f7B7629768c40Eeb39',
+  MASTERCHEF: '0xB2Ca4A66d3e57a5a9A12043B6bAD28249fE302d4',
+  // Multicall3 — ten sam adres na ~250 sieciach EVM, w tym PulseChain (chainId 369).
+  MULTICALL3: '0xcA11bde05977b3631167028862bE2a173976CA11',
+  DEMO_ADDRESS: '0xd523699345eac2e601382939b3ef16002d95ed6f',
+  MIN_USD_DISPLAY: 0.5,
+};
+
+// Lista tokenów sprawdzanych przez RPC + Multicall (zamiast auto-discovery z Blockscout).
+// To jest "biała lista" — dopisz tu adres, żeby PulseFolio zaczął go widzieć.
+// Adresy poniżej zweryfikowane (PulseX / PulseChainStats, maj 2026).
+const KNOWN_TOKENS = [
+  { address: '0xA1077a294dDE1B09bB078844df40758a5D0f9a27', symbol: 'WPLS', name: 'Wrapped Pulse', decimals: 18 },
+  { address: '0x95B303987A60C71504D99Aa1b13B4DA07b0790ab', symbol: 'PLSX', name: 'PulseX', decimals: 18 },
+  { address: '0x2b591e99afE9f32eAA6214f7B7629768c40Eeb39', symbol: 'HEX', name: 'HEX', decimals: 8 },
+  { address: '0x2fa878Ab3F87CC1C9737Fc071108F904c0B0C95d', symbol: 'INC', name: 'Incentive', decimals: 18 },
+  // { address: '0x...', symbol: 'USDC', name: 'USD Coin (from Ethereum)', decimals: 6 },
+  // { address: '0x...', symbol: 'DAI',  name: 'Dai Stablecoin',            decimals: 18 },
+];
+
+const HEX_ABI = [
+  'function stakeCount(address stakerAddr) view returns (uint256)',
+  'function stakeLists(address stakerAddr, uint256 stakeIndex) view returns (uint40 stakeId, uint72 stakedHearts, uint72 stakeShares, uint16 lockedDay, uint16 stakedDays, uint16 unlockedDay, bool isAutoStake)',
+  'function currentDay() view returns (uint256)',
+];
+
+const MASTERCHEF_ABI = [
+  'function poolLength() view returns (uint256)',
+  'function poolInfo(uint256) view returns (address lpToken, uint256 allocPoint, uint256 lastRewardTime, uint256 accIncPerShare)',
+  'function userInfo(uint256, address) view returns (uint256 amount, uint256 rewardDebt)',
+];
+
+const PAIR_ABI = [
+  'function token0() view returns (address)',
+  'function token1() view returns (address)',
+  'function getReserves() view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)',
+  'function totalSupply() view returns (uint256)',
+  'function symbol() view returns (string)',
+];
+
+const ERC20_ABI = [
+  'function decimals() view returns (uint8)',
+  'function symbol() view returns (string)',
+  'function name() view returns (string)',
+  'function balanceOf(address) view returns (uint256)',
+];
+
+const MULTICALL3_ABI = [
+  'function aggregate3((address target, bool allowFailure, bytes callData)[] calls) payable returns ((bool success, bytes returnData)[] returnData)',
+];
+
+const TOKEN_STYLE = {
+  PLS:  { color1:'#8b3bff', color2:'#00d4ff', letter:'P' },
+  WPLS: { color1:'#8b3bff', color2:'#00d4ff', letter:'P' },
+  PLSX: { color1:'#00e08f', color2:'#ff2e93', letter:'X' },
+  HEX:  { color1:'#ff8a1e', color2:'#ff2e93', letter:'H' },
+  INC:  { color1:'#ffd34d', color2:'#ff8a1e', letter:'I' },
+  ETH:  { color1:'#627eea', color2:'#3b5bdb', letter:'E' },
+  WETH: { color1:'#627eea', color2:'#3b5bdb', letter:'E' },
+  DAI:  { color1:'#f5b826', color2:'#ff8a1e', letter:'D' },
+  USDC: { color1:'#2775ca', color2:'#00d4ff', letter:'U' },
+  USDT: { color1:'#26a17b', color2:'#35d68b', letter:'U' },
+};
+
+let provider;
+let portfolioData = { tokens: [], farms: [], totalUsd: 0, weightedChange: null };
+const DEFAULT_EMPTY_TEXT = document.getElementById('emptyState').textContent.trim();
+// 'separate' = tokeny z farm pokazywane jako osobne, oznaczone pozycje;
+// 'merge' = ich ilości/wartości USD są dodawane do odpowiadających tokenów portfela.
+let farmDisplayMode = 'separate';
+
+const fmtUSD = n => Number(n || 0).toLocaleString('en-US', { style:'currency', currency:'USD', maximumFractionDigits: n >= 100 ? 0 : 2 });
+const fmtPct = n => `${n >= 0 ? '+' : ''}${Number(n).toFixed(1)}%`;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function chunkArray(arr, size) {
+  const chunks = [];
+  for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
+  return chunks;
+}
+
+function getProvider() {
+  if (!provider) provider = new ethers.providers.JsonRpcProvider(CONFIG.RPC_URL);
+  return provider;
+}
+
+async function withFallback(fn) {
+  try {
+    return await fn(getProvider());
+  } catch (err) {
+    console.warn('Primary RPC failed, trying fallback…', err);
+    return await fn(new ethers.providers.JsonRpcProvider(CONFIG.RPC_FALLBACK));
+  }
+}
+
+function tokenStyle(symbol) {
+  const key = String(symbol || '?').toUpperCase();
+  if (TOKEN_STYLE[key]) return TOKEN_STYLE[key];
+  const letter = key.replace(/[^A-Z0-9]/g, '').charAt(0) || '?';
+  const hash = [...key].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  const palette = ['#ff2e93', '#8b3bff', '#00d4ff', '#35d68b', '#ff8a1e', '#627eea'];
+  return {
+    letter,
+    color1: palette[hash % palette.length],
+    color2: palette[(hash + 2) % palette.length],
+  };
+}
+
+function formatTokenAmount(value, maxFraction = 4) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return '0';
+  if (num === 0) return '0';
+  if (num >= 1e9) return num.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  if (num >= 1) return num.toLocaleString('en-US', { maximumFractionDigits: maxFraction });
+  if (num >= 0.0001) return num.toLocaleString('en-US', { maximumFractionDigits: 6 });
+  return num.toExponential(2);
+}
+
+function setLoading(text) {
+  document.getElementById('loadingText').textContent = text;
+}
+
+// Wariant Blockscout — zachowany jako opcjonalny fallback / punkt odniesienia.
+// Nieużywany domyślnie od czasu przejścia na RPC + Multicall (patrz fetchTokenBalancesViaMulticall).
+async function fetchTokenListBlockscout(address) {
+  const url = `${CONFIG.EXPLORER_API}?module=account&action=tokenlist&address=${address}`;
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Blockscout API: ${response.status}`);
+  const data = await response.json();
+  if (data.status !== '1' || !Array.isArray(data.result)) return [];
+  return data.result;
+}
+
+// Odczytuje salda tokenów z KNOWN_TOKENS jednym zapytaniem RPC (Multicall3.aggregate3),
+// zamiast pytać zewnętrzne API o listę tokenów danego adresu.
+// Zwraca dane w tym samym kształcie co fetchTokenListBlockscout (contractAddress/decimals/balance/symbol/name),
+// więc reszta kodu (loadPortfolio) nie musi się zmieniać.
+async function fetchTokenBalancesViaMulticall(address) {
+  if (!KNOWN_TOKENS.length) return [];
+
+  const erc20Iface = new ethers.utils.Interface(ERC20_ABI);
+  const calls = KNOWN_TOKENS.map(token => ({
+    target: token.address,
+    allowFailure: true,
+    callData: erc20Iface.encodeFunctionData('balanceOf', [address]),
+  }));
+
+  return withFallback(async (p) => {
+    const multicall = new ethers.Contract(CONFIG.MULTICALL3, MULTICALL3_ABI, p);
+    const results = await multicall.callStatic.aggregate3(calls);
+
+    const tokens = [];
+    results.forEach((res, i) => {
+      const meta = KNOWN_TOKENS[i];
+      if (!res.success || res.returnData === '0x') return;
+
+      let balance;
+      try {
+        [balance] = erc20Iface.decodeFunctionResult('balanceOf', res.returnData);
+      } catch (err) {
+        console.warn(`Nie udało się zdekodować balanceOf dla ${meta.symbol}`, err);
+        return;
+      }
+
+      if (balance.isZero()) return;
+
+      tokens.push({
+        contractAddress: meta.address,
+        decimals: meta.decimals,
+        balance: balance.toString(),
+        symbol: meta.symbol,
+        name: meta.name,
+      });
+    });
+
+    return tokens;
+  });
+}
+
+async function fetchPrices(addresses) {
+  if (!addresses.length) return {};
+  const unique = [...new Set(addresses.map(a => a.toLowerCase()))];
+  const priceMap = {};
+
+  for (const chunk of chunkArray(unique, 30)) {
+    const url = `${CONFIG.DEXSCREENER_API}/${chunk.join(',')}`;
+    try {
+      const res = await fetch(url);
+      const json = await res.json();
+      const pairs = Array.isArray(json) ? json : (json.pairs || []);
+      const byBase = {};
+
+      for (const pair of pairs) {
+        if (pair.chainId !== 'pulsechain') continue;
+        const base = pair.baseToken?.address?.toLowerCase();
+        if (!base) continue;
+        if (!byBase[base]) byBase[base] = [];
+        byBase[base].push(pair);
+      }
+
+      for (const [addr, pairsList] of Object.entries(byBase)) {
+        const bestPair = pairsList.sort((a, b) => (b.liquidity?.usd ?? 0) - (a.liquidity?.usd ?? 0))[0];
+        const price = parseFloat(bestPair.priceUsd);
+        if (Number.isNaN(price)) continue;
+        priceMap[addr] = {
+          price,
+          change24h: bestPair.priceChange?.h24 ?? null,
+        };
+      }
+    } catch (err) {
+      console.error('DexScreener error:', err);
+    }
+    await sleep(150);
+  }
+
+  return priceMap;
+}
+
+async function getPlsBalance(address) {
+  const balance = await withFallback(p => p.getBalance(address));
+  return ethers.utils.formatEther(balance);
+}
+
+async function getHexStakes(address, hexPrice) {
+  return withFallback(async (p) => {
+    const hex = new ethers.Contract(CONFIG.HEX, HEX_ABI, p);
+    const [stakeCountBn, currentDayBn] = await Promise.all([
+      hex.stakeCount(address),
+      hex.currentDay(),
+    ]);
+
+    const stakeCount = stakeCountBn.toNumber();
+    const currentDay = currentDayBn.toNumber();
+
+    // Odczytaj wszystkie stake'y równolegle (paczkami), zamiast jeden po drugim.
+    const indices = Array.from({ length: stakeCount }, (_, i) => i);
+    const rawStakes = (
+      await Promise.all(
+        chunkArray(indices, 15).map(chunk =>
+          Promise.all(chunk.map(i => hex.stakeLists(address, i)))
+        )
+      )
+    ).flat();
+
+    const style = tokenStyle('HEX');
+    const stakes = [];
+
+    for (const stake of rawStakes) {
+      if (Number(stake.unlockedDay) !== 0) continue;
+
+      const hexAmount = parseFloat(ethers.utils.formatUnits(stake.stakedHearts, 8));
+      const endDay = Number(stake.lockedDay) + Number(stake.stakedDays);
+      const elapsed = Math.max(0, currentDay - Number(stake.lockedDay));
+      const progress = Number(stake.stakedDays) > 0
+        ? Math.min(100, Math.round((elapsed / Number(stake.stakedDays)) * 100))
+        : 100;
+      const daysLeft = Math.max(0, endDay - currentDay);
+      const usd = hexPrice ? hexAmount * hexPrice : 0;
+
+      stakes.push({
+        proto: `HEX Staking #${stake.stakeId}`,
+        type: 'Stake',
+        principal: usd,
+        shares: `${formatTokenAmount(hexAmount)} HEX`,
+        apy: null,
+        progress,
+        daysLeft,
+        letter: style.letter,
+        color1: style.color1,
+        color2: style.color2,
+      });
+    }
+
+    return stakes;
+  });
+}
+
+async function getPairMeta(lpToken, provider) {
+  const pair = new ethers.Contract(lpToken, PAIR_ABI, provider);
+  const [token0, token1, symbol] = await Promise.all([
+    pair.token0(),
+    pair.token1(),
+    pair.symbol().catch(() => 'LP'),
+  ]);
+
+  const t0 = new ethers.Contract(token0, ERC20_ABI, provider);
+  const t1 = new ethers.Contract(token1, ERC20_ABI, provider);
+  const [sym0, sym1] = await Promise.all([
+    t0.symbol().catch(() => 'TKN0'),
+    t1.symbol().catch(() => 'TKN1'),
+  ]);
+
+  return { token0, token1, sym0, sym1, symbol };
+}
+
+// Wycena pozycji LP z rozbiciem na 2 tokeny składowe (potrzebne, żeby pokazać
+// je osobno lub zsumować z saldami portfela na liście tokenów).
+async function getLpBreakdown(lpToken, lpAmountBn, meta, priceMap, provider) {
+  if (lpAmountBn.isZero()) return { usd: 0, parts: [] };
+
+  const pair = new ethers.Contract(lpToken, PAIR_ABI, provider);
+  const t0 = new ethers.Contract(meta.token0, ERC20_ABI, provider);
+  const t1 = new ethers.Contract(meta.token1, ERC20_ABI, provider);
+
+  const [reserves, totalSupply, dec0, dec1] = await Promise.all([
+    pair.getReserves(),
+    pair.totalSupply(),
+    t0.decimals(),
+    t1.decimals(),
+  ]);
+
+  if (totalSupply.isZero()) return { usd: 0, parts: [] };
+
+  const amount0 = parseFloat(ethers.utils.formatUnits(reserves[0].mul(lpAmountBn).div(totalSupply), dec0));
+  const amount1 = parseFloat(ethers.utils.formatUnits(reserves[1].mul(lpAmountBn).div(totalSupply), dec1));
+
+  const addr0 = meta.token0.toLowerCase();
+  const addr1 = meta.token1.toLowerCase();
+  const quote0 = priceMap[addr0];
+  const quote1 = priceMap[addr1];
+  const usd0 = amount0 * (quote0?.price ?? 0);
+  const usd1 = amount1 * (quote1?.price ?? 0);
+
+  return {
+    usd: usd0 + usd1,
+    parts: [
+      { address: addr0, symbol: meta.sym0, amount: amount0, usd: usd0, change: quote0?.change24h ?? null },
+      { address: addr1, symbol: meta.sym1, amount: amount1, usd: usd1, change: quote1?.change24h ?? null },
+    ],
+  };
+}
+
+async function getPulseXFarms(address, priceMap) {
+  return withFallback(async (p) => {
+    const chef = new ethers.Contract(CONFIG.MASTERCHEF, MASTERCHEF_ABI, p);
+    const poolLength = (await chef.poolLength()).toNumber();
+
+    // Krok 1: sprawdź userInfo dla WSZYSTKICH pul naraz (paczkami), zamiast
+    // po jednym zapytaniu na pulę w pętli — to był główny powód wolnego ładowania.
+    const pids = Array.from({ length: poolLength }, (_, i) => i);
+    const userEntries = (
+      await Promise.all(
+        chunkArray(pids, 20).map(chunk =>
+          Promise.all(chunk.map(pid =>
+            chef.userInfo(pid, address).then(user => ({ pid, user }))
+          ))
+        )
+      )
+    ).flat();
+
+    const nonEmpty = userEntries.filter(({ user }) => !user.amount.isZero());
+
+    // Krok 2: poolInfo tylko dla pul, gdzie faktycznie coś jest — też równolegle.
+    const activePools = await Promise.all(
+      nonEmpty.map(async ({ pid, user }) => ({
+        pid,
+        user,
+        pool: await chef.poolInfo(pid),
+      }))
+    );
+
+    // Krok 3: metadane par (token0/token1/symbol) równolegle.
+    await Promise.all(activePools.map(async entry => {
+      entry.meta = await getPairMeta(entry.pool.lpToken, p);
+    }));
+
+    const underlyingTokens = new Set();
+    for (const entry of activePools) {
+      underlyingTokens.add(entry.meta.token0.toLowerCase());
+      underlyingTokens.add(entry.meta.token1.toLowerCase());
+    }
+
+    const missingPrices = [...underlyingTokens].filter(addr => !priceMap[addr]);
+    if (missingPrices.length) {
+      const extraPrices = await fetchPrices(missingPrices);
+      Object.assign(priceMap, extraPrices);
+    }
+
+    // Krok 4: wycena LP (z rozbiciem na 2 tokeny składowe) dla aktywnych pozycji równolegle.
+    const farms = await Promise.all(activePools.map(async ({ pool, user, meta }) => {
+      const breakdown = await getLpBreakdown(pool.lpToken, user.amount, meta, priceMap, p);
+      const style = tokenStyle(meta.sym0);
+
+      return {
+        proto: `PulseX Farm — ${meta.sym0}/${meta.sym1}`,
+        type: 'LP Farm',
+        principal: breakdown.usd,
+        shares: `${formatTokenAmount(parseFloat(ethers.utils.formatEther(user.amount)))} LP`,
+        apy: null,
+        progress: 100,
+        daysLeft: 0,
+        letter: style.letter,
+        color1: style.color1,
+        color2: style.color2,
+        tokenParts: breakdown.parts,
+      };
+    }));
+
+    return farms;
+  });
+}
+
+async function loadPortfolio(address) {
+  if (!ethers.utils.isAddress(address)) {
+    throw new Error('Nieprawidłowy adres portfela (wymagany format 0x…)');
+  }
+
+  const normalized = ethers.utils.getAddress(address);
+
+  setLoading('Pobieranie sald przez RPC (Multicall)…');
+  const [tokenList, plsBalance] = await Promise.all([
+    fetchTokenBalancesViaMulticall(normalized),
+    getPlsBalance(normalized),
+  ]);
+
+  const priceAddresses = [
+    CONFIG.WPLS,
+    ...tokenList.map(t => t.contractAddress),
+  ];
+
+  setLoading('Pobieranie cen z DexScreener…');
+  const priceMap = await fetchPrices(priceAddresses);
+  const plsPrice = priceMap[CONFIG.WPLS.toLowerCase()]?.price ?? null;
+  const plsChange = priceMap[CONFIG.WPLS.toLowerCase()]?.change24h ?? null;
+
+  const tokens = [];
+  const plsNum = parseFloat(plsBalance);
+
+  if (plsNum > 0) {
+    const usd = plsPrice ? plsNum * plsPrice : 0;
+    const style = tokenStyle('PLS');
+    tokens.push({
+      symbol: 'PLS',
+      name: 'Pulse',
+      amount: formatTokenAmount(plsNum),
+      rawAmount: plsNum,
+      usd,
+      change: plsChange,
+      // PLS natywny jest wyceniany przez adres WPLS — to samo pole address
+      // pozwala scalić z komponentem WPLS pochodzącym z farmy.
+      address: CONFIG.WPLS.toLowerCase(),
+      ...style,
+    });
+  }
+
+  for (const token of tokenList) {
+    const addr = token.contractAddress.toLowerCase();
+    const decimals = parseInt(token.decimals, 10);
+    const balance = parseFloat(ethers.utils.formatUnits(token.balance, decimals));
+    if (balance <= 0) continue;
+
+    const quote = priceMap[addr];
+    const price = quote?.price ?? null;
+    const usd = price ? balance * price : 0;
+
+    if (usd > 0 && usd < CONFIG.MIN_USD_DISPLAY) continue;
+    if (!price && balance > 0) continue;
+
+    const style = tokenStyle(token.symbol);
+    tokens.push({
+      symbol: token.symbol,
+      name: token.name,
+      amount: formatTokenAmount(balance),
+      rawAmount: balance,
+      usd,
+      change: quote?.change24h ?? null,
+      address: addr,
+      ...style,
+    });
+  }
+
+  tokens.sort((a, b) => b.usd - a.usd);
+
+  setLoading('Odczyt stakingu HEX i farm PulseX…');
+  const hexPrice = priceMap[CONFIG.HEX.toLowerCase()]?.price ?? null;
+  const [farms, hexStakes] = await Promise.all([
+    getPulseXFarms(normalized, priceMap),
+    getHexStakes(normalized, hexPrice),
+  ]);
+
+  const allFarms = [...hexStakes, ...farms].map(f => ({ ...f, sourceAddress: normalized }));
+  const tokenUsd = tokens.reduce((sum, t) => sum + (t.usd || 0), 0);
+  const farmUsd = allFarms.reduce((sum, f) => sum + (f.principal || 0), 0);
+  const totalUsd = tokenUsd + farmUsd;
+
+  let weightedChange = null;
+  const pricedTokens = tokens.filter(t => t.usd > 0 && t.change !== null && t.change !== undefined);
+  if (pricedTokens.length && tokenUsd > 0) {
+    weightedChange = pricedTokens.reduce((sum, t) => sum + t.usd * t.change, 0) / tokenUsd;
+  }
+
+  return { tokens, farms: allFarms, totalUsd, weightedChange };
+}
+
+// Ładuje jeden lub więcej adresów i sumuje je w jedno portfolio.
+// Każdy adres jest pobierany niezależnie (Promise.all) — jeśli jeden padnie,
+// cały multi-load się nie uda; błąd zawiera info który adres zawiódł.
+async function loadMultiPortfolio(addresses) {
+  if (addresses.length === 1) {
+    setLoading('Pobieranie sald przez RPC (Multicall)…');
+    return loadPortfolio(addresses[0]);
+  }
+
+  setLoading(`Pobieranie sald ${addresses.length} adresów przez RPC (Multicall)…`);
+  const results = await Promise.all(
+    addresses.map(addr =>
+      loadPortfolio(addr).catch(err => {
+        throw new Error(`${shortAddr(addr)}: ${err.message}`);
+      })
+    )
+  );
+  return mergePortfolios(results);
+}
+
+// Sumuje kilka wyników loadPortfolio w jedno portfolio:
+// - tokeny o tym samym adresie kontraktu są łączone (ilości i USD sumowane,
+//   zmiana 24h uśredniona wagowo po wartości USD);
+// - farmy/staking są po prostu łączone w jedną listę (każda pozycja to osobny wpis,
+//   oznaczony adresem źródłowego portfela w loadPortfolio());
+// - totalUsd i weightedChange liczone tak samo jak w loadPortfolio, na scalonych danych.
+function mergePortfolios(results) {
+  const tokenMap = new Map();
+
+  for (const res of results) {
+    for (const t of res.tokens) {
+      const key = t.address || t.symbol;
+      const existing = tokenMap.get(key);
+
+      if (existing) {
+        const prevUsd = existing.usd || 0;
+        const addedUsd = t.usd || 0;
+        const newUsd = prevUsd + addedUsd;
+        const prevChange = existing.change ?? 0;
+        const addedChange = t.change ?? 0;
+        existing.change = newUsd > 0
+          ? (prevChange * prevUsd + addedChange * addedUsd) / newUsd
+          : existing.change;
+        existing.rawAmount = (existing.rawAmount || 0) + (t.rawAmount || 0);
+        existing.amount = formatTokenAmount(existing.rawAmount);
+        existing.usd = newUsd;
+      } else {
+        tokenMap.set(key, { ...t });
+      }
+    }
+  }
+
+  const tokens = [...tokenMap.values()].sort((a, b) => b.usd - a.usd);
+  const farms = results.flatMap(r => r.farms);
+
+  const tokenUsd = tokens.reduce((sum, t) => sum + (t.usd || 0), 0);
+  const farmUsd = farms.reduce((sum, f) => sum + (f.principal || 0), 0);
+  const totalUsd = tokenUsd + farmUsd;
+
+  let weightedChange = null;
+  const pricedTokens = tokens.filter(t => t.usd > 0 && t.change !== null && t.change !== undefined);
+  if (pricedTokens.length && tokenUsd > 0) {
+    weightedChange = pricedTokens.reduce((sum, t) => sum + t.usd * t.change, 0) / tokenUsd;
+  }
+
+  return { tokens, farms, totalUsd, weightedChange };
+}
+
+// Zbiera tokeny składowe wszystkich farm LP (pomija HEX staking — to jeden token, nie para).
+function collectFarmTokenParts(farms) {
+  const parts = [];
+  for (const f of farms) {
+    if (!Array.isArray(f.tokenParts)) continue;
+    for (const part of f.tokenParts) {
+      if (part.amount > 0) parts.push(part);
+    }
+  }
+  return parts;
+}
+
+// Buduje listę tokenów do wyświetlenia zależnie od wybranego trybu:
+// 'separate' — tokeny portfela + osobne, oznaczone pozycje z farm;
+// 'merge' — tokeny z farm doliczone (ilość i USD) do pasujących tokenów portfela po adresie kontraktu.
+function buildDisplayTokens(data, mode) {
+  const farmParts = collectFarmTokenParts(data.farms);
+
+  if (mode === 'merge') {
+    const merged = data.tokens.map(t => ({ ...t }));
+
+    for (const part of farmParts) {
+      const existing = part.address ? merged.find(t => t.address === part.address) : null;
+
+      if (existing) {
+        const prevUsd = existing.usd || 0;
+        const newUsd = prevUsd + part.usd;
+        const prevChange = existing.change ?? 0;
+        const partChange = part.change ?? 0;
+        existing.change = newUsd > 0 ? (prevChange * prevUsd + partChange * part.usd) / newUsd : existing.change;
+        existing.rawAmount = (existing.rawAmount || 0) + part.amount;
+        existing.amount = formatTokenAmount(existing.rawAmount);
+        existing.usd = newUsd;
+      } else {
+        const style = tokenStyle(part.symbol);
+        merged.push({
+          symbol: part.symbol,
+          name: part.symbol,
+          amount: formatTokenAmount(part.amount),
+          rawAmount: part.amount,
+          usd: part.usd,
+          change: part.change,
+          address: part.address,
+          ...style,
+        });
+      }
+    }
+
+    merged.sort((a, b) => b.usd - a.usd);
+    return merged;
+  }
+
+  // separate: tokeny portfela + tokeny z farm jako osobne pozycje,
+  // ale zsumowane między sobą, jeśli ten sam token powtarza się w kilku farmach/adresach
+  // (np. PLSX ze stakingu HEX na jednym portfelu + z farmy LP na drugim).
+  const farmMap = new Map();
+
+  for (const part of farmParts) {
+    const key = part.address || part.symbol;
+    const existing = farmMap.get(key);
+
+    if (existing) {
+      const prevUsd = existing.usd || 0;
+      const addedUsd = part.usd || 0;
+      const newUsd = prevUsd + addedUsd;
+      const prevChange = existing.change ?? 0;
+      const addedChange = part.change ?? 0;
+      existing.change = newUsd > 0
+        ? (prevChange * prevUsd + addedChange * addedUsd) / newUsd
+        : existing.change;
+      existing.rawAmount = (existing.rawAmount || 0) + (part.amount || 0);
+      existing.amount = formatTokenAmount(existing.rawAmount);
+      existing.usd = newUsd;
+    } else {
+      const style = tokenStyle(part.symbol);
+      farmMap.set(key, {
+        symbol: part.symbol,
+        name: part.symbol,
+        amount: formatTokenAmount(part.amount),
+        rawAmount: part.amount,
+        usd: part.usd,
+        change: part.change,
+        address: part.address,
+        fromFarm: true,
+        ...style,
+      });
+    }
+  }
+
+  const farmRows = [...farmMap.values()];
+
+  return [...data.tokens, ...farmRows].sort((a, b) => b.usd - a.usd);
+}
+
+function renderTokens(tokens) {
+  const list = document.getElementById('tokenList');
+
+  if (!tokens.length) {
+    list.innerHTML = '<div class="empty-state" style="margin-top:24px">Brak tokenów z rozpoznaną wartością USD dla tego adresu.</div>';
+    return;
+  }
+
+  list.innerHTML = tokens.map(t => {
+    const changeHtml = t.change === null || t.change === undefined
+      ? '<div class="row-change">—</div>'
+      : `<div class="row-change ${t.change >= 0 ? 'pos' : 'neg'}">${fmtPct(t.change)}</div>`;
+    const farmBadge = t.fromFarm ? '<span class="farm-badge">z farmy</span>' : '';
+
+    return `
+      <div class="row">
+        <div class="icon" style="background: linear-gradient(135deg, ${t.color1}, ${t.color2});">${escapeHtml(t.letter)}</div>
+        <div class="row-info">
+          <div class="row-name">${escapeHtml(t.symbol)}${farmBadge}</div>
+          <div class="row-sub">${escapeHtml(t.name)} · ${fmtUSD(t.usd)}</div>
+        </div>
+        <div class="row-right">
+          <div class="row-amount">${escapeHtml(t.amount)}</div>
+          ${changeHtml}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function shortAddr(addr) {
+  if (!addr) return '';
+  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+}
+
+// ---------- zapisane portfolio (localStorage) ----------
+// Uwaga: to działa w przeglądarce po otwarciu/hostowaniu pliku normalnie.
+// W podglądzie artefaktu wewnątrz Claude.ai localStorage bywa piaskownicowany
+// i może nie przetrwać odświeżenia — po pobraniu pliku działa bez ograniczeń.
+const STORAGE_KEY = 'pulsefolio_saved_addresses';
+
+function saveAddressesToStorage(addresses) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(addresses));
+  } catch (err) {
+    console.warn('Nie udało się zapisać adresów w pamięci podręcznej:', err);
+  }
+}
+
+function loadAddressesFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length ? parsed : null;
+  } catch (err) {
+    console.warn('Nie udało się odczytać zapisanych adresów:', err);
+    return null;
+  }
+}
+
+function clearAddressesFromStorage() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (err) {
+    console.warn('Nie udało się wyczyścić zapisanych adresów:', err);
+  }
+}
+
+// Przełącza widok między formularzem wprowadzania adresów (edycja/nowe portfolio)
+// a skróconym paskiem "zapisane portfolio" z przyciskami Edytuj / Stwórz nowe.
+function setPortfolioBarVisible(visible, addresses = []) {
+  document.getElementById('searchCard').style.display = visible ? 'none' : 'block';
+  document.getElementById('portfolioBar').style.display = visible ? 'flex' : 'none';
+
+  if (visible) {
+    const label = addresses.length > 1
+      ? `Zapisane portfolio — ${addresses.length} adresy`
+      : `Zapisany adres — ${shortAddr(addresses[0] || '')}`;
+    document.getElementById('portfolioBarLabel').textContent = label;
+  } else {
+    // Przycisk "Zwiń" w formularzu ma sens tylko wtedy, gdy jest do czego wracać
+    // (czyli mamy już zapisane, wcześniej wczytane portfolio).
+    const hasSaved = !!loadAddressesFromStorage();
+    document.getElementById('collapseSearchBtn').classList.toggle('show', hasSaved);
+  }
+}
+
+// Rozdziela wklejony/wpisany tekst na pojedyncze adresy (przecinek, spacja, nowa linia).
+function splitAddresses(text) {
+  return text.split(/[\s,;]+/).map(s => s.trim()).filter(Boolean);
+}
+
+function createAddrRow(value = '') {
+  const row = document.createElement('div');
+  row.className = 'addr-row';
+  row.innerHTML = `
+    <input class="addr-input" type="text" placeholder="0x..." autocomplete="off" />
+    <button class="addr-remove" type="button" title="Usuń adres" aria-label="Usuń adres">×</button>
+  `;
+  row.querySelector('.addr-input').value = value;
+
+  row.querySelector('.addr-remove').addEventListener('click', () => {
+    row.remove();
+    updateRemoveButtons();
+  });
+
+  // Wklejenie kilku adresów naraz (np. z notatnika) rozbija je na osobne wiersze.
+  row.querySelector('.addr-input').addEventListener('paste', (e) => {
+    const pasted = (e.clipboardData || window.clipboardData).getData('text');
+    const parts = splitAddresses(pasted);
+    if (parts.length <= 1) return;
+
+    e.preventDefault();
+    row.querySelector('.addr-input').value = parts[0];
+    const container = document.getElementById('addrRows');
+    for (const addr of parts.slice(1)) {
+      container.appendChild(createAddrRow(addr));
+    }
+    updateRemoveButtons();
+  });
+
+  return row;
+}
+
+function updateRemoveButtons() {
+  const rows = document.querySelectorAll('.addr-row');
+  rows.forEach(r => {
+    r.querySelector('.addr-remove').disabled = rows.length <= 1;
+  });
+}
+
+function getAddressInputs() {
+  return Array.from(document.querySelectorAll('.addr-input')).map(i => i.value.trim()).filter(Boolean);
+}
+
+function resetAddrRows(firstValue = '') {
+  const container = document.getElementById('addrRows');
+  container.innerHTML = '';
+  container.appendChild(createAddrRow(firstValue));
+  updateRemoveButtons();
+}
+
+document.getElementById('addAddrBtn').addEventListener('click', () => {
+  const container = document.getElementById('addrRows');
+  const row = createAddrRow();
+  container.appendChild(row);
+  updateRemoveButtons();
+  row.querySelector('.addr-input').focus();
+});
+
+function renderFarms(farms) {
+  const list = document.getElementById('farmList');
+
+  if (!farms.length) {
+    list.innerHTML = '<div class="empty-state" style="margin-top:24px">Brak aktywnych pozycji w farmach lub stakingu HEX.</div>';
+    return;
+  }
+
+  const multiWallet = new Set(farms.map(f => f.sourceAddress).filter(Boolean)).size > 1;
+
+  list.innerHTML = farms.map(f => `
+    <div class="farm-card">
+      <div class="farm-head">
+        <div class="icon" style="background: linear-gradient(135deg, ${f.color1}, ${f.color2});">${escapeHtml(f.letter)}</div>
+        <div class="farm-proto-col">
+          <div class="farm-proto">${escapeHtml(f.proto)}</div>
+          ${multiWallet ? `<div class="farm-wallet">${escapeHtml(shortAddr(f.sourceAddress))}</div>` : ''}
+        </div>
+        <div class="farm-type">${escapeHtml(f.type)}</div>
+      </div>
+      <div class="farm-row"><span>Wartość</span><b>${fmtUSD(f.principal)}</b></div>
+      <div class="farm-row"><span>Udziały</span><b>${escapeHtml(f.shares)}</b></div>
+      <div class="farm-row"><span>APY</span><b class="farm-apy">${f.apy === null ? '—' : `${f.apy}%`}</b></div>
+      ${f.daysLeft > 0 ? `<div class="farm-row"><span>Koniec stakingu</span><b>za ${f.daysLeft} dni</b></div>` : ''}
+      <div class="farm-progress"><div class="farm-progress-fill" style="width:${f.progress}%;"></div></div>
+    </div>
+  `).join('');
+}
+
+function showResults(data, addressCount = 1) {
+  portfolioData = data;
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('notice').classList.add('show');
+  document.getElementById('summary').classList.add('show');
+  document.getElementById('tabs').classList.add('show');
+
+  document.getElementById('summaryLabel').textContent =
+    addressCount > 1 ? `Wartość portfela (${addressCount} adresy)` : 'Wartość portfela';
+  document.getElementById('totalValue').textContent = fmtUSD(data.totalUsd);
+
+  const changeEl = document.getElementById('totalChange');
+  if (data.weightedChange === null) {
+    changeEl.textContent = '—';
+    changeEl.className = 'p-change';
+  } else {
+    changeEl.textContent = fmtPct(data.weightedChange);
+    changeEl.className = `p-change ${data.weightedChange >= 0 ? 'pos' : 'neg'}`;
+  }
+
+  const hasFarmTokens = collectFarmTokenParts(data.farms).length > 0;
+  document.getElementById('farmModeRow').classList.toggle('show', hasFarmTokens);
+
+  renderTokens(buildDisplayTokens(data, farmDisplayMode));
+  renderFarms(data.farms);
+}
+
+function showError(message) {
+  document.getElementById('notice').classList.remove('show');
+  document.getElementById('summary').classList.remove('show');
+  document.getElementById('tabs').classList.remove('show');
+  document.getElementById('farmModeRow').classList.remove('show');
+  document.getElementById('tokenList').classList.remove('show');
+  document.getElementById('farmList').classList.remove('show');
+  document.getElementById('emptyState').style.display = 'block';
+  document.getElementById('emptyState').textContent = message;
+}
+
+async function handleLoad() {
+  const raw = getAddressInputs();
+  if (!raw.length) {
+    document.querySelector('.addr-input').focus();
+    return;
+  }
+
+  // Walidacja + deduplikacja (case-insensitive, np. te same adresy w różnym casingu).
+  const seen = new Set();
+  const addresses = [];
+  for (const value of raw) {
+    if (!ethers.utils.isAddress(value)) {
+      showError(`Nieprawidłowy adres portfela: ${value}`);
+      return;
+    }
+    const normalized = ethers.utils.getAddress(value);
+    if (seen.has(normalized.toLowerCase())) continue;
+    seen.add(normalized.toLowerCase());
+    addresses.push(normalized);
+  }
+
+  const btn = document.getElementById('loadBtn');
+  const loading = document.getElementById('loading');
+
+  btn.disabled = true;
+  loading.classList.add('show');
+  document.getElementById('emptyState').style.display = 'none';
+  setLoading('Łączenie z PulseChain…');
+
+  try {
+    const data = await loadMultiPortfolio(addresses);
+    showResults(data, addresses.length);
+    document.getElementById('tokenList').classList.add('show');
+    document.getElementById('farmList').classList.remove('show');
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'tokens'));
+    saveAddressesToStorage(addresses);
+    setPortfolioBarVisible(true, addresses);
+  } catch (err) {
+    console.error(err);
+    showError(err.message || 'Nie udało się pobrać danych portfela.');
+  } finally {
+    loading.classList.remove('show');
+    btn.disabled = false;
+  }
+}
+
+document.getElementById('loadBtn').addEventListener('click', handleLoad);
+
+// Delegacja zdarzeń — Enter działa w dowolnym polu adresu, także dodanym dynamicznie.
+document.getElementById('addrRows').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.classList.contains('addr-input')) handleLoad();
+});
+
+document.querySelector('.hint-chip').addEventListener('click', () => {
+  resetAddrRows(CONFIG.DEMO_ADDRESS);
+  handleLoad();
+});
+
+document.getElementById('editPortfolioBtn').addEventListener('click', () => {
+  // Wiersze adresów już są wypełnione (z zapisu lub ostatniego ładowania) — po prostu odsłaniamy formularz.
+  setPortfolioBarVisible(false);
+});
+
+document.getElementById('collapseSearchBtn').addEventListener('click', () => {
+  // Zwija formularz bez ponownego wczytywania — wraca do już wyrenderowanego portfolio.
+  const saved = loadAddressesFromStorage();
+  if (saved && saved.length) {
+    setPortfolioBarVisible(true, saved);
+  }
+});
+
+document.getElementById('newPortfolioBtn').addEventListener('click', () => {
+  clearAddressesFromStorage();
+  resetAddrRows();
+  setPortfolioBarVisible(false);
+
+  // Reset widoku wyników do stanu początkowego.
+  portfolioData = { tokens: [], farms: [], totalUsd: 0, weightedChange: null };
+  document.getElementById('notice').classList.remove('show');
+  document.getElementById('summary').classList.remove('show');
+  document.getElementById('tabs').classList.remove('show');
+  document.getElementById('farmModeRow').classList.remove('show');
+  document.getElementById('tokenList').classList.remove('show');
+  document.getElementById('farmList').classList.remove('show');
+  document.getElementById('emptyState').style.display = 'block';
+  document.getElementById('emptyState').textContent = DEFAULT_EMPTY_TEXT;
+
+  document.querySelector('.addr-input').focus();
+});
+
+// Przy starcie: jeśli w pamięci podręcznej jest zapisane portfolio, wypełniamy nim
+// wiersze adresów (przydatne przy edycji), zwijamy formularz i wczytujemy dane automatycznie.
+// W przeciwnym razie po prostu normalizujemy pojedynczy pusty wiersz z HTML.
+const savedAddresses = loadAddressesFromStorage();
+if (savedAddresses && savedAddresses.length) {
+  resetAddrRows(savedAddresses[0]);
+  const addrRowsContainer = document.getElementById('addrRows');
+  for (const addr of savedAddresses.slice(1)) {
+    addrRowsContainer.appendChild(createAddrRow(addr));
+  }
+  updateRemoveButtons();
+  setPortfolioBarVisible(true, savedAddresses);
+  handleLoad();
+} else {
+  resetAddrRows();
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const target = tab.dataset.tab;
+    document.getElementById('tokenList').classList.toggle('show', target === 'tokens');
+    document.getElementById('farmList').classList.toggle('show', target === 'farms');
+
+    const hasFarmTokens = collectFarmTokenParts(portfolioData.farms).length > 0;
+    document.getElementById('farmModeRow').classList.toggle('show', target === 'tokens' && hasFarmTokens);
+  });
+});
+
+document.querySelectorAll('.fm-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.mode === farmDisplayMode) return;
+    farmDisplayMode = btn.dataset.mode;
+    document.querySelectorAll('.fm-btn').forEach(b => b.classList.toggle('active', b === btn));
+    renderTokens(buildDisplayTokens(portfolioData, farmDisplayMode));
+  });
+});
+</script>
+
+</body>
+</html>
