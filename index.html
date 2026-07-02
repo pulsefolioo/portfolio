@@ -156,6 +156,52 @@
   }
   .hint-chip:hover{ border-color: var(--purple); color: var(--text-primary); }
 
+  /* ---------- custom tokens ---------- */
+  .token-card{
+    display:none;
+    margin-top: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .token-card.show{ display:block; }
+  .token-add-row{ display:flex; gap:8px; }
+  .token-add-row input{
+    flex:1;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: 'Inter', monospace;
+    outline: none;
+  }
+  .token-add-row input::placeholder{ color: var(--text-muted); }
+  .token-add-row input:focus{ border-color: var(--purple); }
+  .token-add-row .btn-grad{ height:44px; min-width:70px; flex-shrink:0; }
+  .token-add-row .btn-grad:disabled{ opacity:0.6; cursor:default; }
+  .token-msg{ font-size:12px; margin-top:8px; display:none; line-height:1.4; }
+  .token-msg.show{ display:block; }
+  .token-msg.error{ color: var(--red); }
+  .token-msg.success{ color: var(--green); }
+  .token-chip-row{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+  .token-chip{
+    display:flex; align-items:center; gap:6px;
+    font-size:12px; font-weight:500; color: var(--text-primary);
+    background: var(--surface-2); border:1px solid var(--border);
+    border-radius:20px; padding:5px 6px 5px 12px;
+  }
+  .token-chip-remove{
+    display:flex; align-items:center; justify-content:center;
+    width:18px; height:18px; border-radius:50%;
+    background: transparent; border:none; color: var(--text-secondary);
+    font-size:14px; line-height:1; cursor:pointer; flex-shrink:0;
+  }
+  .token-chip-remove:hover{ background: rgba(255,84,112,0.18); color: var(--red); }
+  .token-empty-hint{ font-size:12px; color: var(--text-muted); margin-top:10px; }
+
   /* ---------- notice ---------- */
   .notice{
     margin-top:16px; font-size:13px; color: var(--text-secondary);
@@ -197,6 +243,11 @@
     display:flex; align-items:center; justify-content:center;
     font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:14px;
     color:#07070a; flex-shrink:0;
+    position: relative; overflow:hidden;
+  }
+  .icon img{
+    position:absolute; inset:0; width:100%; height:100%;
+    object-fit:cover; border-radius:50%;
   }
   .row-info{ flex:1; min-width:0; }
   .row-name{ font-weight:600; font-size:15px; display:flex; align-items:center; gap:6px; }
@@ -210,6 +261,10 @@
     font-size:10px; font-weight:600; color: var(--purple);
     background: rgba(139,59,255,0.14); border:1px solid rgba(139,59,255,0.35);
     padding:2px 7px; border-radius:20px; white-space:nowrap;
+  }
+  .no-price-badge{
+    color: var(--text-muted);
+    background: rgba(85,85,95,0.14); border-color: var(--border);
   }
 
   /* ---------- farm token display mode ---------- */
@@ -339,6 +394,17 @@
     </div>
   </div>
 
+  <div class="token-card" id="tokenCard">
+    <div class="search-label">Missing a token? Add it</div>
+    <div class="token-add-row">
+      <input id="customTokenInput" type="text" placeholder="Token contract address 0x..." autocomplete="off" />
+      <button class="btn-grad" id="addTokenBtn" type="button">Add</button>
+    </div>
+    <div class="token-msg" id="tokenMsg"></div>
+    <div class="token-chip-row" id="customTokenChips"></div>
+    <div class="token-empty-hint" id="tokenEmptyHint">Tokens you add here are saved in this browser only and are included whenever balances are checked.</div>
+  </div>
+
   <div class="loading" id="loading">
     <div class="spinner"></div>
     <span id="loadingText">Connecting to PulseChain…</span>
@@ -377,12 +443,13 @@
   <div class="portfolio-bar-label" id="portfolioBarLabel">Saved portfolio</div>
   <div class="portfolio-bar-actions">
     <button class="btn-bar" id="editPortfolioBtn" type="button"><i class="ti ti-pencil" aria-hidden="true"></i> Edit portfolio</button>
+    <button class="btn-bar" id="toggleTokenCardBtn" type="button"><i class="ti ti-coin" aria-hidden="true"></i> Missing a token? Add it</button>
     <button class="btn-bar" id="newPortfolioBtn" type="button"><i class="ti ti-plus" aria-hidden="true"></i> Create new</button>
   </div>
 </div>
 
   <div class="privacy-note">
-    <i class="ti ti-lock" aria-hidden="true"></i>Wallet addresses are stored only locally in your browser (localStorage) — they are never sent to or saved on any server.
+    <i class="ti ti-lock" aria-hidden="true"></i>Wallet addresses and custom tokens are stored only locally in your browser (localStorage) — they are never sent to or saved on any server.
   </div>
 </main>
 
@@ -468,6 +535,18 @@ const TOKEN_STYLE = {
   USDT: { color1:'#26a17b', color2:'#35d68b', letter:'U' },
 };
 
+// Manual overrides for token icons — used when a symbol should always show a
+// specific logo regardless of what DexScreener returns for that exact contract
+// (e.g. bridged/wrapped tokens reusing their origin-chain asset's icon).
+const ICON_OVERRIDES = {
+  WETH: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png',
+};
+
+function resolveIcon(symbol, fetchedIcon) {
+  const override = ICON_OVERRIDES[String(symbol || '').toUpperCase()];
+  return override || fetchedIcon || null;
+}
+
 let provider;
 let portfolioData = { tokens: [], farms: [], totalUsd: 0, weightedChange: null };
 const DEFAULT_EMPTY_TEXT = document.getElementById('emptyState').textContent.trim();
@@ -485,6 +564,14 @@ function escapeHtml(value) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+// Renders a real token icon (e.g. from DexScreener) on top of the colored letter
+// avatar. If the image fails to load, it's hidden via onerror so the letter
+// underneath shows through — no extra fallback logic needed.
+function iconImg(url) {
+  if (!url) return '';
+  return `<img src="${escapeHtml(url)}" alt="" loading="lazy" onerror="this.style.display='none'" />`;
 }
 
 function chunkArray(arr, size) {
@@ -545,15 +632,16 @@ async function fetchTokenListBlockscout(address) {
   return data.result;
 }
 
-// Reads token balances from KNOWN_TOKENS with a single RPC call (Multicall3.aggregate3),
-// instead of asking an external API for the token list of a given address.
+// Reads token balances from KNOWN_TOKENS + user-added custom tokens with a single RPC call
+// (Multicall3.aggregate3), instead of asking an external API for the token list of a given address.
 // Returns data in the same shape as fetchTokenListBlockscout (contractAddress/decimals/balance/symbol/name),
 // so the rest of the code (loadPortfolio) doesn't need to change.
 async function fetchTokenBalancesViaMulticall(address) {
-  if (!KNOWN_TOKENS.length) return [];
+  const tokenList = getAllTokens();
+  if (!tokenList.length) return [];
 
   const erc20Iface = new ethers.utils.Interface(ERC20_ABI);
-  const calls = KNOWN_TOKENS.map(token => ({
+  const calls = tokenList.map(token => ({
     target: token.address,
     allowFailure: true,
     callData: erc20Iface.encodeFunctionData('balanceOf', [address]),
@@ -565,7 +653,7 @@ async function fetchTokenBalancesViaMulticall(address) {
 
     const tokens = [];
     results.forEach((res, i) => {
-      const meta = KNOWN_TOKENS[i];
+      const meta = tokenList[i];
       if (!res.success || res.returnData === '0x') return;
 
       let balance;
@@ -584,6 +672,7 @@ async function fetchTokenBalancesViaMulticall(address) {
         balance: balance.toString(),
         symbol: meta.symbol,
         name: meta.name,
+        isCustom: !!meta.isCustom,
       });
     });
 
@@ -616,9 +705,13 @@ async function fetchPrices(addresses) {
         const bestPair = pairsList.sort((a, b) => (b.liquidity?.usd ?? 0) - (a.liquidity?.usd ?? 0))[0];
         const price = parseFloat(bestPair.priceUsd);
         if (Number.isNaN(price)) continue;
+        // Not every pair carries token metadata — fall back to any pair in the
+        // group that does have an icon before giving up on it.
+        const iconPair = pairsList.find(p => p.info?.imageUrl);
         priceMap[addr] = {
           price,
           change24h: bestPair.priceChange?.h24 ?? null,
+          icon: iconPair?.info?.imageUrl ?? null,
         };
       }
     } catch (err) {
@@ -635,7 +728,7 @@ async function getPlsBalance(address) {
   return ethers.utils.formatEther(balance);
 }
 
-async function getHexStakes(address, hexPrice) {
+async function getHexStakes(address, hexPrice, hexIcon) {
   return withFallback(async (p) => {
     const hex = new ethers.Contract(CONFIG.HEX, HEX_ABI, p);
     const [stakeCountBn, currentDayBn] = await Promise.all([
@@ -682,6 +775,7 @@ async function getHexStakes(address, hexPrice) {
         letter: style.letter,
         color1: style.color1,
         color2: style.color2,
+        icon: hexIcon,
       });
     }
 
@@ -738,8 +832,8 @@ async function getLpBreakdown(lpToken, lpAmountBn, meta, priceMap, provider) {
   return {
     usd: usd0 + usd1,
     parts: [
-      { address: addr0, symbol: meta.sym0, amount: amount0, usd: usd0, change: quote0?.change24h ?? null },
-      { address: addr1, symbol: meta.sym1, amount: amount1, usd: usd1, change: quote1?.change24h ?? null },
+      { address: addr0, symbol: meta.sym0, amount: amount0, usd: usd0, change: quote0?.change24h ?? null, icon: resolveIcon(meta.sym0, quote0?.icon) },
+      { address: addr1, symbol: meta.sym1, amount: amount1, usd: usd1, change: quote1?.change24h ?? null, icon: resolveIcon(meta.sym1, quote1?.icon) },
     ],
   };
 }
@@ -806,6 +900,7 @@ async function getPulseXFarms(address, priceMap) {
         letter: style.letter,
         color1: style.color1,
         color2: style.color2,
+        icon: breakdown.parts[0]?.icon ?? null,
         tokenParts: breakdown.parts,
       };
     }));
@@ -821,7 +916,7 @@ async function loadPortfolio(address) {
 
   const normalized = ethers.utils.getAddress(address);
 
-  setLoading('Pobieranie sald przez RPC (Multicall)…');
+  setLoading('Fetching balances via RPC (Multicall)…');
   const [tokenList, plsBalance] = await Promise.all([
     fetchTokenBalancesViaMulticall(normalized),
     getPlsBalance(normalized),
@@ -832,10 +927,11 @@ async function loadPortfolio(address) {
     ...tokenList.map(t => t.contractAddress),
   ];
 
-  setLoading('Pobieranie cen z DexScreener…');
+  setLoading('Fetching prices from DexScreener…');
   const priceMap = await fetchPrices(priceAddresses);
   const plsPrice = priceMap[CONFIG.WPLS.toLowerCase()]?.price ?? null;
   const plsChange = priceMap[CONFIG.WPLS.toLowerCase()]?.change24h ?? null;
+  const plsIcon = priceMap[CONFIG.WPLS.toLowerCase()]?.icon ?? null;
 
   const tokens = [];
   const plsNum = parseFloat(plsBalance);
@@ -850,7 +946,8 @@ async function loadPortfolio(address) {
       rawAmount: plsNum,
       usd,
       change: plsChange,
-      // PLS natywny jest wyceniany przez adres WPLS — to samo pole address
+      icon: plsIcon,
+      // PLS native is priced via the WPLS address — the same address field
       // allows merging with the WPLS component coming from a farm.
       address: CONFIG.WPLS.toLowerCase(),
       ...style,
@@ -867,8 +964,14 @@ async function loadPortfolio(address) {
     const price = quote?.price ?? null;
     const usd = price ? balance * price : 0;
 
-    if (usd > 0 && usd < CONFIG.MIN_USD_DISPLAY) continue;
-    if (!price && balance > 0) continue;
+    // Tokens from the built-in whitelist are hidden below the dust threshold or
+    // when DexScreener has no price for them (avoids noise from spam tokens).
+    // Tokens the user explicitly added are always shown, even without a price —
+    // they asked for it by address, so a missing quote shouldn't hide the balance.
+    if (!token.isCustom) {
+      if (usd > 0 && usd < CONFIG.MIN_USD_DISPLAY) continue;
+      if (!price && balance > 0) continue;
+    }
 
     const style = tokenStyle(token.symbol);
     tokens.push({
@@ -878,18 +981,22 @@ async function loadPortfolio(address) {
       rawAmount: balance,
       usd,
       change: quote?.change24h ?? null,
+      icon: resolveIcon(token.symbol, quote?.icon),
       address: addr,
+      isCustom: !!token.isCustom,
+      noPrice: !price,
       ...style,
     });
   }
 
   tokens.sort((a, b) => b.usd - a.usd);
 
-  setLoading('Odczyt stakingu HEX i farm PulseX…');
+  setLoading('Reading HEX staking and PulseX farms…');
   const hexPrice = priceMap[CONFIG.HEX.toLowerCase()]?.price ?? null;
+  const hexIcon = priceMap[CONFIG.HEX.toLowerCase()]?.icon ?? null;
   const [farms, hexStakes] = await Promise.all([
     getPulseXFarms(normalized, priceMap),
-    getHexStakes(normalized, hexPrice),
+    getHexStakes(normalized, hexPrice, hexIcon),
   ]);
 
   const allFarms = [...hexStakes, ...farms].map(f => ({ ...f, sourceAddress: normalized }));
@@ -911,7 +1018,7 @@ async function loadPortfolio(address) {
 // the whole multi-load fails; the error states which address failed.
 async function loadMultiPortfolio(addresses) {
   if (addresses.length === 1) {
-    setLoading('Pobieranie sald przez RPC (Multicall)…');
+    setLoading('Fetching balances via RPC (Multicall)…');
     return loadPortfolio(addresses[0]);
   }
 
@@ -987,7 +1094,7 @@ function collectFarmTokenParts(farms) {
 }
 
 // Builds the list of tokens to display depending on the selected mode:
-// 'separate' — tokeny portfela + osobne, oznaczone pozycje z farm;
+// 'separate' — wallet tokens + separate, tagged farm positions;
 // 'merge' — farm tokens added (amount and USD) to matching wallet tokens by contract address.
 function buildDisplayTokens(data, mode) {
   const farmParts = collectFarmTokenParts(data.farms);
@@ -1016,6 +1123,7 @@ function buildDisplayTokens(data, mode) {
           rawAmount: part.amount,
           usd: part.usd,
           change: part.change,
+          icon: part.icon ?? null,
           address: part.address,
           ...style,
         });
@@ -1026,7 +1134,7 @@ function buildDisplayTokens(data, mode) {
     return merged;
   }
 
-  // separate: tokeny portfela + tokeny z farm jako osobne pozycje,
+  // separate: wallet tokens + farm tokens as separate positions,
   // but summed together if the same token appears in several farms/addresses
   // (e.g. PLSX from HEX staking on one wallet + from an LP farm on another).
   const farmMap = new Map();
@@ -1056,6 +1164,7 @@ function buildDisplayTokens(data, mode) {
         rawAmount: part.amount,
         usd: part.usd,
         change: part.change,
+        icon: part.icon ?? null,
         address: part.address,
         fromFarm: true,
         ...style,
@@ -1081,13 +1190,15 @@ function renderTokens(tokens) {
       ? '<div class="row-change">—</div>'
       : `<div class="row-change ${t.change >= 0 ? 'pos' : 'neg'}">${fmtPct(t.change)}</div>`;
     const farmBadge = t.fromFarm ? '<span class="farm-badge">from farm</span>' : '';
+    const noPriceBadge = t.noPrice ? '<span class="farm-badge no-price-badge">no price data</span>' : '';
+    const subValue = t.noPrice ? 'No price data' : fmtUSD(t.usd);
 
     return `
       <div class="row">
-        <div class="icon" style="background: linear-gradient(135deg, ${t.color1}, ${t.color2});">${escapeHtml(t.letter)}</div>
+        <div class="icon" style="background: linear-gradient(135deg, ${t.color1}, ${t.color2});">${escapeHtml(t.letter)}${iconImg(t.icon)}</div>
         <div class="row-info">
-          <div class="row-name">${escapeHtml(t.symbol)}${farmBadge}</div>
-          <div class="row-sub">${escapeHtml(t.name)} · ${fmtUSD(t.usd)}</div>
+          <div class="row-name">${escapeHtml(t.symbol)}${farmBadge}${noPriceBadge}</div>
+          <div class="row-sub">${escapeHtml(t.name)} · ${subValue}</div>
         </div>
         <div class="row-right">
           <div class="row-amount">${escapeHtml(t.amount)}</div>
@@ -1103,7 +1214,7 @@ function shortAddr(addr) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
-// ---------- zapisane portfolio (localStorage) ----------
+// ---------- saved portfolio (localStorage) ----------
 // Note: this works in the browser once the file is opened/hosted normally.
 // In the artifact preview inside Claude.ai, localStorage may be sandboxed
 // and may not survive a refresh — once the file is downloaded it works without limitations.
@@ -1136,6 +1247,149 @@ function clearAddressesFromStorage() {
     console.warn('Failed to clear saved addresses:', err);
   }
 }
+
+// ---------- custom tokens (localStorage) ----------
+// Lets the user add tokens that aren't in the built-in KNOWN_TOKENS whitelist.
+// Stored only in this browser; merged with KNOWN_TOKENS whenever balances are fetched.
+const TOKENS_STORAGE_KEY = 'pulsefolio_custom_tokens';
+
+function loadCustomTokensFromStorage() {
+  try {
+    const raw = localStorage.getItem(TOKENS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.warn('Failed to read saved custom tokens:', err);
+    return [];
+  }
+}
+
+function saveCustomTokensToStorage(tokens) {
+  try {
+    localStorage.setItem(TOKENS_STORAGE_KEY, JSON.stringify(tokens));
+  } catch (err) {
+    console.warn('Failed to save custom tokens to local storage:', err);
+  }
+}
+
+let customTokens = loadCustomTokensFromStorage();
+
+// Combined list used everywhere balances are fetched: built-in whitelist + user-added tokens.
+function getAllTokens() {
+  return [...KNOWN_TOKENS, ...customTokens];
+}
+
+function setTokenMsg(text, type) {
+  const el = document.getElementById('tokenMsg');
+  el.textContent = text;
+  el.className = `token-msg show${type ? ` ${type}` : ''}`;
+}
+
+function clearTokenMsg() {
+  const el = document.getElementById('tokenMsg');
+  el.textContent = '';
+  el.className = 'token-msg';
+}
+
+function renderCustomTokenChips() {
+  const container = document.getElementById('customTokenChips');
+  const emptyHint = document.getElementById('tokenEmptyHint');
+
+  if (!customTokens.length) {
+    container.innerHTML = '';
+    emptyHint.style.display = 'block';
+    return;
+  }
+
+  emptyHint.style.display = 'none';
+  container.innerHTML = customTokens.map(t => `
+    <div class="token-chip" title="${escapeHtml(t.address)}">
+      ${escapeHtml(t.symbol)}
+      <button class="token-chip-remove" type="button" data-address="${escapeHtml(t.address)}" title="Remove ${escapeHtml(t.symbol)}" aria-label="Remove ${escapeHtml(t.symbol)}">×</button>
+    </div>
+  `).join('');
+
+  container.querySelectorAll('.token-chip-remove').forEach(btn => {
+    btn.addEventListener('click', () => removeCustomToken(btn.dataset.address));
+  });
+}
+
+function removeCustomToken(address) {
+  customTokens = customTokens.filter(t => t.address.toLowerCase() !== address.toLowerCase());
+  saveCustomTokensToStorage(customTokens);
+  renderCustomTokenChips();
+}
+
+// Looks up symbol/name/decimals for a token contract directly on-chain,
+// so the user only ever has to paste the contract address.
+async function fetchTokenMetadata(address) {
+  return withFallback(async (p) => {
+    const erc20 = new ethers.Contract(address, ERC20_ABI, p);
+    const [symbol, name, decimals] = await Promise.all([
+      erc20.symbol(),
+      erc20.name().catch(() => null),
+      erc20.decimals(),
+    ]);
+    return { symbol, name: name || symbol, decimals };
+  });
+}
+
+async function handleAddCustomToken() {
+  const input = document.getElementById('customTokenInput');
+  const btn = document.getElementById('addTokenBtn');
+  const value = input.value.trim();
+
+  clearTokenMsg();
+
+  if (!value) {
+    input.focus();
+    return;
+  }
+
+  if (!ethers.utils.isAddress(value)) {
+    setTokenMsg('That doesn\'t look like a valid contract address.', 'error');
+    return;
+  }
+
+  const normalized = ethers.utils.getAddress(value);
+  const already = getAllTokens().some(t => t.address.toLowerCase() === normalized.toLowerCase());
+  if (already) {
+    setTokenMsg('This token is already tracked.', 'error');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Adding…';
+
+  try {
+    const meta = await fetchTokenMetadata(normalized);
+    customTokens.push({
+      address: normalized,
+      symbol: meta.symbol || 'TOKEN',
+      name: meta.name || meta.symbol || 'Token',
+      decimals: Number(meta.decimals),
+      isCustom: true,
+    });
+    saveCustomTokensToStorage(customTokens);
+    renderCustomTokenChips();
+    setTokenMsg(`${meta.symbol} added — it'll be included next time you check balances.`, 'success');
+    input.value = '';
+  } catch (err) {
+    console.error(err);
+    setTokenMsg('Couldn\'t read this contract. Make sure it\'s a valid ERC-20 token on PulseChain.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Add';
+  }
+}
+
+document.getElementById('addTokenBtn').addEventListener('click', handleAddCustomToken);
+document.getElementById('customTokenInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleAddCustomToken();
+});
+
+renderCustomTokenChips();
 
 // Toggles the view between the address input form (edit/new portfolio)
 // and the compact "saved portfolio" bar with Edit / Create new buttons.
@@ -1232,7 +1486,7 @@ function renderFarms(farms) {
   list.innerHTML = farms.map(f => `
     <div class="farm-card">
       <div class="farm-head">
-        <div class="icon" style="background: linear-gradient(135deg, ${f.color1}, ${f.color2});">${escapeHtml(f.letter)}</div>
+        <div class="icon" style="background: linear-gradient(135deg, ${f.color1}, ${f.color2});">${escapeHtml(f.letter)}${iconImg(f.icon)}</div>
         <div class="farm-proto-col">
           <div class="farm-proto">${escapeHtml(f.proto)}</div>
           ${multiWallet ? `<div class="farm-wallet">${escapeHtml(shortAddr(f.sourceAddress))}</div>` : ''}
@@ -1358,6 +1612,11 @@ document.querySelector('.hint-chip').addEventListener('click', () => {
 document.getElementById('editPortfolioBtn').addEventListener('click', () => {
   // Address rows are already filled (from storage or last load) — we just reveal the form.
   setPortfolioBarVisible(false);
+  document.getElementById('tokenCard').classList.remove('show');
+});
+
+document.getElementById('toggleTokenCardBtn').addEventListener('click', () => {
+  document.getElementById('tokenCard').classList.toggle('show');
 });
 
 document.getElementById('collapseSearchBtn').addEventListener('click', () => {
@@ -1372,6 +1631,7 @@ document.getElementById('newPortfolioBtn').addEventListener('click', () => {
   clearAddressesFromStorage();
   resetAddrRows();
   setPortfolioBarVisible(false);
+  document.getElementById('tokenCard').classList.remove('show');
 
   // Reset the results view to its initial state.
   portfolioData = { tokens: [], farms: [], totalUsd: 0, weightedChange: null };
@@ -1389,7 +1649,7 @@ document.getElementById('newPortfolioBtn').addEventListener('click', () => {
 
 // On startup: if a saved portfolio exists in local storage, we use it to fill
 // the address rows (useful for editing), collapse the form and load the data automatically.
-// W przeciwnym razie po prostu normalizujemy pojedynczy pusty wiersz z HTML.
+// Otherwise we just normalize the single empty row from the HTML.
 const savedAddresses = loadAddressesFromStorage();
 if (savedAddresses && savedAddresses.length) {
   resetAddrRows(savedAddresses[0]);
