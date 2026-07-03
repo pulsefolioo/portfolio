@@ -263,6 +263,7 @@
   .row-change{ font-size:12px; margin-top:1px; }
   .row-change.pos{ color: var(--green); }
   .row-change.neg{ color: var(--red); }
+  .row-change.ath{ color:#ffb300; font-weight:600; }
   .farm-badge{
     font-size:10px; font-weight:600; color: var(--purple);
     background: rgba(139,59,255,0.14); border:1px solid rgba(139,59,255,0.35);
@@ -272,6 +273,66 @@
     color: var(--text-muted);
     background: rgba(85,85,95,0.14); border-color: var(--border);
   }
+  .ath-badge{
+    color:#ffb300;
+    background: rgba(255,179,0,0.14); border-color: rgba(255,179,0,0.35);
+  }
+
+  /* ---------- ATH dream mode ---------- */
+  .ath-dream-row{ display:none; margin-top:14px; }
+  .ath-dream-row.show{ display:block; }
+  .btn-ath{
+    width:100%;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background: var(--surface-2);
+    color: var(--text-primary);
+    font-weight:600; font-size:13px;
+    padding:12px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .btn-ath i{ font-size:16px; }
+  .btn-ath:hover{ border-color:#ffb300; color:#ffb300; }
+  .btn-ath.active{
+    background: linear-gradient(90deg, #ffd34d, #ff8a1e);
+    border-color: transparent;
+    color:#07070a;
+  }
+  .btn-ath.active:hover{ color:#07070a; }
+  .p-change.ath{ color:#ffb300; }
+
+  .ath-btn-row{ display:flex; gap:8px; }
+  .ath-btn-row .btn-ath{ flex:1; }
+  .btn-multiplier:hover{ border-color: var(--cyan); color: var(--cyan); }
+  .btn-multiplier.active{
+    background: linear-gradient(90deg, var(--cyan), var(--purple));
+    border-color: transparent;
+    color:#07070a;
+  }
+  .btn-multiplier.active:hover{ color:#07070a; }
+  .p-change.multiplier{ color: var(--cyan); }
+
+  .multiplier-input-row{
+    display:none;
+    align-items:center; gap:8px;
+    margin-top:10px;
+  }
+  .multiplier-input-row.show{ display:flex; }
+  .multiplier-label{ font-size:12px; color: var(--text-secondary); white-space:nowrap; }
+  .multiplier-input{
+    flex:1; min-width:0;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: 'Inter', monospace;
+    outline: none;
+  }
+  .multiplier-input:focus{ border-color: var(--cyan); }
+  .multiplier-input-row .btn-grad{ height:40px; min-width:80px; flex-shrink:0; padding:0 14px; }
 
   /* ---------- farm token display mode ---------- */
   .farm-mode-row{
@@ -426,6 +487,22 @@
     <div class="p-change pos" id="totalChange">+0%</div>
   </div>
 
+  <div class="ath-dream-row" id="athDreamRow">
+    <div class="ath-btn-row">
+      <button class="btn-ath" id="athDreamBtn" type="button">
+        <i class="ti ti-rocket" aria-hidden="true"></i> ATH Dream
+      </button>
+      <button class="btn-ath btn-multiplier" id="multiplierBtn" type="button">
+        <i class="ti ti-x" aria-hidden="true"></i> Multiplier
+      </button>
+    </div>
+    <div class="multiplier-input-row" id="multiplierInputRow">
+      <span class="multiplier-label">Mnożnik:</span>
+      <input type="number" id="multiplierInput" class="multiplier-input" value="10" min="0" step="any" inputmode="decimal">
+      <button class="btn-grad" id="multiplierApplyBtn" type="button">Zastosuj</button>
+    </div>
+  </div>
+
   <div class="tabs" id="tabs">
     <div class="tab active" data-tab="tokens">Tokens</div>
     <div class="tab" data-tab="farms">Farms &amp; staking</div>
@@ -558,12 +635,35 @@ function resolveIcon(symbol, fetchedIcon) {
   return override || fetchedIcon || null;
 }
 
+// Fixed ATH (all-time high) prices, hardcoded per user request — used only in
+// "ATH Dream" mode. Keys are uppercase token symbols. Any token not listed here
+// keeps using its current (live) price in ATH Dream mode.
+const ATH_PRICES = {
+  PLS: 0.000139,     // ok. 0.000139 USD
+  WPLS: 0.000139,    // same ATH as PLS (wrapped PLS)
+  PLSX: 0.0001397,   // 0.0001397 USD
+  INC: 9.5,          // ok. ~9–10 USD (midpoint)
+  HEX: 0.556,        // original HEX on Ethereum, 0.556 USD
+  EHEX: 0.031,       // eHEX (HEX on Ethereum after the PulseChain launch), ok. 0.031 USD
+  ETH: 4950,         // ok. 4950 USD
+  WETH: 4950,        // same ATH as ETH (wrapped ETH)
+};
+
 let provider;
 let portfolioData = { tokens: [], farms: [], totalUsd: 0, weightedChange: null };
+let lastAddressCount = 1;
 const DEFAULT_EMPTY_TEXT = document.getElementById('emptyState').textContent.trim();
 // 'separate' = tokeny z farm pokazywane jako osobne, oznaczone pozycje;
 // 'merge' = their amounts/USD values are added to the matching wallet tokens.
 let farmDisplayMode = 'separate';
+// When true, token/farm values are shown using ATH_PRICES instead of live prices
+// (falling back to the live price for any token without a hardcoded ATH entry).
+let athMode = false;
+
+// When true, token/farm values are shown multiplied by `multiplierValue`
+// instead of live prices. Mutually exclusive with athMode.
+let multiplierMode = false;
+let multiplierValue = 10;
 
 const fmtUSD = n => Number(n || 0).toLocaleString('en-US', { style:'currency', currency:'USD', maximumFractionDigits: n >= 100 ? 0 : 2 });
 const fmtPct = n => `${n >= 0 ? '+' : ''}${Number(n).toFixed(1)}%`;
@@ -780,6 +880,9 @@ async function getHexStakes(address, hexPrice, hexIcon) {
         type: 'Stake',
         principal: usd,
         shares: `${formatTokenAmount(hexAmount)} HEX`,
+        // Raw HEX amount kept alongside the formatted `shares` string so the
+        // ATH Dream mode can recompute this stake's value at a fixed ATH price.
+        hexAmount,
         apy: null,
         progress,
         daysLeft,
@@ -1136,6 +1239,86 @@ function mergePortfolios(results) {
   return { tokens, farms, totalUsd, weightedChange };
 }
 
+// Looks up the hardcoded ATH price for a symbol, case-insensitive.
+// PulseChain's Ethereum-bridged tokens are commonly prefixed "we" (e.g. weWETH,
+// weUSDC) — if the raw symbol isn't found, we also try it with that prefix stripped.
+// Returns null if the symbol isn't in ATH_PRICES (caller should fall back to the live price).
+function getAthPrice(symbol) {
+  const key = String(symbol || '').toUpperCase();
+  if (Object.prototype.hasOwnProperty.call(ATH_PRICES, key)) return ATH_PRICES[key];
+  if (key.startsWith('WE') && key.length > 2) {
+    const stripped = key.slice(2);
+    if (Object.prototype.hasOwnProperty.call(ATH_PRICES, stripped)) return ATH_PRICES[stripped];
+  }
+  return null;
+}
+
+// USD value of `rawAmount` units of `symbol` at its ATH price, or `fallbackUsd`
+// (the live-price value) if no ATH price is hardcoded for that symbol.
+function athAdjustedUsd(rawAmount, symbol, fallbackUsd) {
+  const athPrice = getAthPrice(symbol);
+  if (athPrice === null || !Number.isFinite(rawAmount)) return fallbackUsd;
+  return rawAmount * athPrice;
+}
+
+// Builds an ATH-Dream version of the loaded portfolio: wallet tokens and farm
+// positions are revalued using ATH_PRICES where available, keeping live prices
+// for everything else. Balances (amounts) are never changed — only USD values.
+function applyAthPricing(data) {
+  const tokens = data.tokens.map(t => {
+    const usd = athAdjustedUsd(t.rawAmount, t.symbol, t.usd);
+    return { ...t, usd, isAth: getAthPrice(t.symbol) !== null, change: null };
+  });
+
+  const farms = data.farms.map(f => {
+    if (Array.isArray(f.tokenParts) && f.tokenParts.length) {
+      // LP-style positions: revalue each underlying token, then re-sum.
+      const tokenParts = f.tokenParts.map(part => ({
+        ...part,
+        usd: athAdjustedUsd(part.amount, part.symbol, part.usd),
+        isAth: getAthPrice(part.symbol) !== null,
+      }));
+      const principal = tokenParts.reduce((sum, p) => sum + (p.usd || 0), 0);
+      return { ...f, principal, tokenParts };
+    }
+    if (typeof f.hexAmount === 'number') {
+      // HEX staking: single-asset position, revalue directly.
+      return { ...f, principal: athAdjustedUsd(f.hexAmount, 'HEX', f.principal) };
+    }
+    return { ...f };
+  });
+
+  const tokenUsd = tokens.reduce((sum, t) => sum + (t.usd || 0), 0);
+  const farmUsd = farms.reduce((sum, f) => sum + (f.principal || 0), 0);
+
+  // % change vs. 24h ago isn't meaningful against a fixed ATH price, so it's
+  // dropped here — the summary shows a dedicated "ATH scenario" label instead.
+  return { tokens, farms, totalUsd: tokenUsd + farmUsd, weightedChange: null };
+}
+
+// Builds a Multiplier version of the loaded portfolio: every wallet token and
+// farm position's USD value is scaled by `multiplier`. Balances (amounts) are
+// never changed — only USD values, exactly like ATH Dream mode.
+function applyMultiplierPricing(data, multiplier) {
+  const m = Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 1;
+
+  const tokens = data.tokens.map(t => ({ ...t, usd: (t.usd || 0) * m, change: null }));
+
+  const farms = data.farms.map(f => {
+    if (Array.isArray(f.tokenParts) && f.tokenParts.length) {
+      const tokenParts = f.tokenParts.map(part => ({ ...part, usd: (part.usd || 0) * m }));
+      const principal = tokenParts.reduce((sum, p) => sum + (p.usd || 0), 0);
+      return { ...f, principal, tokenParts };
+    }
+    return { ...f, principal: (f.principal || 0) * m };
+  });
+
+  const tokenUsd = tokens.reduce((sum, t) => sum + (t.usd || 0), 0);
+  const farmUsd = farms.reduce((sum, f) => sum + (f.principal || 0), 0);
+
+  return { tokens, farms, totalUsd: tokenUsd + farmUsd, weightedChange: null };
+}
+
 // Collects the underlying tokens of all LP farms (skips HEX staking — a single token, not a pair).
 function collectFarmTokenParts(farms) {
   const parts = [];
@@ -1169,6 +1352,7 @@ function buildDisplayTokens(data, mode) {
         existing.rawAmount = (existing.rawAmount || 0) + part.amount;
         existing.amount = formatTokenAmount(existing.rawAmount);
         existing.usd = newUsd;
+        existing.isAth = existing.isAth || part.isAth || false;
       } else {
         const style = tokenStyle(part.symbol);
         merged.push({
@@ -1180,6 +1364,7 @@ function buildDisplayTokens(data, mode) {
           change: part.change,
           icon: part.icon ?? null,
           address: part.address,
+          isAth: part.isAth || false,
           ...style,
         });
       }
@@ -1210,6 +1395,7 @@ function buildDisplayTokens(data, mode) {
       existing.rawAmount = (existing.rawAmount || 0) + (part.amount || 0);
       existing.amount = formatTokenAmount(existing.rawAmount);
       existing.usd = newUsd;
+      existing.isAth = existing.isAth || part.isAth || false;
     } else {
       const style = tokenStyle(part.symbol);
       farmMap.set(key, {
@@ -1222,6 +1408,7 @@ function buildDisplayTokens(data, mode) {
         icon: part.icon ?? null,
         address: part.address,
         fromFarm: true,
+        isAth: part.isAth || false,
         ...style,
       });
     }
@@ -1241,18 +1428,24 @@ function renderTokens(tokens) {
   }
 
   list.innerHTML = tokens.map(t => {
-    const changeHtml = t.change === null || t.change === undefined
-      ? '<div class="row-change">—</div>'
-      : `<div class="row-change ${t.change >= 0 ? 'pos' : 'neg'}">${fmtPct(t.change)}</div>`;
+    const multiplierPct = (multiplierValue - 1) * 100;
+    const changeHtml = athMode
+      ? (t.isAth ? '<div class="row-change ath">ATH</div>' : '<div class="row-change">—</div>')
+      : multiplierMode
+      ? `<div class="row-change ${multiplierPct >= 0 ? 'pos' : 'neg'}">${fmtPct(multiplierPct)}</div>`
+      : (t.change === null || t.change === undefined
+        ? '<div class="row-change">—</div>'
+        : `<div class="row-change ${t.change >= 0 ? 'pos' : 'neg'}">${fmtPct(t.change)}</div>`);
     const farmBadge = t.fromFarm ? '<span class="farm-badge">from farm</span>' : '';
-    const noPriceBadge = t.noPrice ? '<span class="farm-badge no-price-badge">no price data</span>' : '';
-    const subValue = t.noPrice ? 'No price data' : fmtUSD(t.usd);
+    const athBadge = athMode && t.isAth ? '<span class="farm-badge ath-badge">ATH price</span>' : '';
+    const noPriceBadge = (!athMode && t.noPrice) ? '<span class="farm-badge no-price-badge">no price data</span>' : '';
+    const subValue = (!athMode && t.noPrice) ? 'No price data' : fmtUSD(t.usd);
 
     return `
       <div class="row">
         <div class="icon" style="background: linear-gradient(135deg, ${t.color1}, ${t.color2});">${escapeHtml(t.letter)}${iconImg(t.icon)}</div>
         <div class="row-info">
-          <div class="row-name">${escapeHtml(t.symbol)}${farmBadge}${noPriceBadge}</div>
+          <div class="row-name">${escapeHtml(t.symbol)}${farmBadge}${athBadge}${noPriceBadge}</div>
           <div class="row-sub">${escapeHtml(t.name)} · ${subValue}</div>
         </div>
         <div class="row-right">
@@ -1568,19 +1761,34 @@ function renderFarms(farms) {
   `).join('');
 }
 
-function showResults(data, addressCount = 1) {
-  portfolioData = data;
-  document.getElementById('emptyState').style.display = 'none';
-  document.getElementById('notice').classList.add('show');
-  document.getElementById('summary').classList.add('show');
-  document.getElementById('tabs').classList.add('show');
+// The data actually shown on screen: the raw loaded portfolio, or its
+// ATH-Dream revaluation when that mode is toggled on.
+function getEffectiveData() {
+  if (athMode) return applyAthPricing(portfolioData);
+  if (multiplierMode) return applyMultiplierPricing(portfolioData, multiplierValue);
+  return portfolioData;
+}
 
-  document.getElementById('summaryLabel').textContent =
-    addressCount > 1 ? `Portfolio value (${addressCount} addresses)` : 'Portfolio value';
+// Re-renders the summary, token list and farm list from the current
+// portfolioData + athMode + farmDisplayMode state, without re-fetching anything.
+function refreshView() {
+  const data = getEffectiveData();
+
+  document.getElementById('summaryLabel').textContent = athMode
+    ? (lastAddressCount > 1 ? `ATH Dream value (${lastAddressCount} addresses)` : 'ATH Dream value')
+    : multiplierMode
+    ? (lastAddressCount > 1 ? `Multiplier ×${multiplierValue} value (${lastAddressCount} addresses)` : `Multiplier ×${multiplierValue} value`)
+    : (lastAddressCount > 1 ? `Portfolio value (${lastAddressCount} addresses)` : 'Portfolio value');
   document.getElementById('totalValue').textContent = fmtUSD(data.totalUsd);
 
   const changeEl = document.getElementById('totalChange');
-  if (data.weightedChange === null) {
+  if (athMode) {
+    changeEl.textContent = 'Wartość przy ATH 🚀';
+    changeEl.className = 'p-change ath';
+  } else if (multiplierMode) {
+    changeEl.textContent = `Pomnożone ×${multiplierValue} ✖️`;
+    changeEl.className = 'p-change multiplier';
+  } else if (data.weightedChange === null) {
     changeEl.textContent = '—';
     changeEl.className = 'p-change';
   } else {
@@ -1588,17 +1796,32 @@ function showResults(data, addressCount = 1) {
     changeEl.className = `p-change ${data.weightedChange >= 0 ? 'pos' : 'neg'}`;
   }
 
+  const activeTab = document.querySelector('.tab.active')?.dataset.tab || 'tokens';
   const hasFarmTokens = collectFarmTokenParts(data.farms).length > 0;
-  document.getElementById('farmModeRow').classList.toggle('show', hasFarmTokens);
+  document.getElementById('farmModeRow').classList.toggle('show', activeTab === 'tokens' && hasFarmTokens);
 
   renderTokens(buildDisplayTokens(data, farmDisplayMode));
   renderFarms(data.farms);
+}
+
+function showResults(data, addressCount = 1) {
+  portfolioData = data;
+  lastAddressCount = addressCount;
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('notice').classList.add('show');
+  document.getElementById('summary').classList.add('show');
+  document.getElementById('tabs').classList.add('show');
+  document.getElementById('athDreamRow').classList.add('show');
+
+  refreshView();
 }
 
 function showError(message) {
   document.getElementById('notice').classList.remove('show');
   document.getElementById('summary').classList.remove('show');
   document.getElementById('tabs').classList.remove('show');
+  document.getElementById('athDreamRow').classList.remove('show');
+  document.getElementById('multiplierInputRow').classList.remove('show');
   document.getElementById('farmModeRow').classList.remove('show');
   document.getElementById('tokenList').classList.remove('show');
   document.getElementById('farmList').classList.remove('show');
@@ -1690,9 +1913,15 @@ document.getElementById('newPortfolioBtn').addEventListener('click', () => {
 
   // Reset the results view to its initial state.
   portfolioData = { tokens: [], farms: [], totalUsd: 0, weightedChange: null };
+  athMode = false;
+  multiplierMode = false;
+  document.getElementById('athDreamBtn').classList.remove('active');
+  document.getElementById('multiplierBtn').classList.remove('active');
+  document.getElementById('multiplierInputRow').classList.remove('show');
   document.getElementById('notice').classList.remove('show');
   document.getElementById('summary').classList.remove('show');
   document.getElementById('tabs').classList.remove('show');
+  document.getElementById('athDreamRow').classList.remove('show');
   document.getElementById('farmModeRow').classList.remove('show');
   document.getElementById('tokenList').classList.remove('show');
   document.getElementById('farmList').classList.remove('show');
@@ -1701,6 +1930,56 @@ document.getElementById('newPortfolioBtn').addEventListener('click', () => {
 
   document.querySelector('.addr-input').focus();
 });
+
+document.getElementById('athDreamBtn').addEventListener('click', () => {
+  athMode = !athMode;
+  document.getElementById('athDreamBtn').classList.toggle('active', athMode);
+
+  if (athMode && multiplierMode) {
+    multiplierMode = false;
+    document.getElementById('multiplierBtn').classList.remove('active');
+    document.getElementById('multiplierInputRow').classList.remove('show');
+  }
+
+  refreshView();
+});
+
+document.getElementById('multiplierBtn').addEventListener('click', () => {
+  multiplierMode = !multiplierMode;
+  document.getElementById('multiplierBtn').classList.toggle('active', multiplierMode);
+  document.getElementById('multiplierInputRow').classList.toggle('show', multiplierMode);
+
+  if (multiplierMode && athMode) {
+    athMode = false;
+    document.getElementById('athDreamBtn').classList.remove('active');
+  }
+
+  if (multiplierMode) {
+    document.getElementById('multiplierInput').focus();
+    document.getElementById('multiplierInput').select();
+  }
+
+  refreshView();
+});
+
+function applyMultiplierInput() {
+  const input = document.getElementById('multiplierInput');
+  const value = parseFloat(input.value);
+
+  if (!Number.isFinite(value) || value <= 0) {
+    input.value = multiplierValue;
+    return;
+  }
+
+  multiplierValue = value;
+  if (multiplierMode) refreshView();
+}
+
+document.getElementById('multiplierApplyBtn').addEventListener('click', applyMultiplierInput);
+document.getElementById('multiplierInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') applyMultiplierInput();
+});
+document.getElementById('multiplierInput').addEventListener('blur', applyMultiplierInput);
 
 // On startup: if a saved portfolio exists in local storage, we use it to fill
 // the address rows (useful for editing), collapse the form and load the data automatically.
@@ -1727,7 +2006,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.getElementById('tokenList').classList.toggle('show', target === 'tokens');
     document.getElementById('farmList').classList.toggle('show', target === 'farms');
 
-    const hasFarmTokens = collectFarmTokenParts(portfolioData.farms).length > 0;
+    const hasFarmTokens = collectFarmTokenParts(getEffectiveData().farms).length > 0;
     document.getElementById('farmModeRow').classList.toggle('show', target === 'tokens' && hasFarmTokens);
   });
 });
@@ -1737,7 +2016,7 @@ document.querySelectorAll('.fm-btn').forEach(btn => {
     if (btn.dataset.mode === farmDisplayMode) return;
     farmDisplayMode = btn.dataset.mode;
     document.querySelectorAll('.fm-btn').forEach(b => b.classList.toggle('active', b === btn));
-    renderTokens(buildDisplayTokens(portfolioData, farmDisplayMode));
+    renderTokens(buildDisplayTokens(getEffectiveData(), farmDisplayMode));
   });
 });
 </script>
