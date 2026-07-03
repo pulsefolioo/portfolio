@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-    <title>PulseFolio — Portfolio on PulseChain</title>
+    <title>PulseFolio — Portfolio on PulseChain & Ethereum</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Ccircle cx='13' cy='13' r='12' stroke='url(%23g)' stroke-width='1.5' fill='none'/%3E%3Cpath d='M4 13H8L10.5 6L14.5 20L17 13H22' stroke='url(%23g)' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='26' y2='26'%3E%3Cstop stop-color='%23ff2e93'/%3E%3Cstop offset='0.5' stop-color='%238b3bff'/%3E%3Cstop offset='1' stop-color='%2300d4ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -237,7 +237,7 @@
             border-radius: 10px;
             padding: clamp(10px, 1.2vw, 14px) clamp(12px, 1.2vw, 16px);
             color: var(--text-primary);
-            font-size: 16px;   /* ZAPOBIEGA ZOOMOWANIU NA TELEFONACH */
+            font-size: 16px;
             font-family: 'Inter', monospace;
             outline: none;
             width: 100%;
@@ -351,6 +351,32 @@
             color: var(--text-primary);
         }
 
+        .network-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .network-selector select {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 12px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(12px, 0.9vw, 14px);
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .network-selector select:focus {
+            border-color: var(--purple);
+        }
+        .network-selector select option {
+            background: var(--surface);
+        }
+
         /* ---------- token card ---------- */
         .token-card {
             display: none;
@@ -376,7 +402,7 @@
             border-radius: 10px;
             padding: clamp(10px, 1.2vw, 14px) clamp(12px, 1.2vw, 16px);
             color: var(--text-primary);
-            font-size: 16px;   /* ZAPOBIEGA ZOOMOWANIU */
+            font-size: 16px;
             font-family: 'Inter', monospace;
             outline: none;
             transition: border-color 0.2s;
@@ -481,6 +507,50 @@
             color: var(--text-secondary);
             margin-bottom: 4px;
         }
+        .p-label-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .network-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(11px, 0.85vw, 13px);
+            font-weight: 500;
+            padding: 5px 10px 5px 8px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            margin-bottom: 4px;
+        }
+        .network-pill:hover {
+            border-color: var(--purple);
+            background: var(--surface);
+        }
+        .network-pill i {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .network-pill-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            flex-shrink: 0;
+        }
+        .network-pill-dot.ethereum {
+            background: var(--cyan);
+        }
+        .network-pill-dot.both {
+            background: linear-gradient(135deg, var(--magenta), var(--cyan));
+        }
         .p-value {
             font-family: 'Space Grotesk', sans-serif;
             font-weight: 700;
@@ -511,6 +581,23 @@
         }
         .p-change.multiplier {
             color: var(--cyan);
+        }
+        .stale-badge {
+            display: none;
+            align-items: center;
+            gap: 5px;
+            font-size: clamp(11px, 0.85vw, 13px);
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+        .stale-badge.show {
+            display: flex;
+        }
+        .stale-badge i {
+            font-size: 13px;
+        }
+        .stale-badge.error {
+            color: var(--red);
         }
 
         /* ---------- tabs ---------- */
@@ -654,6 +741,23 @@
             background: rgba(255, 179, 0, 0.14);
             border-color: rgba(255, 179, 0, 0.35);
         }
+        .chain-badge {
+            font-size: clamp(9px, 0.7vw, 11px);
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+        .chain-badge.pulsechain {
+            color: var(--magenta);
+            background: rgba(255, 46, 147, 0.14);
+            border: 1px solid rgba(255, 46, 147, 0.35);
+        }
+        .chain-badge.ethereum {
+            color: var(--cyan);
+            background: rgba(0, 212, 255, 0.14);
+            border: 1px solid rgba(0, 212, 255, 0.35);
+        }
 
         /* ---------- ATH dream ---------- */
         .ath-dream-row {
@@ -736,7 +840,7 @@
             border-radius: 10px;
             padding: clamp(8px, 1vw, 12px) clamp(10px, 1.2vw, 14px);
             color: var(--text-primary);
-            font-size: 16px;    /* ZAPOBIEGA ZOOMOWANIU */
+            font-size: 16px;
             font-family: 'Inter', monospace;
             outline: none;
             transition: border-color 0.2s;
@@ -1174,9 +1278,18 @@
 
         <div class="search-card" id="searchCard">
             <div class="search-card-head">
-                <div class="search-label">Wallet addresses — PulseChain</div>
+                <div class="search-label">Wallet addresses — PulseChain / Ethereum</div>
                 <button class="btn-collapse" id="collapseSearchBtn" type="button" title="Collapse — back to saved portfolio" aria-label="Collapse"><i class="ti ti-chevron-up" aria-hidden="true"></i></button>
             </div>
+
+            <div class="network-selector">
+                <span style="color: var(--text-secondary); font-size: clamp(12px, 0.9vw, 14px);">Network:</span>
+                <select id="networkSelect">
+                    <option value="pulsechain">PulseChain</option>
+                    <option value="ethereum">Ethereum</option>
+                </select>
+            </div>
+
             <div class="addr-rows" id="addrRows">
                 <div class="addr-row">
                     <input class="addr-input" type="text" placeholder="0x…" autocomplete="off" />
@@ -1211,7 +1324,15 @@
         <div class="notice" id="notice"></div>
 
         <div class="portfolio-summary" id="summary">
-            <div class="p-label" id="summaryLabel">Portfolio value</div>
+            <div class="p-label-row">
+                <div class="p-label" id="summaryLabel">Portfolio value</div>
+                <button class="network-pill" id="networkPillBtn" type="button" title="Switch network">
+                    <span class="network-pill-dot" id="networkPillDot"></span>
+                    <span id="networkPillText">PulseChain</span>
+                    <i class="ti ti-selector" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="stale-badge" id="staleBadge"><i class="ti ti-refresh" aria-hidden="true"></i> <span id="staleBadgeText">Cached data — refreshing…</span></div>
             <div class="p-value" id="totalValue">$0</div>
             <div class="p-change pos" id="totalChange">+0%</div>
         </div>
@@ -1249,7 +1370,7 @@
         <div class="list" id="farmList"></div>
 
         <div class="empty-state" id="emptyState">
-            Paste a PulseChain wallet address to see a summary — token balances and farm/staking positions.
+            Paste a wallet address to see a summary — token balances and farm/staking positions.
         </div>
 
         <div class="portfolio-bar" id="portfolioBar">
@@ -1280,70 +1401,140 @@
     </script>
 
     <script>
-        const CONFIG = {
-            RPC_URL: 'https://rpc.pulsechain.com',
-            RPC_FALLBACK: 'https://rpc.pulsechainstats.com',
-            EXPLORER_API: 'https://api.scan.pulsechain.com/api',
-            DEXSCREENER_API: 'https://api.dexscreener.com/tokens/v1/pulsechain',
-            WPLS: '0xA1077a294dDE1B09bB078844df40758a5D0f9a27',
-            HEX: '0x2b591e99afE9f32eAA6214f7B7629768c40Eeb39',
-            INC: '0x2fa878Ab3F87CC1C9737Fc071108F904c0B0C95d',
-            MASTERCHEF: '0xB2Ca4A66d3e57a5a9A12043B6bAD28249fE302d4',
-            MULTICALL3: '0xcA11bde05977b3631167028862bE2a173976CA11',
-            DEMO_ADDRESS: '0xd523699345eac2e601382939b3ef16002d95ed6f',
-            MIN_USD_DISPLAY: 0.5,
+        // =================================================================
+        //  NETWORK CONFIGURATION
+        // =================================================================
+        const NETWORKS = {
+            pulsechain: {
+                name: 'PulseChain',
+                chainId: 369,
+                rpcUrls: ['https://rpc.pulsechain.com', 'https://rpc.pulsechainstats.com'],
+                dexChain: 'pulsechain',
+                nativeSymbol: 'PLS',
+                nativeToken: { symbol: 'PLS', name: 'Pulse', address: '0xA1077a294dDE1B09bB078844df40758a5D0f9a27' },
+                knownTokens: [
+                    { address: '0xA1077a294dDE1B09bB078844df40758a5D0f9a27', symbol: 'WPLS', name: 'Wrapped Pulse',
+                        decimals: 18 },
+                    { address: '0x95B303987A60C71504D99Aa1b13B4DA07b0790ab', symbol: 'PLSX', name: 'PulseX', decimals: 18 },
+                    { address: '0x2b591e99afE9f32eAA6214f7B7629768c40Eeb39', symbol: 'HEX', name: 'HEX', decimals: 8 },
+                    { address: '0x2fa878Ab3F87CC1C9737Fc071108F904c0B0C95d', symbol: 'INC', name: 'Incentive', decimals: 18 },
+                    { address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', symbol: 'ETH', name: 'Ether', decimals: 18 },
+                    { address: '0x02DcdD04e3F455D838cd1249292C58f3B79e3C3C', symbol: 'WETH', name: 'Wrapped Ether',
+                        decimals: 18 },
+                    { address: '0xefD766cCb38EaF1dfd701853BFCe31359239F305', symbol: 'DAI', name: 'Dai Stablecoin',
+                        decimals: 18 },
+                    { address: '0x15D38573d2feeb82e7ad5187aB8c1D52810B1f07', symbol: 'USDC', name: 'USD Coin', decimals: 6 },
+                    { address: '0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f', symbol: 'USDT', name: 'Tether USD',
+                        decimals: 6 },
+                    { address: '0xb17D901469B9208B17d916112988A3FeD19b5cA1', symbol: 'WBTC', name: 'Wrapped BTC',
+                        decimals: 8 },
+                    { address: '0xF6f8Db0aBa00007681F8fAF16A0FDa1c9B030b11', symbol: 'PRVX', name: 'PrivateX', decimals: 18 },
+                    { address: '0x9b59b6a9c1f8d0ff8d4ea0b2c1fa3ec5b6b9d7e1', symbol: 'ATROPA', name: 'Atropa', decimals: 18 },
+                    { address: '0xe83034A7A78fC148c69defebD6D4C80f8Bb4f710', symbol: 'PINU', name: 'Pulse Inu',
+                    decimals: 18 },
+                    { address: '0xcFCFfE432A48dB53F59c301422d2EdD77B2A88d7', symbol: 'TEXAN', name: 'Texan', decimals: 18, isCustom: true},
+                ]
+            },
+            ethereum: {
+                name: 'Ethereum',
+                chainId: 1,
+                rpcUrls: [
+                    'https://rpc.ankr.com/eth',
+                    'https://cloudflare-eth.com',
+                    'https://eth-mainnet.public.blastapi.io',
+                    'https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161'
+                ],
+                dexChain: 'ethereum',
+                nativeSymbol: 'ETH',
+                nativeToken: { symbol: 'ETH', name: 'Ether', address: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE' },
+                knownTokens: [
+                    { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', symbol: 'USDC', name: 'USD Coin',
+                    decimals: 6 },
+                    { address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', symbol: 'USDT', name: 'Tether USD',
+                        decimals: 6 },
+                    { address: '0x6B175474E89094C44Da98b954EedeAC495271d0F', symbol: 'DAI', name: 'Dai Stablecoin',
+                        decimals: 18 },
+                    { address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', symbol: 'WETH', name: 'Wrapped Ether',
+                        decimals: 18 },
+                    { address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599', symbol: 'WBTC', name: 'Wrapped BTC',
+                        decimals: 8 },
+                ]
+            }
         };
 
-        const KNOWN_TOKENS = [
-            { address: '0xA1077a294dDE1B09bB078844df40758a5D0f9a27', symbol: 'WPLS', name: 'Wrapped Pulse', decimals: 18 },
-            { address: '0x95B303987A60C71504D99Aa1b13B4DA07b0790ab', symbol: 'PLSX', name: 'PulseX', decimals: 18 },
-            { address: '0x2b591e99afE9f32eAA6214f7B7629768c40Eeb39', symbol: 'HEX', name: 'HEX', decimals: 8 },
-            { address: '0x2fa878Ab3F87CC1C9737Fc071108F904c0B0C95d', symbol: 'INC', name: 'Incentive', decimals: 18 },
-            { address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', symbol: 'ETH', name: 'Ether', decimals: 18 },
-            { address: '0x02DcdD04e3F455D838cd1249292C58f3B79e3C3C', symbol: 'WETH', name: 'Wrapped Ether', decimals: 18 },
-            { address: '0xefD766cCb38EaF1dfd701853BFCe31359239F305', symbol: 'DAI', name: 'Dai Stablecoin', decimals: 18 },
-            { address: '0x15D38573d2feeb82e7ad5187aB8c1D52810B1f07', symbol: 'USDC', name: 'USD Coin', decimals: 6 },
-            { address: '0x0Cb6F5a34ad42ec934882A05265A7d5F59b51A2f', symbol: 'USDT', name: 'Tether USD', decimals: 6 },
-            { address: '0xb17D901469B9208B17d916112988A3FeD19b5cA1', symbol: 'WBTC', name: 'Wrapped BTC', decimals: 8 },
-            { address: '0xF6f8Db0aBa00007681F8fAF16A0FDa1c9B030b11', symbol: 'PRVX', name: 'PrivateX', decimals: 18 },
-            { address: '0x9b59b6a9c1f8d0ff8d4ea0b2c1fa3ec5b6b9d7e1', symbol: 'ATROPA', name: 'Atropa', decimals: 18 },
-            { address: '0xe83034A7A78fC148c69defebD6D4C80f8Bb4f710', symbol: 'PINU', name: 'Pulse Inu', decimals: 18, isCustom: true},
-            { address: '0xcFCFfE432A48dB53F59c301422d2EdD77B2A88d7', symbol: 'TEXAN', name: 'Texan', decimals: 18, isCustom: true},
-            
-        ];
+        let selectedNetwork = 'pulsechain';
+        let combinedMode = false; // true = show PulseChain + Ethereum together
 
-        const HEX_ABI = [
-            'function stakeCount(address stakerAddr) view returns (uint256)',
-            'function stakeLists(address stakerAddr, uint256 stakeIndex) view returns (uint40 stakeId, uint72 stakedHearts, uint72 stakeShares, uint16 lockedDay, uint16 stakedDays, uint16 unlockedDay, bool isAutoStake)',
-            'function currentDay() view returns (uint256)',
-        ];
+        function getNetwork() {
+            return NETWORKS[selectedNetwork];
+        }
 
-        const MASTERCHEF_ABI = [
-            'function poolLength() view returns (uint256)',
-            'function poolInfo(uint256) view returns (address lpToken, uint256 allocPoint, uint256 lastRewardTime, uint256 accIncPerShare)',
-            'function userInfo(uint256, address) view returns (uint256 amount, uint256 rewardDebt)',
-            'function incPerSecond() view returns (uint256)',
-            'function totalAllocPoint() view returns (uint256)',
-        ];
+        // -----------------------------------------------------------------
+        //  withFallback – próbuje kolejne RPC, aż znajdzie działający
+        // -----------------------------------------------------------------
+        async function withFallback(fn, maxRetries = 3) {
+            const net = getNetwork();
+            const urls = net.rpcUrls;
+            let lastError = null;
 
-        const PAIR_ABI = [
-            'function token0() view returns (address)',
-            'function token1() view returns (address)',
-            'function getReserves() view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)',
-            'function totalSupply() view returns (uint256)',
-            'function symbol() view returns (string)',
-        ];
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                for (const url of urls) {
+                    try {
+                        const provider = new ethers.providers.JsonRpcProvider(url, {
+                            chainId: net.chainId,
+                            name: net.name
+                        });
+                        // Sprawdź, czy provider wykrywa sieć – to rzuci błąd jeśli nie
+                        await provider.getNetwork();
+                        // Jeśli doszliśmy tu, provider działa – wykonaj funkcję
+                        return await fn(provider);
+                    } catch (err) {
+                        lastError = err;
+                        console.warn(`RPC ${url} failed:`, err.message);
+                        // przejdź do następnego URL
+                    }
+                }
+                // Jeśli wszystkie RPC zawiodły, poczekaj przed kolejną próbą
+                if (attempt < maxRetries - 1) {
+                    await sleep(600 * (attempt + 1));
+                }
+            }
+            throw lastError || new Error('All RPC attempts failed.');
+        }
 
-        const ERC20_ABI = [
-            'function decimals() view returns (uint8)',
-            'function symbol() view returns (string)',
-            'function name() view returns (string)',
-            'function balanceOf(address) view returns (uint256)',
-        ];
+        // =================================================================
+        //  TOKEN LISTS
+        // =================================================================
+        function getKnownTokens() {
+            return getNetwork().knownTokens || [];
+        }
 
-        const MULTICALL3_ABI = [
-            'function aggregate3((address target, bool allowFailure, bytes callData)[] calls) payable returns ((bool success, bytes returnData)[] returnData)',
-        ];
+        let customTokens = loadCustomTokensFromStorage();
+
+        function getAllTokens() {
+            return [...getKnownTokens(), ...customTokens];
+        }
+
+        function getNativeToken() {
+            return getNetwork().nativeToken;
+        }
+
+        // =================================================================
+        //  CONSTANTS
+        // =================================================================
+        const ATH_PRICES = {
+            PLS: 0.000139,
+            WPLS: 0.000139,
+            PLSX: 0.0001397,
+            INC: 9.5,
+            HEX: 0.556,
+            EHEX: 0.031,
+            ETH: 4950,
+            WETH: 4950,
+            USDC: 1,
+            USDT: 1,
+            DAI: 1,
+        };
 
         const TOKEN_STYLE = {
             PLS: { color1: '#8b3bff', color2: '#00d4ff', letter: 'P' },
@@ -1368,30 +1559,9 @@
             WETH: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png',
         };
 
-        const ATH_PRICES = {
-            PLS: 0.000139,
-            WPLS: 0.000139,
-            PLSX: 0.0001397,
-            INC: 9.5,
-            HEX: 0.556,
-            EHEX: 0.031,
-            ETH: 4950,
-            WETH: 4950,
-        };
-
-        let provider;
-        let portfolioData = { tokens: [], farms: [], totalUsd: 0, weightedChange: null };
-        let lastAddressCount = 1;
-        const DEFAULT_EMPTY_TEXT = document.getElementById('emptyState').textContent.trim();
-
-        // ---------- ZMIANY: zapamiętywanie trybu farm ----------
-        const FARM_MODE_STORAGE_KEY = 'pulsefolio_farm_display_mode';
-        let farmDisplayMode = localStorage.getItem(FARM_MODE_STORAGE_KEY) || 'merge'; // domyślnie 'merge'
-
-        let athMode = false;
-        let multiplierMode = false;
-        let multiplierValue = 10;
-
+        // =================================================================
+        //  HELPERS
+        // =================================================================
         const fmtUSD = n => Number(n || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD',
             maximumFractionDigits: n >= 100 ? 0 : 2 });
         const fmtPct = n => `${n >= 0 ? '+' : ''}${Number(n).toFixed(1)}%`;
@@ -1414,20 +1584,6 @@
             const chunks = [];
             for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
             return chunks;
-        }
-
-        function getProvider() {
-            if (!provider) provider = new ethers.providers.JsonRpcProvider(CONFIG.RPC_URL);
-            return provider;
-        }
-
-        async function withFallback(fn) {
-            try {
-                return await fn(getProvider());
-            } catch (err) {
-                console.warn('Primary RPC failed, trying fallback…', err);
-                return await fn(new ethers.providers.JsonRpcProvider(CONFIG.RPC_FALLBACK));
-            }
         }
 
         function tokenStyle(symbol) {
@@ -1462,6 +1618,148 @@
             return override || fetchedIcon || null;
         }
 
+        function shortAddr(addr) {
+            if (!addr) return '';
+            return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+        }
+
+        function getAthPrice(symbol) {
+            const key = String(symbol || '').toUpperCase();
+            if (Object.prototype.hasOwnProperty.call(ATH_PRICES, key)) return ATH_PRICES[key];
+            if (key.startsWith('WE') && key.length > 2) {
+                const stripped = key.slice(2);
+                if (Object.prototype.hasOwnProperty.call(ATH_PRICES, stripped)) return ATH_PRICES[stripped];
+            }
+            return null;
+        }
+
+        // =================================================================
+        //  LOCAL STORAGE
+        // =================================================================
+        const STORAGE_KEY = 'pulsefolio_saved_addresses';
+        const TOKENS_STORAGE_KEY = 'pulsefolio_custom_tokens';
+        const FARM_MODE_STORAGE_KEY = 'pulsefolio_farm_display_mode';
+        const NETWORK_STORAGE_KEY = 'pulsefolio_selected_network';
+        const COMBINED_MODE_STORAGE_KEY = 'pulsefolio_combined_mode';
+        const PORTFOLIO_CACHE_KEY = 'pulsefolio_portfolio_cache';
+
+        function saveAddressesToStorage(addresses) {
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(addresses)); } catch (err) { console.warn(err); }
+        }
+
+        function loadAddressesFromStorage() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) && parsed.length ? parsed : null;
+            } catch (err) { return null; }
+        }
+
+        function clearAddressesFromStorage() {
+            try { localStorage.removeItem(STORAGE_KEY); } catch (err) {}
+        }
+
+        function loadCustomTokensFromStorage() {
+            try {
+                const raw = localStorage.getItem(TOKENS_STORAGE_KEY);
+                if (!raw) return [];
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (err) { return []; }
+        }
+
+        function saveCustomTokensToStorage(tokens) {
+            try { localStorage.setItem(TOKENS_STORAGE_KEY, JSON.stringify(tokens)); } catch (err) { console.warn(err); }
+        }
+
+        function loadNetworkFromStorage() {
+            try {
+                const val = localStorage.getItem(NETWORK_STORAGE_KEY);
+                if (val && NETWORKS[val]) return val;
+                return 'pulsechain';
+            } catch { return 'pulsechain'; }
+        }
+
+        function saveNetworkToStorage(net) {
+            try { localStorage.setItem(NETWORK_STORAGE_KEY, net); } catch (err) { console.warn(err); }
+        }
+
+        function loadCombinedModeFromStorage() {
+            try { return localStorage.getItem(COMBINED_MODE_STORAGE_KEY) === '1'; } catch { return false; }
+        }
+
+        function saveCombinedModeToStorage(val) {
+            try { localStorage.setItem(COMBINED_MODE_STORAGE_KEY, val ? '1' : '0'); } catch (err) { console.warn(err); }
+        }
+
+        // Caches the last successfully loaded portfolio so it can be shown instantly
+        // (as a "stale" preview) the next time the page opens, while fresh data loads.
+        function savePortfolioToCache(data, addressCount, addresses) {
+            try {
+                const snapshot = {
+                    data: { tokens: data.tokens, farms: data.farms, totalUsd: data.totalUsd, weightedChange: data.weightedChange },
+                    addressCount,
+                    addresses: addresses.map(a => a.toLowerCase()),
+                    network: selectedNetwork,
+                    combined: combinedMode,
+                    savedAt: Date.now(),
+                };
+                localStorage.setItem(PORTFOLIO_CACHE_KEY, JSON.stringify(snapshot));
+            } catch (err) { console.warn(err); }
+        }
+
+        function loadPortfolioFromCache() {
+            try {
+                const raw = localStorage.getItem(PORTFOLIO_CACHE_KEY);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                if (!parsed || !parsed.data || !Array.isArray(parsed.addresses)) return null;
+                return parsed;
+            } catch { return null; }
+        }
+
+        // True if a cached snapshot matches the currently loaded addresses/network/mode
+        function cacheMatchesCurrentContext(cached, addresses) {
+            if (!cached) return false;
+            if (cached.network !== selectedNetwork || !!cached.combined !== combinedMode) return false;
+            const currentSet = addresses.map(a => a.toLowerCase());
+            if (currentSet.length !== cached.addresses.length) return false;
+            const cachedSet = new Set(cached.addresses);
+            return currentSet.every(a => cachedSet.has(a));
+        }
+
+        // =================================================================
+        //  FETCHING FUNCTIONS
+        // =================================================================
+
+        // Native balance – always uses withFallback
+        async function getNativeBalance(address) {
+            return withFallback(async (p) => {
+                const balance = await p.getBalance(address);
+                return ethers.utils.formatEther(balance);
+            });
+        }
+
+        // Token balances – tries Multicall3, then individual calls
+        async function fetchTokenBalances(address) {
+            const tokenList = getAllTokens();
+            if (!tokenList.length) return [];
+
+            try {
+                const result = await fetchTokenBalancesViaMulticall(address);
+                if (result.length > 0 || tokenList.length === 0) return result;
+            } catch (err) {
+                console.warn('Multicall failed, falling back to individual calls:', err.message);
+            }
+
+            // Use withFallback to get a working provider for individual calls
+            return withFallback(async (provider) => {
+                return await fetchTokenBalancesIndividual(address, provider);
+            });
+        }
+
+        // Multicall3
         async function fetchTokenBalancesViaMulticall(address) {
             const tokenList = getAllTokens();
             if (!tokenList.length) return [];
@@ -1474,7 +1772,7 @@
             }));
 
             return withFallback(async (p) => {
-                const multicall = new ethers.Contract(CONFIG.MULTICALL3, MULTICALL3_ABI, p);
+                const multicall = new ethers.Contract(MULTICALL3_ADDR, MULTICALL3_ABI, p);
                 const results = await multicall.callStatic.aggregate3(calls);
 
                 const tokens = [];
@@ -1486,7 +1784,6 @@
                     try {
                         [balance] = erc20Iface.decodeFunctionResult('balanceOf', res.returnData);
                     } catch (err) {
-                        console.warn(`Failed to decode balanceOf for ${meta.symbol}`, err);
                         return;
                     }
 
@@ -1506,13 +1803,44 @@
             });
         }
 
+        // Individual calls – uses the provided provider (which is guaranteed to work)
+        async function fetchTokenBalancesIndividual(address, provider) {
+            const tokenList = getAllTokens();
+            const tokens = [];
+
+            for (const meta of tokenList) {
+                try {
+                    const contract = new ethers.Contract(meta.address, ERC20_ABI, provider);
+                    const balance = await contract.balanceOf(address);
+                    if (balance.isZero()) continue;
+
+                    tokens.push({
+                        contractAddress: meta.address,
+                        decimals: meta.decimals,
+                        balance: balance.toString(),
+                        symbol: meta.symbol,
+                        name: meta.name,
+                        isCustom: !!meta.isCustom,
+                    });
+                } catch (err) {
+                    console.warn(`Failed to fetch balance for ${meta.symbol}:`, err.message);
+                }
+                // Małe opóźnienie, by nie przeciążać RPC
+                await sleep(50);
+            }
+
+            return tokens;
+        }
+
+        // Prices from DexScreener (no RPC needed)
         async function fetchPrices(addresses) {
             if (!addresses.length) return {};
             const unique = [...new Set(addresses.map(a => a.toLowerCase()))];
             const priceMap = {};
+            const chain = getNetwork().dexChain;
 
             for (const chunk of chunkArray(unique, 30)) {
-                const url = `${CONFIG.DEXSCREENER_API}/${chunk.join(',')}`;
+                const url = `https://api.dexscreener.com/tokens/v1/${chain}/${chunk.join(',')}`;
                 try {
                     const res = await fetch(url);
                     const json = await res.json();
@@ -1520,7 +1848,7 @@
                     const byBase = {};
 
                     for (const pair of pairs) {
-                        if (pair.chainId !== 'pulsechain') continue;
+                        if (pair.chainId !== chain) continue;
                         const base = pair.baseToken?.address?.toLowerCase();
                         if (!base) continue;
                         if (!byBase[base]) byBase[base] = [];
@@ -1547,14 +1875,14 @@
             return priceMap;
         }
 
-        async function getPlsBalance(address) {
-            const balance = await withFallback(p => p.getBalance(address));
-            return ethers.utils.formatEther(balance);
-        }
-
+        // =================================================================
+        //  HEX STAKING (only on PulseChain)
+        // =================================================================
         async function getHexStakes(address, hexPrice, hexIcon) {
+            if (selectedNetwork !== 'pulsechain') return [];
+
             return withFallback(async (p) => {
-                const hex = new ethers.Contract(CONFIG.HEX, HEX_ABI, p);
+                const hex = new ethers.Contract(HEX_ADDR, HEX_ABI, p);
                 const [stakeCountBn, currentDayBn] = await Promise.all([
                     hex.stakeCount(address),
                     hex.currentDay(),
@@ -1607,6 +1935,89 @@
             });
         }
 
+        // =================================================================
+        //  PULSEX FARMS (only on PulseChain)
+        // =================================================================
+        async function getPulseXFarms(address, priceMap) {
+            if (selectedNetwork !== 'pulsechain') return [];
+
+            return withFallback(async (p) => {
+                const chef = new ethers.Contract(MASTERCHEF_ADDR, MASTERCHEF_ABI, p);
+
+                const [poolLength, incPerSecondBn, totalAllocPointBn] = await Promise.all([
+                    chef.poolLength().then(v => v.toNumber()),
+                    chef.incPerSecond().catch(() => null),
+                    chef.totalAllocPoint().catch(() => null),
+                ]);
+
+                const pids = Array.from({ length: poolLength }, (_, i) => i);
+                const userEntries = (
+                    await Promise.all(
+                        chunkArray(pids, 20).map(chunk =>
+                            Promise.all(chunk.map(pid =>
+                                chef.userInfo(pid, address).then(user => ({ pid, user }))
+                            ))
+                        )
+                    )
+                ).flat();
+
+                const nonEmpty = userEntries.filter(({ user }) => !user.amount.isZero());
+
+                const activePools = await Promise.all(
+                    nonEmpty.map(async ({ pid, user }) => ({
+                        pid,
+                        user,
+                        pool: await chef.poolInfo(pid),
+                    }))
+                );
+
+                await Promise.all(activePools.map(async entry => {
+                    entry.meta = await getPairMeta(entry.pool.lpToken, p);
+                }));
+
+                const underlyingTokens = new Set();
+                for (const entry of activePools) {
+                    underlyingTokens.add(entry.meta.token0.toLowerCase());
+                    underlyingTokens.add(entry.meta.token1.toLowerCase());
+                }
+
+                const incAddr = INC_ADDR.toLowerCase();
+                if (incPerSecondBn) underlyingTokens.add(incAddr);
+
+                const missingPrices = [...underlyingTokens].filter(addr => !priceMap[addr]);
+                if (missingPrices.length) {
+                    const extraPrices = await fetchPrices(missingPrices);
+                    Object.assign(priceMap, extraPrices);
+                }
+
+                const farms = await Promise.all(activePools.map(async ({ pool, user, meta }) => {
+                    const breakdown = await getLpBreakdown(pool.lpToken, user.amount, meta, priceMap, p);
+                    const style = tokenStyle(meta.sym0);
+                    const apy = await getPoolApy(pool, meta, priceMap, incPerSecondBn, totalAllocPointBn, p);
+
+                    return {
+                        proto: `PulseX Farm — ${meta.sym0}/${meta.sym1}`,
+                        type: 'LP Farm',
+                        principal: breakdown.usd,
+                        shares: `${formatTokenAmount(parseFloat(ethers.utils.formatEther(user.amount)))} LP`,
+                        apy,
+                        progress: 100,
+                        daysLeft: 0,
+                        letter: style.letter,
+                        color1: style.color1,
+                        color2: style.color2,
+                        icon: breakdown.parts[0]?.icon ?? null,
+                        tokenParts: breakdown.parts,
+                    };
+                }));
+
+                return farms;
+            });
+        }
+
+        // -----------------------------------------------------------------
+        //  HELPERS for PulseX farms
+        // -----------------------------------------------------------------
         async function getPairMeta(lpToken, provider) {
             const pair = new ethers.Contract(lpToken, PAIR_ABI, provider);
             const [token0, token1, symbol] = await Promise.all([
@@ -1667,11 +2078,11 @@
                 if (!incPerSecondBn || !totalAllocPointBn || totalAllocPointBn.isZero()) return null;
                 if (!pool.allocPoint || pool.allocPoint.isZero()) return 0;
 
-                const incPrice = priceMap[CONFIG.INC.toLowerCase()]?.price ?? null;
+                const incPrice = priceMap[INC_ADDR.toLowerCase()]?.price ?? null;
                 if (!incPrice) return null;
 
                 const lpContract = new ethers.Contract(pool.lpToken, ERC20_ABI, provider);
-                const chefLpBalance = await lpContract.balanceOf(CONFIG.MASTERCHEF);
+                const chefLpBalance = await lpContract.balanceOf(MASTERCHEF_ADDR);
                 const poolTvl = await getLpBreakdown(pool.lpToken, chefLpBalance, meta, priceMap, provider);
                 if (!poolTvl.usd || poolTvl.usd <= 0) return null;
 
@@ -1687,120 +2098,72 @@
             }
         }
 
-        async function getPulseXFarms(address, priceMap) {
-            return withFallback(async (p) => {
-                const chef = new ethers.Contract(CONFIG.MASTERCHEF, MASTERCHEF_ABI, p);
-
-                const [poolLength, incPerSecondBn, totalAllocPointBn] = await Promise.all([
-                    chef.poolLength().then(v => v.toNumber()),
-                    chef.incPerSecond().catch(() => null),
-                    chef.totalAllocPoint().catch(() => null),
-                ]);
-
-                const pids = Array.from({ length: poolLength }, (_, i) => i);
-                const userEntries = (
-                    await Promise.all(
-                        chunkArray(pids, 20).map(chunk =>
-                            Promise.all(chunk.map(pid =>
-                                chef.userInfo(pid, address).then(user => ({ pid, user }))
-                            ))
-                        )
-                    )
-                ).flat();
-
-                const nonEmpty = userEntries.filter(({ user }) => !user.amount.isZero());
-
-                const activePools = await Promise.all(
-                    nonEmpty.map(async ({ pid, user }) => ({
-                        pid,
-                        user,
-                        pool: await chef.poolInfo(pid),
-                    }))
-                );
-
-                await Promise.all(activePools.map(async entry => {
-                    entry.meta = await getPairMeta(entry.pool.lpToken, p);
-                }));
-
-                const underlyingTokens = new Set();
-                for (const entry of activePools) {
-                    underlyingTokens.add(entry.meta.token0.toLowerCase());
-                    underlyingTokens.add(entry.meta.token1.toLowerCase());
-                }
-
-                const incAddr = CONFIG.INC.toLowerCase();
-                if (incPerSecondBn) underlyingTokens.add(incAddr);
-
-                const missingPrices = [...underlyingTokens].filter(addr => !priceMap[addr]);
-                if (missingPrices.length) {
-                    const extraPrices = await fetchPrices(missingPrices);
-                    Object.assign(priceMap, extraPrices);
-                }
-
-                const farms = await Promise.all(activePools.map(async ({ pool, user, meta }) => {
-                    const breakdown = await getLpBreakdown(pool.lpToken, user.amount, meta, priceMap, p);
-                    const style = tokenStyle(meta.sym0);
-                    const apy = await getPoolApy(pool, meta, priceMap, incPerSecondBn, totalAllocPointBn, p);
-
-                    return {
-                        proto: `PulseX Farm — ${meta.sym0}/${meta.sym1}`,
-                        type: 'LP Farm',
-                        principal: breakdown.usd,
-                        shares: `${formatTokenAmount(parseFloat(ethers.utils.formatEther(user.amount)))} LP`,
-                        apy,
-                        progress: 100,
-                        daysLeft: 0,
-                        letter: style.letter,
-                        color1: style.color1,
-                        color2: style.color2,
-                        icon: breakdown.parts[0]?.icon ?? null,
-                        tokenParts: breakdown.parts,
-                    };
-                }));
-
-                return farms;
-            });
-        }
-
+        // =================================================================
+        //  MAIN LOAD PORTFOLIO
+        // =================================================================
         async function loadPortfolio(address) {
             if (!ethers.utils.isAddress(address)) {
                 throw new Error('Invalid wallet address (format 0x… required)');
             }
 
             const normalized = ethers.utils.getAddress(address);
+            const nativeSymbol = getNetwork().nativeSymbol;
 
-            setLoading('Fetching balances via RPC (Multicall)…');
-            const [tokenList, plsBalance] = await Promise.all([
-                fetchTokenBalancesViaMulticall(normalized),
-                getPlsBalance(normalized),
+            setLoading(`Fetching ${nativeSymbol} balance…`);
+            const [nativeBalance, tokenList] = await Promise.all([
+                getNativeBalance(normalized),
+                fetchTokenBalances(normalized),
             ]);
 
-            const priceAddresses = [
-                CONFIG.WPLS,
-                ...tokenList.map(t => t.contractAddress),
-            ];
+            const priceAddresses = [];
+            const nativeAddr = getNetwork().nativeToken.address;
+            if (nativeAddr) priceAddresses.push(nativeAddr);
+
+            // Dla Ethereum, dodajemy WETH do pobrania ceny ETH (bo DexScreener nie ma ceny dla 0xEeeee...)
+            if (selectedNetwork === 'ethereum') {
+                const wethAddr = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2';
+                if (!priceAddresses.some(a => a.toLowerCase() === wethAddr.toLowerCase())) {
+                    priceAddresses.push(wethAddr);
+                }
+            }
+
+            for (const t of tokenList) {
+                priceAddresses.push(t.contractAddress);
+            }
 
             setLoading('Fetching prices from DexScreener…');
             const priceMap = await fetchPrices(priceAddresses);
-            const plsPrice = priceMap[CONFIG.WPLS.toLowerCase()]?.price ?? null;
-            const plsChange = priceMap[CONFIG.WPLS.toLowerCase()]?.change24h ?? null;
-            const plsIcon = priceMap[CONFIG.WPLS.toLowerCase()]?.icon ?? null;
+
+            // Ustal cenę native tokena (dla ETH używamy ceny WETH, jeśli native nie ma ceny)
+            let finalNativePrice = priceMap[nativeAddr.toLowerCase()]?.price ?? null;
+            let finalNativeChange = priceMap[nativeAddr.toLowerCase()]?.change24h ?? null;
+            let finalNativeIcon = priceMap[nativeAddr.toLowerCase()]?.icon ?? null;
+
+            if (selectedNetwork === 'ethereum' && !finalNativePrice) {
+                const wethAddr = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'.toLowerCase();
+                const wethPrice = priceMap[wethAddr]?.price ?? null;
+                if (wethPrice) {
+                    finalNativePrice = wethPrice;
+                    finalNativeChange = priceMap[wethAddr]?.change24h ?? null;
+                    finalNativeIcon = priceMap[wethAddr]?.icon ?? null;
+                }
+            }
 
             const tokens = [];
-            const plsNum = parseFloat(plsBalance);
+            const nativeNum = parseFloat(nativeBalance);
 
-            if (plsNum > 0) {
-                const usd = plsPrice ? plsNum * plsPrice : 0;
-                const style = tokenStyle('PLS');
+            if (nativeNum > 0) {
+                const usd = finalNativePrice ? nativeNum * finalNativePrice : 0;
+                const style = tokenStyle(nativeSymbol);
                 tokens.push({
-                    symbol: 'PLS',
-                    name: 'Pulse',
-                    amount: formatTokenAmount(plsNum),
-                    rawAmount: plsNum,
+                    symbol: nativeSymbol,
+                    name: getNetwork().nativeToken.name || nativeSymbol,
+                    amount: formatTokenAmount(nativeNum),
+                    rawAmount: nativeNum,
                     usd,
-                    change: plsChange,
-                    icon: plsIcon,
-                    address: CONFIG.WPLS.toLowerCase(),
+                    change: finalNativeChange,
+                    icon: finalNativeIcon,
+                    address: nativeAddr.toLowerCase(),
                     ...style,
                 });
             }
@@ -1816,7 +2179,7 @@
                 const usd = price ? balance * price : 0;
 
                 if (!token.isCustom) {
-                    if (usd > 0 && usd < CONFIG.MIN_USD_DISPLAY) continue;
+                    if (usd > 0 && usd < 0.5) continue;
                     if (!price && balance > 0) continue;
                 }
 
@@ -1839,8 +2202,8 @@
             tokens.sort((a, b) => b.usd - a.usd);
 
             setLoading('Reading HEX staking and PulseX farms…');
-            const hexPrice = priceMap[CONFIG.HEX.toLowerCase()]?.price ?? null;
-            const hexIcon = priceMap[CONFIG.HEX.toLowerCase()]?.icon ?? null;
+            const hexPrice = priceMap[HEX_ADDR.toLowerCase()]?.price ?? null;
+            const hexIcon = priceMap[HEX_ADDR.toLowerCase()]?.icon ?? null;
             const [farms, hexStakes] = await Promise.all([
                 getPulseXFarms(normalized, priceMap),
                 getHexStakes(normalized, hexPrice, hexIcon),
@@ -1862,11 +2225,11 @@
 
         async function loadMultiPortfolio(addresses) {
             if (addresses.length === 1) {
-                setLoading('Fetching balances via RPC (Multicall)…');
+                setLoading(`Fetching balances for ${getNetwork().nativeSymbol}…`);
                 return loadPortfolio(addresses[0]);
             }
 
-            setLoading(`Fetching balances for ${addresses.length} addresses via RPC (Multicall)…`);
+            setLoading(`Fetching balances for ${addresses.length} addresses…`);
             const results = await Promise.all(
                 addresses.map(addr =>
                     loadPortfolio(addr).catch(err => {
@@ -1919,22 +2282,55 @@
             return { tokens, farms, totalUsd, weightedChange };
         }
 
-        function getAthPrice(symbol) {
-            const key = String(symbol || '').toUpperCase();
-            if (Object.prototype.hasOwnProperty.call(ATH_PRICES, key)) return ATH_PRICES[key];
-            if (key.startsWith('WE') && key.length > 2) {
-                const stripped = key.slice(2);
-                if (Object.prototype.hasOwnProperty.call(ATH_PRICES, stripped)) return ATH_PRICES[stripped];
+        // Fetches the portfolio on PulseChain AND Ethereum and merges them into one view,
+        // tagging every token/farm with the network it came from so the UI can badge them.
+        async function loadCombinedPortfolio(addresses) {
+            const prevNetwork = selectedNetwork;
+            const networkKeys = Object.keys(NETWORKS);
+            const perNetworkResults = [];
+            const failedNetworks = [];
+
+            try {
+                for (const netKey of networkKeys) {
+                    selectedNetwork = netKey;
+                    setLoading(`Fetching balances on ${getNetwork().name}…`);
+                    try {
+                        const res = await loadMultiPortfolio(addresses);
+                        res.tokens.forEach(t => { t.network = netKey; });
+                        res.farms.forEach(f => { f.network = netKey; });
+                        perNetworkResults.push(res);
+                    } catch (err) {
+                        console.warn(`Failed loading ${netKey}:`, err);
+                        failedNetworks.push(NETWORKS[netKey].name);
+                    }
+                }
+            } finally {
+                selectedNetwork = prevNetwork;
             }
-            return null;
+
+            if (!perNetworkResults.length) {
+                throw new Error(`Couldn't fetch balances on either network (${failedNetworks.join(', ')}).`);
+            }
+
+            const tokens = perNetworkResults.flatMap(r => r.tokens).sort((a, b) => b.usd - a.usd);
+            const farms = perNetworkResults.flatMap(r => r.farms);
+
+            const tokenUsd = tokens.reduce((sum, t) => sum + (t.usd || 0), 0);
+            const farmUsd = farms.reduce((sum, f) => sum + (f.principal || 0), 0);
+            const totalUsd = tokenUsd + farmUsd;
+
+            let weightedChange = null;
+            const pricedTokens = tokens.filter(t => t.usd > 0 && t.change !== null && t.change !== undefined);
+            if (pricedTokens.length && tokenUsd > 0) {
+                weightedChange = pricedTokens.reduce((sum, t) => sum + t.usd * t.change, 0) / tokenUsd;
+            }
+
+            return { tokens, farms, totalUsd, weightedChange, failedNetworks };
         }
 
-        function athAdjustedUsd(rawAmount, symbol, fallbackUsd) {
-            const athPrice = getAthPrice(symbol);
-            if (athPrice === null || !Number.isFinite(rawAmount)) return fallbackUsd;
-            return rawAmount * athPrice;
-        }
-
+        // =================================================================
+        //  ATH / MULTIPLIER
+        // =================================================================
         function applyAthPricing(data) {
             const tokens = data.tokens.map(t => {
                 const usd = athAdjustedUsd(t.rawAmount, t.symbol, t.usd);
@@ -1963,6 +2359,12 @@
             return { tokens, farms, totalUsd: tokenUsd + farmUsd, weightedChange: null };
         }
 
+        function athAdjustedUsd(rawAmount, symbol, fallbackUsd) {
+            const athPrice = getAthPrice(symbol);
+            if (athPrice === null || !Number.isFinite(rawAmount)) return fallbackUsd;
+            return rawAmount * athPrice;
+        }
+
         function applyMultiplierPricing(data, multiplier) {
             const m = Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 1;
 
@@ -1983,12 +2385,22 @@
             return { tokens, farms, totalUsd: tokenUsd + farmUsd, weightedChange: null };
         }
 
+        // =================================================================
+        //  RENDER
+        // =================================================================
+        let portfolioData = { tokens: [], farms: [], totalUsd: 0, weightedChange: null };
+        let lastAddressCount = 1;
+        let athMode = false;
+        let multiplierMode = false;
+        let multiplierValue = 10;
+        let farmDisplayMode = localStorage.getItem(FARM_MODE_STORAGE_KEY) || 'merge';
+
         function collectFarmTokenParts(farms) {
             const parts = [];
             for (const f of farms) {
                 if (!Array.isArray(f.tokenParts)) continue;
                 for (const part of f.tokenParts) {
-                    if (part.amount > 0) parts.push(part);
+                    if (part.amount > 0) parts.push(f.network ? { ...part, network: f.network } : part);
                 }
             }
             return parts;
@@ -2001,7 +2413,8 @@
                 const merged = data.tokens.map(t => ({ ...t }));
 
                 for (const part of farmParts) {
-                    const existing = part.address ? merged.find(t => t.address === part.address) : null;
+                    const existing = part.address ?
+                        merged.find(t => t.address === part.address && t.network === part.network) : null;
 
                     if (existing) {
                         const prevUsd = existing.usd || 0;
@@ -2025,6 +2438,7 @@
                             change: part.change,
                             icon: part.icon ?? null,
                             address: part.address,
+                            network: part.network,
                             isAth: part.isAth || false,
                             ...style,
                         });
@@ -2038,7 +2452,7 @@
             const farmMap = new Map();
 
             for (const part of farmParts) {
-                const key = part.address || part.symbol;
+                const key = (part.address || part.symbol) + '|' + (part.network || '');
                 const existing = farmMap.get(key);
 
                 if (existing) {
@@ -2065,6 +2479,7 @@
                         change: part.change,
                         icon: part.icon ?? null,
                         address: part.address,
+                        network: part.network,
                         fromFarm: true,
                         isAth: part.isAth || false,
                         ...style,
@@ -2098,13 +2513,15 @@
                 const athBadge = athMode && t.isAth ? '<span class="farm-badge ath-badge">ATH price</span>' : '';
                 const noPriceBadge = (!athMode && t.noPrice) ? '<span class="farm-badge no-price-badge">no price data</span>' :
                     '';
+                const chainBadge = (combinedMode && t.network) ?
+                    `<span class="chain-badge ${t.network}">${NETWORKS[t.network].name}</span>` : '';
                 const subValue = (!athMode && t.noPrice) ? 'No price data' : fmtUSD(t.usd);
 
                 return `
               <div class="row">
                 <div class="icon" style="background: linear-gradient(135deg, ${t.color1}, ${t.color2});">${escapeHtml(t.letter)}${iconImg(t.icon)}</div>
                 <div class="row-info">
-                  <div class="row-name">${escapeHtml(t.symbol)}${farmBadge}${athBadge}${noPriceBadge}</div>
+                  <div class="row-name">${escapeHtml(t.symbol)}${chainBadge}${farmBadge}${athBadge}${noPriceBadge}</div>
                   <div class="row-sub">${escapeHtml(t.name)} · ${subValue}</div>
                 </div>
                 <div class="row-right">
@@ -2116,259 +2533,11 @@
             }).join('');
         }
 
-        function shortAddr(addr) {
-            if (!addr) return '';
-            return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
-        }
-
-        const STORAGE_KEY = 'pulsefolio_saved_addresses';
-
-        function saveAddressesToStorage(addresses) {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(addresses));
-            } catch (err) {
-                console.warn('Failed to save addresses to local storage:', err);
-            }
-        }
-
-        function loadAddressesFromStorage() {
-            try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                if (!raw) return null;
-                const parsed = JSON.parse(raw);
-                return Array.isArray(parsed) && parsed.length ? parsed : null;
-            } catch (err) {
-                console.warn('Failed to read saved addresses:', err);
-                return null;
-            }
-        }
-
-        function clearAddressesFromStorage() {
-            try {
-                localStorage.removeItem(STORAGE_KEY);
-            } catch (err) {
-                console.warn('Failed to clear saved addresses:', err);
-            }
-        }
-
-        const TOKENS_STORAGE_KEY = 'pulsefolio_custom_tokens';
-
-        function loadCustomTokensFromStorage() {
-            try {
-                const raw = localStorage.getItem(TOKENS_STORAGE_KEY);
-                if (!raw) return [];
-                const parsed = JSON.parse(raw);
-                return Array.isArray(parsed) ? parsed : [];
-            } catch (err) {
-                console.warn('Failed to read saved custom tokens:', err);
-                return [];
-            }
-        }
-
-        function saveCustomTokensToStorage(tokens) {
-            try {
-                localStorage.setItem(TOKENS_STORAGE_KEY, JSON.stringify(tokens));
-            } catch (err) {
-                console.warn('Failed to save custom tokens to local storage:', err);
-            }
-        }
-
-        let customTokens = loadCustomTokensFromStorage();
-
-        function getAllTokens() {
-            return [...KNOWN_TOKENS, ...customTokens];
-        }
-
-        function setTokenMsg(text, type) {
-            const el = document.getElementById('tokenMsg');
-            el.textContent = text;
-            el.className = `token-msg show${type ? ` ${type}` : ''}`;
-        }
-
-        function clearTokenMsg() {
-            const el = document.getElementById('tokenMsg');
-            el.textContent = '';
-            el.className = 'token-msg';
-        }
-
-        function renderCustomTokenChips() {
-            const container = document.getElementById('customTokenChips');
-            const emptyHint = document.getElementById('tokenEmptyHint');
-
-            if (!customTokens.length) {
-                container.innerHTML = '';
-                emptyHint.style.display = 'block';
-                return;
-            }
-
-            emptyHint.style.display = 'none';
-            container.innerHTML = customTokens.map(t => `
-            <div class="token-chip" title="${escapeHtml(t.address)}">
-              ${escapeHtml(t.symbol)}
-              <button class="token-chip-remove" type="button" data-address="${escapeHtml(t.address)}" title="Remove ${escapeHtml(t.symbol)}" aria-label="Remove ${escapeHtml(t.symbol)}">×</button>
-            </div>
-          `).join('');
-
-            container.querySelectorAll('.token-chip-remove').forEach(btn => {
-                btn.addEventListener('click', () => removeCustomToken(btn.dataset.address));
-            });
-        }
-
-        function removeCustomToken(address) {
-            customTokens = customTokens.filter(t => t.address.toLowerCase() !== address.toLowerCase());
-            saveCustomTokensToStorage(customTokens);
-            renderCustomTokenChips();
-        }
-
-        async function fetchTokenMetadata(address) {
-            return withFallback(async (p) => {
-                const erc20 = new ethers.Contract(address, ERC20_ABI, p);
-                const [symbol, name, decimals] = await Promise.all([
-                    erc20.symbol(),
-                    erc20.name().catch(() => null),
-                    erc20.decimals(),
-                ]);
-                return { symbol, name: name || symbol, decimals };
-            });
-        }
-
-        async function handleAddCustomToken() {
-            const input = document.getElementById('customTokenInput');
-            const btn = document.getElementById('addTokenBtn');
-            const value = input.value.trim();
-
-            clearTokenMsg();
-
-            if (!value) {
-                input.focus();
-                return;
-            }
-
-            if (!ethers.utils.isAddress(value)) {
-                setTokenMsg('That doesn\'t look like a valid contract address.', 'error');
-                return;
-            }
-
-            const normalized = ethers.utils.getAddress(value);
-            const already = getAllTokens().some(t => t.address.toLowerCase() === normalized.toLowerCase());
-            if (already) {
-                setTokenMsg('This token is already tracked.', 'error');
-                return;
-            }
-
-            btn.disabled = true;
-            btn.textContent = 'Adding…';
-
-            try {
-                const meta = await fetchTokenMetadata(normalized);
-                customTokens.push({
-                    address: normalized,
-                    symbol: meta.symbol || 'TOKEN',
-                    name: meta.name || meta.symbol || 'Token',
-                    decimals: Number(meta.decimals),
-                    isCustom: true,
-                });
-                saveCustomTokensToStorage(customTokens);
-                renderCustomTokenChips();
-                setTokenMsg(`${meta.symbol} added — it'll be included next time you check balances.`, 'success');
-                input.value = '';
-            } catch (err) {
-                console.error(err);
-                setTokenMsg('Couldn\'t read this contract. Make sure it\'s a valid ERC-20 token on PulseChain.', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Add';
-            }
-        }
-
-        document.getElementById('addTokenBtn').addEventListener('click', handleAddCustomToken);
-        document.getElementById('customTokenInput').addEventListener('keydown', e => {
-            if (e.key === 'Enter') handleAddCustomToken();
-        });
-
-        renderCustomTokenChips();
-
-        function setPortfolioBarVisible(visible, addresses = []) {
-            document.getElementById('searchCard').style.display = visible ? 'none' : 'block';
-            document.getElementById('portfolioBar').style.display = visible ? 'flex' : 'none';
-
-            if (visible) {
-                const label = addresses.length > 1 ?
-                    `Saved portfolio — ${addresses.length} addresses` :
-                    `Saved address — ${shortAddr(addresses[0] || '')}`;
-                document.getElementById('portfolioBarLabel').textContent = label;
-            } else {
-                const hasSaved = !!loadAddressesFromStorage();
-                document.getElementById('collapseSearchBtn').classList.toggle('show', hasSaved);
-            }
-        }
-
-        function splitAddresses(text) {
-            return text.split(/[\s,;]+/).map(s => s.trim()).filter(Boolean);
-        }
-
-        function createAddrRow(value = '') {
-            const row = document.createElement('div');
-            row.className = 'addr-row';
-            row.innerHTML = `
-            <input class="addr-input" type="text" placeholder="0x…" autocomplete="off" />
-            <button class="addr-remove" type="button" title="Remove address" aria-label="Remove address">×</button>
-          `;
-            row.querySelector('.addr-input').value = value;
-
-            row.querySelector('.addr-remove').addEventListener('click', () => {
-                row.remove();
-                updateRemoveButtons();
-            });
-
-            row.querySelector('.addr-input').addEventListener('paste', (e) => {
-                const pasted = (e.clipboardData || window.clipboardData).getData('text');
-                const parts = splitAddresses(pasted);
-                if (parts.length <= 1) return;
-
-                e.preventDefault();
-                row.querySelector('.addr-input').value = parts[0];
-                const container = document.getElementById('addrRows');
-                for (const addr of parts.slice(1)) {
-                    container.appendChild(createAddrRow(addr));
-                }
-                updateRemoveButtons();
-            });
-
-            return row;
-        }
-
-        function updateRemoveButtons() {
-            const rows = document.querySelectorAll('.addr-row');
-            rows.forEach(r => {
-                r.querySelector('.addr-remove').disabled = rows.length <= 1;
-            });
-        }
-
-        function getAddressInputs() {
-            return Array.from(document.querySelectorAll('.addr-input')).map(i => i.value.trim()).filter(Boolean);
-        }
-
-        function resetAddrRows(firstValue = '') {
-            const container = document.getElementById('addrRows');
-            container.innerHTML = '';
-            container.appendChild(createAddrRow(firstValue));
-            updateRemoveButtons();
-        }
-
-        document.getElementById('addAddrBtn').addEventListener('click', () => {
-            const container = document.getElementById('addrRows');
-            const row = createAddrRow();
-            container.appendChild(row);
-            updateRemoveButtons();
-            row.querySelector('.addr-input').focus();
-        });
-
         function renderFarms(farms) {
             const list = document.getElementById('farmList');
 
             if (!farms.length) {
-                list.innerHTML = '<div class="empty-state" style="margin-top:24px">No active positions in farms or HEX staking.</div>';
+                list.innerHTML = '<div class="empty-state" style="margin-top:24px">No active positions in farms or staking.</div>';
                 return;
             }
 
@@ -2379,7 +2548,7 @@
               <div class="farm-head">
                 <div class="icon" style="background: linear-gradient(135deg, ${f.color1}, ${f.color2});">${escapeHtml(f.letter)}${iconImg(f.icon)}</div>
                 <div class="farm-proto-col">
-                  <div class="farm-proto">${escapeHtml(f.proto)}</div>
+                  <div class="farm-proto">${escapeHtml(f.proto)}${(combinedMode && f.network) ? ` <span class="chain-badge ${f.network}">${NETWORKS[f.network].name}</span>` : ''}</div>
                   ${multiWallet ? `<div class="farm-wallet">${escapeHtml(shortAddr(f.sourceAddress))}</div>` : ''}
                 </div>
                 <div class="farm-type">${escapeHtml(f.type)}</div>
@@ -2444,19 +2613,38 @@
             renderFarms(data.farms);
         }
 
-        function showResults(data, addressCount = 1) {
+        let showingStale = false;
+
+        function setStaleBadge(mode, text) {
+            const badge = document.getElementById('staleBadge');
+            const badgeText = document.getElementById('staleBadgeText');
+            if (!badge || !badgeText) return;
+            if (mode === 'hidden') {
+                badge.classList.remove('show', 'error');
+                return;
+            }
+            badge.classList.add('show');
+            badge.classList.toggle('error', mode === 'error');
+            badgeText.textContent = text || (mode === 'error' ? "Couldn't refresh — showing cached data" : 'Cached data — refreshing…');
+        }
+
+        function showResults(data, addressCount = 1, opts = {}) {
             portfolioData = data;
             lastAddressCount = addressCount;
+            showingStale = !!opts.stale;
             document.getElementById('emptyState').style.display = 'none';
             document.getElementById('notice').classList.add('show');
             document.getElementById('summary').classList.add('show');
             document.getElementById('tabs').classList.add('show');
             document.getElementById('athDreamRow').classList.add('show');
+            setStaleBadge(showingStale ? 'loading' : 'hidden');
 
             refreshView();
         }
 
         function showError(message) {
+            showingStale = false;
+            setStaleBadge('hidden');
             document.getElementById('notice').classList.remove('show');
             document.getElementById('summary').classList.remove('show');
             document.getElementById('tabs').classList.remove('show');
@@ -2469,6 +2657,9 @@
             document.getElementById('emptyState').textContent = message;
         }
 
+        // =================================================================
+        //  UI HANDLERS
+        // =================================================================
         async function handleLoad() {
             const raw = getAddressInputs();
             if (!raw.length) {
@@ -2495,24 +2686,203 @@
             btn.disabled = true;
             loading.classList.add('show');
             document.getElementById('emptyState').style.display = 'none';
-            setLoading('Connecting to PulseChain…');
+            setLoading(combinedMode ? 'Connecting to PulseChain + Ethereum…' : `Connecting to ${getNetwork().name}…`);
 
             try {
-                const data = await loadMultiPortfolio(addresses);
+                const data = combinedMode ? await loadCombinedPortfolio(addresses) : await loadMultiPortfolio(addresses);
                 showResults(data, addresses.length);
                 document.getElementById('tokenList').classList.add('show');
                 document.getElementById('farmList').classList.remove('show');
                 document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'tokens'));
                 saveAddressesToStorage(addresses);
                 setPortfolioBarVisible(true, addresses);
+                const notice = document.getElementById('notice');
+                if (data.failedNetworks && data.failedNetworks.length) {
+                    notice.textContent = `Couldn't fetch balances on ${data.failedNetworks.join(', ')} — showing the other network only.`;
+                    notice.classList.add('show');
+                } else {
+                    notice.textContent = '';
+                }
+                savePortfolioToCache(data, addresses.length, addresses);
             } catch (err) {
                 console.error(err);
-                showError(err.message || 'Failed to fetch portfolio data.');
+                if (showingStale) {
+                    // Keep showing the cached snapshot instead of wiping the view; just flag the refresh failure.
+                    setStaleBadge('error', `Couldn't refresh (${err.message || 'network error'}) — showing cached data`);
+                } else {
+                    showError(err.message || 'Failed to fetch portfolio data.');
+                }
             } finally {
                 loading.classList.remove('show');
                 btn.disabled = false;
             }
         }
+
+        function getAddressInputs() {
+            return Array.from(document.querySelectorAll('.addr-input')).map(i => i.value.trim()).filter(Boolean);
+        }
+
+        function createAddrRow(value = '') {
+            const row = document.createElement('div');
+            row.className = 'addr-row';
+            row.innerHTML = `
+            <input class="addr-input" type="text" placeholder="0x…" autocomplete="off" />
+            <button class="addr-remove" type="button" title="Remove address" aria-label="Remove address">×</button>
+          `;
+            row.querySelector('.addr-input').value = value;
+
+            row.querySelector('.addr-remove').addEventListener('click', () => {
+                row.remove();
+                updateRemoveButtons();
+            });
+
+            row.querySelector('.addr-input').addEventListener('paste', (e) => {
+                const pasted = (e.clipboardData || window.clipboardData).getData('text');
+                const parts = splitAddresses(pasted);
+                if (parts.length <= 1) return;
+
+                e.preventDefault();
+                row.querySelector('.addr-input').value = parts[0];
+                const container = document.getElementById('addrRows');
+                for (const addr of parts.slice(1)) {
+                    container.appendChild(createAddrRow(addr));
+                }
+                updateRemoveButtons();
+            });
+
+            return row;
+        }
+
+        function splitAddresses(text) {
+            return text.split(/[\s,;]+/).map(s => s.trim()).filter(Boolean);
+        }
+
+        function resetAddrRows(firstValue = '') {
+            const container = document.getElementById('addrRows');
+            container.innerHTML = '';
+            container.appendChild(createAddrRow(firstValue));
+            updateRemoveButtons();
+        }
+
+        function updateRemoveButtons() {
+            const rows = document.querySelectorAll('.addr-row');
+            rows.forEach(r => {
+                r.querySelector('.addr-remove').disabled = rows.length <= 1;
+            });
+        }
+
+        function setPortfolioBarVisible(visible, addresses = []) {
+            document.getElementById('searchCard').style.display = visible ? 'none' : 'block';
+            document.getElementById('portfolioBar').style.display = visible ? 'flex' : 'none';
+
+            if (visible) {
+                const label = addresses.length > 1 ?
+                    `Saved portfolio — ${addresses.length} addresses` :
+                    `Saved address — ${shortAddr(addresses[0] || '')}`;
+                document.getElementById('portfolioBarLabel').textContent = label;
+            } else {
+                const hasSaved = !!loadAddressesFromStorage();
+                document.getElementById('collapseSearchBtn').classList.toggle('show', hasSaved);
+            }
+        }
+
+        // Keep the network pill (next to "Portfolio value") in sync with the selected network
+        function updateNetworkPill() {
+            const pillText = document.getElementById('networkPillText');
+            const pillDot = document.getElementById('networkPillDot');
+            if (!pillText || !pillDot) return;
+            pillText.textContent = combinedMode ? 'PulseChain + Ethereum' : getNetwork().name;
+            pillDot.classList.toggle('ethereum', !combinedMode && selectedNetwork === 'ethereum');
+            pillDot.classList.toggle('both', combinedMode);
+        }
+
+        // Resets the view and (re)loads any saved addresses after a network/mode change
+        function reloadForNetworkChange() {
+            const saved = loadAddressesFromStorage();
+            if (saved && saved.length) {
+                resetAddrRows(saved[0]);
+                const container = document.getElementById('addrRows');
+                for (let i = 1; i < saved.length; i++) {
+                    container.appendChild(createAddrRow(saved[i]));
+                }
+                updateRemoveButtons();
+
+                const cached = loadPortfolioFromCache();
+                if (cacheMatchesCurrentContext(cached, saved)) {
+                    showResults(cached.data, cached.addressCount, { stale: true });
+                    document.getElementById('tokenList').classList.add('show');
+                    document.getElementById('farmList').classList.remove('show');
+                    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'tokens'));
+                }
+
+                handleLoad();
+            } else {
+                resetAddrRows();
+                setPortfolioBarVisible(false);
+                document.getElementById('tokenCard').classList.remove('show');
+                portfolioData = { tokens: [], farms: [], totalUsd: 0, weightedChange: null };
+                athMode = false;
+                multiplierMode = false;
+                document.getElementById('athDreamBtn').classList.remove('active');
+                document.getElementById('multiplierBtn').classList.remove('active');
+                document.getElementById('multiplierInputRow').classList.remove('show');
+                document.getElementById('notice').classList.remove('show');
+                document.getElementById('summary').classList.remove('show');
+                document.getElementById('tabs').classList.remove('show');
+                document.getElementById('athDreamRow').classList.remove('show');
+                document.getElementById('farmModeRow').classList.remove('show');
+                document.getElementById('tokenList').classList.remove('show');
+                document.getElementById('farmList').classList.remove('show');
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('emptyState').textContent = 'Paste a wallet address to see a summary — token balances and farm/staking positions.';
+                document.querySelector('.addr-input').focus();
+            }
+        }
+
+        // Explicit single-network switch (from the "Network:" dropdown)
+        function switchNetwork(newNet) {
+            if (!NETWORKS[newNet]) return;
+            if (newNet === selectedNetwork && !combinedMode) return;
+            selectedNetwork = newNet;
+            combinedMode = false;
+            document.getElementById('networkSelect').value = selectedNetwork;
+            saveNetworkToStorage(selectedNetwork);
+            saveCombinedModeToStorage(combinedMode);
+            updateNetworkPill();
+            reloadForNetworkChange();
+        }
+
+        // Toggle the combined "PulseChain + Ethereum" view
+        function setCombinedMode(val) {
+            if (combinedMode === val) return;
+            combinedMode = val;
+            saveCombinedModeToStorage(combinedMode);
+            updateNetworkPill();
+            reloadForNetworkChange();
+        }
+
+        document.getElementById('networkSelect').addEventListener('change', function() {
+            switchNetwork(this.value);
+        });
+
+        document.getElementById('networkPillBtn').addEventListener('click', function() {
+            // Cycles: PulseChain -> Ethereum -> PulseChain + Ethereum -> PulseChain ...
+            if (combinedMode) {
+                switchNetwork('pulsechain');
+            } else if (selectedNetwork === 'pulsechain') {
+                switchNetwork('ethereum');
+            } else {
+                setCombinedMode(true);
+            }
+        });
+
+        document.getElementById('addAddrBtn').addEventListener('click', () => {
+            const container = document.getElementById('addrRows');
+            const row = createAddrRow();
+            container.appendChild(row);
+            updateRemoveButtons();
+            row.querySelector('.addr-input').focus();
+        });
 
         document.getElementById('loadBtn').addEventListener('click', handleLoad);
 
@@ -2521,7 +2891,7 @@
         });
 
         document.querySelector('.hint-chip').addEventListener('click', () => {
-            resetAddrRows(CONFIG.DEMO_ADDRESS);
+            resetAddrRows(CONFIG_DEMO_ADDRESS);
             handleLoad();
         });
 
@@ -2561,8 +2931,7 @@
             document.getElementById('tokenList').classList.remove('show');
             document.getElementById('farmList').classList.remove('show');
             document.getElementById('emptyState').style.display = 'block';
-            document.getElementById('emptyState').textContent = DEFAULT_EMPTY_TEXT;
-
+            document.getElementById('emptyState').textContent = 'Paste a wallet address to see a summary — token balances and farm/staking positions.';
             document.querySelector('.addr-input').focus();
         });
 
@@ -2616,12 +2985,11 @@
         });
         document.getElementById('multiplierInput').addEventListener('blur', applyMultiplierInput);
 
-        // ---------- Ustawienie aktywnego przycisku na podstawie zapisanego trybu ----------
+        // Farm mode toggle
         document.querySelectorAll('.fm-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.mode === farmDisplayMode);
         });
 
-        // ---------- Event listener dla przycisków trybu farm z zapisem do localStorage ----------
         document.querySelectorAll('.fm-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 if (btn.dataset.mode === farmDisplayMode) return;
@@ -2632,22 +3000,7 @@
             });
         });
 
-        // ---------- Wczytanie zapisanego portfela przy starcie ----------
-        const savedAddresses = loadAddressesFromStorage();
-        if (savedAddresses && savedAddresses.length) {
-            resetAddrRows(savedAddresses[0]);
-            const addrRowsContainer = document.getElementById('addrRows');
-            for (const addr of savedAddresses.slice(1)) {
-                addrRowsContainer.appendChild(createAddrRow(addr));
-            }
-            updateRemoveButtons();
-            setPortfolioBarVisible(true, savedAddresses);
-            handleLoad();
-        } else {
-            resetAddrRows();
-        }
-
-        // ---------- Obsługa zakładek ----------
+        // Tabs
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -2661,6 +3014,190 @@
                 hasFarmTokens);
             });
         });
+
+        // Custom tokens
+        function renderCustomTokenChips() {
+            const container = document.getElementById('customTokenChips');
+            const emptyHint = document.getElementById('tokenEmptyHint');
+
+            if (!customTokens.length) {
+                container.innerHTML = '';
+                emptyHint.style.display = 'block';
+                return;
+            }
+
+            emptyHint.style.display = 'none';
+            container.innerHTML = customTokens.map(t => `
+            <div class="token-chip" title="${escapeHtml(t.address)}">
+              ${escapeHtml(t.symbol)}
+              <button class="token-chip-remove" type="button" data-address="${escapeHtml(t.address)}" title="Remove ${escapeHtml(t.symbol)}" aria-label="Remove ${escapeHtml(t.symbol)}">×</button>
+            </div>
+          `).join('');
+
+            container.querySelectorAll('.token-chip-remove').forEach(btn => {
+                btn.addEventListener('click', () => removeCustomToken(btn.dataset.address));
+            });
+        }
+
+        function removeCustomToken(address) {
+            customTokens = customTokens.filter(t => t.address.toLowerCase() !== address.toLowerCase());
+            saveCustomTokensToStorage(customTokens);
+            renderCustomTokenChips();
+        }
+
+        async function handleAddCustomToken() {
+            const input = document.getElementById('customTokenInput');
+            const btn = document.getElementById('addTokenBtn');
+            const value = input.value.trim();
+
+            clearTokenMsg();
+
+            if (!value) {
+                input.focus();
+                return;
+            }
+
+            if (!ethers.utils.isAddress(value)) {
+                setTokenMsg('That doesn\'t look like a valid contract address.', 'error');
+                return;
+            }
+
+            const normalized = ethers.utils.getAddress(value);
+            const already = getAllTokens().some(t => t.address.toLowerCase() === normalized.toLowerCase());
+            if (already) {
+                setTokenMsg('This token is already tracked.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Adding…';
+
+            try {
+                const meta = await fetchTokenMetadata(normalized);
+                customTokens.push({
+                    address: normalized,
+                    symbol: meta.symbol || 'TOKEN',
+                    name: meta.name || meta.symbol || 'Token',
+                    decimals: Number(meta.decimals),
+                    isCustom: true,
+                });
+                saveCustomTokensToStorage(customTokens);
+                renderCustomTokenChips();
+                setTokenMsg(`${meta.symbol} added — it'll be included next time you check balances.`, 'success');
+                input.value = '';
+            } catch (err) {
+                console.error(err);
+                setTokenMsg('Couldn\'t read this contract. Make sure it\'s a valid ERC-20 token on the selected network.',
+                    'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Add';
+            }
+        }
+
+        function setTokenMsg(text, type) {
+            const el = document.getElementById('tokenMsg');
+            el.textContent = text;
+            el.className = `token-msg show${type ? ` ${type}` : ''}`;
+        }
+
+        function clearTokenMsg() {
+            const el = document.getElementById('tokenMsg');
+            el.textContent = '';
+            el.className = 'token-msg';
+        }
+
+        async function fetchTokenMetadata(address) {
+            return withFallback(async (p) => {
+                const erc20 = new ethers.Contract(address, ERC20_ABI, p);
+                const [symbol, name, decimals] = await Promise.all([
+                    erc20.symbol(),
+                    erc20.name().catch(() => null),
+                    erc20.decimals(),
+                ]);
+                return { symbol, name: name || symbol, decimals };
+            });
+        }
+
+        document.getElementById('addTokenBtn').addEventListener('click', handleAddCustomToken);
+        document.getElementById('customTokenInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') handleAddCustomToken();
+        });
+
+        renderCustomTokenChips();
+
+        // =================================================================
+        //  CONSTANTS
+        // =================================================================
+        const CONFIG_DEMO_ADDRESS = '0xd523699345eac2e601382939b3ef16002d95ed6f';
+
+        const HEX_ADDR = '0x2b591e99afE9f32eAA6214f7B7629768c40Eeb39';
+        const INC_ADDR = '0x2fa878Ab3F87CC1C9737Fc071108F904c0B0C95d';
+        const MASTERCHEF_ADDR = '0xB2Ca4A66d3e57a5a9A12043B6bAD28249fE302d4';
+        const MULTICALL3_ADDR = '0xcA11bde05977b3631167028862bE2a173976CA11';
+
+        const ERC20_ABI = [
+            'function decimals() view returns (uint8)',
+            'function symbol() view returns (string)',
+            'function name() view returns (string)',
+            'function balanceOf(address) view returns (uint256)',
+        ];
+
+        const HEX_ABI = [
+            'function stakeCount(address stakerAddr) view returns (uint256)',
+            'function stakeLists(address stakerAddr, uint256 stakeIndex) view returns (uint40 stakeId, uint72 stakedHearts, uint72 stakeShares, uint16 lockedDay, uint16 stakedDays, uint16 unlockedDay, bool isAutoStake)',
+            'function currentDay() view returns (uint256)',
+        ];
+
+        const MASTERCHEF_ABI = [
+            'function poolLength() view returns (uint256)',
+            'function poolInfo(uint256) view returns (address lpToken, uint256 allocPoint, uint256 lastRewardTime, uint256 accIncPerShare)',
+            'function userInfo(uint256, address) view returns (uint256 amount, uint256 rewardDebt)',
+            'function incPerSecond() view returns (uint256)',
+            'function totalAllocPoint() view returns (uint256)',
+        ];
+
+        const PAIR_ABI = [
+            'function token0() view returns (address)',
+            'function token1() view returns (address)',
+            'function getReserves() view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)',
+            'function totalSupply() view returns (uint256)',
+            'function symbol() view returns (string)',
+        ];
+
+        const MULTICALL3_ABI = [
+            'function aggregate3((address target, bool allowFailure, bytes callData)[] calls) payable returns ((bool success, bytes returnData)[] returnData)',
+        ];
+
+        // =================================================================
+        //  INIT
+        // =================================================================
+        selectedNetwork = loadNetworkFromStorage();
+        combinedMode = loadCombinedModeFromStorage();
+        document.getElementById('networkSelect').value = selectedNetwork;
+        updateNetworkPill();
+
+        const savedAddresses = loadAddressesFromStorage();
+        if (savedAddresses && savedAddresses.length) {
+            resetAddrRows(savedAddresses[0]);
+            const addrRowsContainer = document.getElementById('addrRows');
+            for (const addr of savedAddresses.slice(1)) {
+                addrRowsContainer.appendChild(createAddrRow(addr));
+            }
+            updateRemoveButtons();
+            setPortfolioBarVisible(true, savedAddresses);
+
+            const cached = loadPortfolioFromCache();
+            if (cacheMatchesCurrentContext(cached, savedAddresses)) {
+                showResults(cached.data, cached.addressCount, { stale: true });
+                document.getElementById('tokenList').classList.add('show');
+                document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'tokens'));
+            }
+
+            handleLoad();
+        } else {
+            resetAddrRows();
+        }
     </script>
 
 </body>
