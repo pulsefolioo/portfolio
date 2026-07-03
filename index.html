@@ -236,7 +236,7 @@
             border-radius: 10px;
             padding: clamp(10px, 1.2vw, 14px) clamp(12px, 1.2vw, 16px);
             color: var(--text-primary);
-            font-size: clamp(13px, 1vw, 15px);
+            font-size: 16px;   /* ZAPOBIEGA ZOOMOWANIU NA TELEFONACH */
             font-family: 'Inter', monospace;
             outline: none;
             width: 100%;
@@ -375,7 +375,7 @@
             border-radius: 10px;
             padding: clamp(10px, 1.2vw, 14px) clamp(12px, 1.2vw, 16px);
             color: var(--text-primary);
-            font-size: clamp(13px, 1vw, 15px);
+            font-size: 16px;   /* ZAPOBIEGA ZOOMOWANIU */
             font-family: 'Inter', monospace;
             outline: none;
             transition: border-color 0.2s;
@@ -735,7 +735,7 @@
             border-radius: 10px;
             padding: clamp(8px, 1vw, 12px) clamp(10px, 1.2vw, 14px);
             color: var(--text-primary);
-            font-size: clamp(13px, 1vw, 15px);
+            font-size: 16px;    /* ZAPOBIEGA ZOOMOWANIU */
             font-family: 'Inter', monospace;
             outline: none;
             transition: border-color 0.2s;
@@ -1144,15 +1144,6 @@
         ::-webkit-scrollbar-thumb:hover {
             background: var(--text-muted);
         }
-        /* zapobiega automatycznemu zoomowaniu na urządzeniach mobilnych */
-        .addr-input,
-        #customTokenInput,
-        .multiplier-input {
-            font-size: 16px;
-        }
-        input, textarea {
-            font-size: 16px;
-        }
     </style>
 </head>
 <body>
@@ -1248,7 +1239,7 @@
         <div class="farm-mode-row" id="farmModeRow">
             <span class="farm-mode-label">Farm tokens</span>
             <div class="farm-mode-toggle">
-                <button class="fm-btn active" data-mode="separate" type="button">Separate</button>
+                <button class="fm-btn" data-mode="separate" type="button">Separate</button>
                 <button class="fm-btn" data-mode="merge" type="button">Merge with portfolio</button>
             </div>
         </div>
@@ -1377,7 +1368,11 @@
         let portfolioData = { tokens: [], farms: [], totalUsd: 0, weightedChange: null };
         let lastAddressCount = 1;
         const DEFAULT_EMPTY_TEXT = document.getElementById('emptyState').textContent.trim();
-        let farmDisplayMode = 'separate';
+
+        // ---------- ZMIANY: zapamiętywanie trybu farm ----------
+        const FARM_MODE_STORAGE_KEY = 'pulsefolio_farm_display_mode';
+        let farmDisplayMode = localStorage.getItem(FARM_MODE_STORAGE_KEY) || 'merge'; // domyślnie 'merge'
+
         let athMode = false;
         let multiplierMode = false;
         let multiplierValue = 10;
@@ -2606,6 +2601,23 @@
         });
         document.getElementById('multiplierInput').addEventListener('blur', applyMultiplierInput);
 
+        // ---------- Ustawienie aktywnego przycisku na podstawie zapisanego trybu ----------
+        document.querySelectorAll('.fm-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.mode === farmDisplayMode);
+        });
+
+        // ---------- Event listener dla przycisków trybu farm z zapisem do localStorage ----------
+        document.querySelectorAll('.fm-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.dataset.mode === farmDisplayMode) return;
+                farmDisplayMode = btn.dataset.mode;
+                document.querySelectorAll('.fm-btn').forEach(b => b.classList.toggle('active', b === btn));
+                localStorage.setItem(FARM_MODE_STORAGE_KEY, farmDisplayMode);
+                renderTokens(buildDisplayTokens(getEffectiveData(), farmDisplayMode));
+            });
+        });
+
+        // ---------- Wczytanie zapisanego portfela przy starcie ----------
         const savedAddresses = loadAddressesFromStorage();
         if (savedAddresses && savedAddresses.length) {
             resetAddrRows(savedAddresses[0]);
@@ -2620,6 +2632,7 @@
             resetAddrRows();
         }
 
+        // ---------- Obsługa zakładek ----------
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -2631,15 +2644,6 @@
                 const hasFarmTokens = collectFarmTokenParts(getEffectiveData().farms).length > 0;
                 document.getElementById('farmModeRow').classList.toggle('show', target === 'tokens' &&
                 hasFarmTokens);
-            });
-        });
-
-        document.querySelectorAll('.fm-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (btn.dataset.mode === farmDisplayMode) return;
-                farmDisplayMode = btn.dataset.mode;
-                document.querySelectorAll('.fm-btn').forEach(b => b.classList.toggle('active', b === btn));
-                renderTokens(buildDisplayTokens(getEffectiveData(), farmDisplayMode));
             });
         });
     </script>
