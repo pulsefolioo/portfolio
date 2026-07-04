@@ -1629,17 +1629,18 @@
         //  CONSTANTS
         // =================================================================
         const ATH_PRICES = {
-            PLS: 0.000139,
-            WPLS: 0.000139,
-            PLSX: 0.0001397,
-            INC: 9.5,
-            HEX: 0.556,
+            PLS: 0.0002,
+            WPLS: 0.0002,
+            PLSX: 0.0001,
+            INC: 10,
+            HEX: 0.5,
             EHEX: 0.031,
             ETH: 4950,
             WETH: 4950,
             USDC: 1,
             USDT: 1,
             DAI: 1,
+            TEXAN: 0.0000135,
         };
 
         const TOKEN_STYLE = {
@@ -3114,7 +3115,8 @@
             switchNetwork(this.value);
         });
 
-        /*document.getElementById('networkPillBtn').addEventListener('click', function() {
+        /* 3 state cycle for the network pill button was removed in favor of a simpler toggle between PulseChain and PulseChain + Ethereum
+        document.getElementById('networkPillBtn').addEventListener('click', function() {
             // Cycles: PulseChain -> Ethereum -> PulseChain + Ethereum -> PulseChain ...
             if (combinedMode) {
                 switchNetwork('pulsechain');
@@ -3122,7 +3124,7 @@
                 switchNetwork('ethereum');
             } else {
                 setCombinedMode(true);
-            }//zmiana dla picu
+            }
         });*/
         document.getElementById('networkPillBtn').addEventListener('click', function() {
             // Przełączanie między trybem PulseChain (sam) a PulseChain + Ethereum
