@@ -1116,6 +1116,112 @@
             }
         }
 
+        /* ---------- token table ---------- */
+        .table-wrap {
+            overflow-x: auto;
+            margin-top: 18px;
+        }
+        .token-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: clamp(12px, 0.9vw, 14px);
+        }
+        .token-table th {
+            text-align: left;
+            padding: 8px 6px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-weight: 500;
+            cursor: default;
+        }
+        .token-table th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+        .token-table th.sortable:hover {
+            color: var(--text-primary);
+        }
+        .token-table td {
+            padding: 8px 6px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        .token-table .token-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .token-table .icon-sm {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 11px;
+            color: #07070a;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .token-table .icon-sm img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        .token-table .token-name {
+            display: flex;
+            flex-direction: column;
+        }
+        .token-table .token-symbol {
+            font-weight: 600;
+        }
+        .token-table .token-sub {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+        }
+        .token-table .value-row {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            line-height: 1.3;
+        }
+        .token-table .value-amount {
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+        .token-table .value-change {
+            font-size: 0.85em;
+            margin-top: 2px;
+        }
+        .token-table .value-change.pos {
+            color: var(--green);
+        }
+        .token-table .value-change.neg {
+            color: var(--red);
+        }
+        .token-table .value-change.ath {
+            color: #ffb300;
+            font-weight: 600;
+        }
+        .token-table .value-change.multiplier {
+            color: var(--cyan);
+        }
+        .token-table .value-change.no-price {
+            color: var(--text-muted);
+        }
+        .token-table .no-price {
+            color: var(--text-muted);
+        }
+        .token-table .value {
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
         /* ---------- extra small screens ---------- */
         @media (max-width: 400px) {
             .addr-row {
@@ -1599,7 +1705,7 @@
             };
         }
 
-        function formatTokenAmount(value, maxFraction = 4) {
+        function formatTokenAmount(value, maxFraction = 1) {
             const num = Number(value);
             if (!Number.isFinite(num)) return '0';
             if (num === 0) return '0';
@@ -1633,6 +1739,16 @@
             return null;
         }
 
+        function formatPrice(price) {
+            if (price === null || price === undefined || !Number.isFinite(price)) return '—';
+            if (price === 0) return '—';
+            if (price < 0.0001) return `$${price.toFixed(7)}`;
+            if (price < 0.01) return `$${price.toFixed(6)}`;
+            if (price < 1) return `$${price.toFixed(4)}`;
+            if (price < 100) return `$${price.toFixed(2)}`;
+            return `$${price.toFixed(0)}`;
+        }
+
         // =================================================================
         //  LOCAL STORAGE
         // =================================================================
@@ -1642,6 +1758,7 @@
         const NETWORK_STORAGE_KEY = 'pulsefolio_selected_network';
         const COMBINED_MODE_STORAGE_KEY = 'pulsefolio_combined_mode';
         const PORTFOLIO_CACHE_KEY = 'pulsefolio_portfolio_cache';
+        const SORT_STORAGE_KEY = 'pulsefolio_sort_config';
 
         function saveAddressesToStorage(addresses) {
             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(addresses)); } catch (err) { console.warn(err); }
@@ -2386,6 +2503,59 @@
         }
 
         // =================================================================
+        //  SORTING
+        // =================================================================
+        let sortConfig = { key: 'value', direction: 'desc' };
+
+        // Load sort config from localStorage
+        function loadSortConfig() {
+            try {
+                const raw = localStorage.getItem(SORT_STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed.key && parsed.direction) {
+                        sortConfig = parsed;
+                        return;
+                    }
+                }
+            } catch (e) {}
+            // default
+            sortConfig = { key: 'value', direction: 'desc' };
+        }
+
+        function saveSortConfig() {
+            try {
+                localStorage.setItem(SORT_STORAGE_KEY, JSON.stringify(sortConfig));
+            } catch (e) {}
+        }
+
+        function sortTokens(tokens) {
+            const { key, direction } = sortConfig;
+            const sorted = [...tokens];
+            sorted.sort((a, b) => {
+                let aVal, bVal;
+                if (key === 'price') {
+                    aVal = a.price || 0;
+                    bVal = b.price || 0;
+                } else if (key === 'amount') {
+                    aVal = a.rawAmount || 0;
+                    bVal = b.rawAmount || 0;
+                } else if (key === 'change') {
+                    // Obsługa zmiany na wypadek, gdyby została – ale nie ma kolumny, więc pomijamy
+                    aVal = a.change ?? 0;
+                    bVal = b.change ?? 0;
+                } else { // value
+                    aVal = a.usd || 0;
+                    bVal = b.usd || 0;
+                }
+                if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+                if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+            return sorted;
+        }
+
+        // =================================================================
         //  RENDER
         // =================================================================
         let portfolioData = { tokens: [], farms: [], totalUsd: 0, weightedChange: null };
@@ -2409,6 +2579,7 @@
         function buildDisplayTokens(data, mode) {
             const farmParts = collectFarmTokenParts(data.farms);
 
+            let result;
             if (mode === 'merge') {
                 const merged = data.tokens.map(t => ({ ...t }));
 
@@ -2446,50 +2617,58 @@
                 }
 
                 merged.sort((a, b) => b.usd - a.usd);
-                return merged;
-            }
+                result = merged;
+            } else {
+                const farmMap = new Map();
 
-            const farmMap = new Map();
+                for (const part of farmParts) {
+                    const key = (part.address || part.symbol) + '|' + (part.network || '');
+                    const existing = farmMap.get(key);
 
-            for (const part of farmParts) {
-                const key = (part.address || part.symbol) + '|' + (part.network || '');
-                const existing = farmMap.get(key);
-
-                if (existing) {
-                    const prevUsd = existing.usd || 0;
-                    const addedUsd = part.usd || 0;
-                    const newUsd = prevUsd + addedUsd;
-                    const prevChange = existing.change ?? 0;
-                    const addedChange = part.change ?? 0;
-                    existing.change = newUsd > 0 ?
-                        (prevChange * prevUsd + addedChange * addedUsd) / newUsd :
-                        existing.change;
-                    existing.rawAmount = (existing.rawAmount || 0) + (part.amount || 0);
-                    existing.amount = formatTokenAmount(existing.rawAmount);
-                    existing.usd = newUsd;
-                    existing.isAth = existing.isAth || part.isAth || false;
-                } else {
-                    const style = tokenStyle(part.symbol);
-                    farmMap.set(key, {
-                        symbol: part.symbol,
-                        name: part.symbol,
-                        amount: formatTokenAmount(part.amount),
-                        rawAmount: part.amount,
-                        usd: part.usd,
-                        change: part.change,
-                        icon: part.icon ?? null,
-                        address: part.address,
-                        network: part.network,
-                        fromFarm: true,
-                        isAth: part.isAth || false,
-                        ...style,
-                    });
+                    if (existing) {
+                        const prevUsd = existing.usd || 0;
+                        const addedUsd = part.usd || 0;
+                        const newUsd = prevUsd + addedUsd;
+                        const prevChange = existing.change ?? 0;
+                        const addedChange = part.change ?? 0;
+                        existing.change = newUsd > 0 ?
+                            (prevChange * prevUsd + addedChange * addedUsd) / newUsd :
+                            existing.change;
+                        existing.rawAmount = (existing.rawAmount || 0) + (part.amount || 0);
+                        existing.amount = formatTokenAmount(existing.rawAmount);
+                        existing.usd = newUsd;
+                        existing.isAth = existing.isAth || part.isAth || false;
+                    } else {
+                        const style = tokenStyle(part.symbol);
+                        farmMap.set(key, {
+                            symbol: part.symbol,
+                            name: part.symbol,
+                            amount: formatTokenAmount(part.amount),
+                            rawAmount: part.amount,
+                            usd: part.usd,
+                            change: part.change,
+                            icon: part.icon ?? null,
+                            address: part.address,
+                            network: part.network,
+                            fromFarm: true,
+                            isAth: part.isAth || false,
+                            ...style,
+                        });
+                    }
                 }
+
+                const farmRows = [...farmMap.values()];
+                const combined = [...data.tokens, ...farmRows];
+                combined.sort((a, b) => b.usd - a.usd);
+                result = combined;
             }
 
-            const farmRows = [...farmMap.values()];
+            // Add price field (usd / rawAmount) to every token
+            for (const t of result) {
+                t.price = t.rawAmount > 0 ? (t.usd || 0) / t.rawAmount : 0;
+            }
 
-            return [...data.tokens, ...farmRows].sort((a, b) => b.usd - a.usd);
+            return result;
         }
 
         function renderTokens(tokens) {
@@ -2500,37 +2679,104 @@
                 return;
             }
 
-            list.innerHTML = tokens.map(t => {
-                const multiplierPct = (multiplierValue - 1) * 100;
-                const changeHtml = athMode ?
-                    (t.isAth ? '<div class="row-change ath">ATH</div>' : '<div class="row-change">—</div>') :
-                    multiplierMode ?
-                    `<div class="row-change ${multiplierPct >= 0 ? 'pos' : 'neg'}">${fmtPct(multiplierPct)}</div>` :
-                    (t.change === null || t.change === undefined ?
-                        '<div class="row-change">—</div>' :
-                        `<div class="row-change ${t.change >= 0 ? 'pos' : 'neg'}">${fmtPct(t.change)}</div>`);
-                const farmBadge = t.fromFarm ? '<span class="farm-badge">from farm</span>' : '';
-                const athBadge = athMode && t.isAth ? '<span class="farm-badge ath-badge">ATH price</span>' : '';
-                const noPriceBadge = (!athMode && t.noPrice) ? '<span class="farm-badge no-price-badge">no price data</span>' :
-                    '';
-                const chainBadge = (combinedMode && t.network) ?
-                    `<span class="chain-badge ${t.network}">${NETWORKS[t.network].name}</span>` : '';
-                const subValue = (!athMode && t.noPrice) ? 'No price data' : fmtUSD(t.usd);
+            // Determine column order: active sort column moves to the right end
+            // Usunięto kolumnę 'change' – zmiana wyświetlana jest pod wartością
+            const allCols = ['token', 'price', 'amount', 'value'];
+            const activeKey = sortConfig.key;
+            const otherCols = allCols.filter(c => c !== activeKey);
+            const orderedCols = [...otherCols, activeKey];
 
-                return `
-              <div class="row">
-                <div class="icon" style="background: linear-gradient(135deg, ${t.color1}, ${t.color2});">${escapeHtml(t.letter)}${iconImg(t.icon)}</div>
-                <div class="row-info">
-                  <div class="row-name">${escapeHtml(t.symbol)}${chainBadge}${farmBadge}${athBadge}${noPriceBadge}</div>
-                  <div class="row-sub">${escapeHtml(t.name)} · ${subValue}</div>
-                </div>
-                <div class="row-right">
-                  <div class="row-amount">${escapeHtml(t.amount)}</div>
-                  ${changeHtml}
-                </div>
-              </div>
-            `;
-            }).join('');
+            // Build header
+            let headerHtml = '<thead><tr>';
+            for (const col of orderedCols) {
+                let label = col.charAt(0).toUpperCase() + col.slice(1);
+                if (col === 'token') label = 'Token';
+                if (col === 'price') label = 'Price';
+                if (col === 'amount') label = 'Amount';
+                if (col === 'value') label = 'Value';
+                const isActive = col === activeKey;
+                const arrow = isActive ? (sortConfig.direction === 'asc' ? ' ↑' : ' ↓') : '';
+                const cls = isActive ? 'sortable active' : 'sortable';
+                headerHtml += `<th class="${cls}" data-sort="${col}">${label}${arrow}</th>`;
+            }
+            headerHtml += '</tr></thead>';
+
+            // Build body
+            let bodyHtml = '<tbody>';
+            for (const t of tokens) {
+                const priceDisplay = t.noPrice ? '—' : formatPrice(t.price);
+
+                // Przygotowanie znacznika zmiany – będzie wyświetlany pod wartością
+                let changeHtml;
+                if (athMode) {
+                    changeHtml = t.isAth ? '<span class="value-change ath">ATH</span>' : '<span class="value-change">—</span>';
+                } else if (multiplierMode) {
+                    changeHtml = `<span class="value-change multiplier">×${multiplierValue}</span>`;
+                } else {
+                    if (t.change === null || t.change === undefined) {
+                        changeHtml = '<span class="value-change no-price">—</span>';
+                    } else {
+                        const cls = t.change >= 0 ? 'pos' : 'neg';
+                        changeHtml = `<span class="value-change ${cls}">${fmtPct(t.change)}</span>`;
+                    }
+                }
+
+                const chainBadge = (combinedMode && t.network) ?
+                    `<span class="chain-badge ${t.network}" style="font-size:0.7em; padding:1px 5px;">${NETWORKS[t.network].name}</span>` : '';
+                const farmBadge = t.fromFarm ? '<span class="farm-badge" style="font-size:0.7em; padding:1px 5px;">farm</span>' : '';
+                const noPriceBadge = (!athMode && t.noPrice) ? '<span class="no-price-badge" style="font-size:0.7em; padding:1px 5px;">no price</span>' :
+                    '';
+                const athBadge = athMode && t.isAth ? '<span class="ath-badge" style="font-size:0.7em; padding:1px 5px;">ATH</span>' :
+                    '';
+
+                // Build cells in the same order
+                const cells = orderedCols.map(col => {
+                    if (col === 'token') {
+                        return `<td>
+                            <div class="token-cell">
+                                <div class="icon-sm" style="background: linear-gradient(135deg, ${t.color1}, ${t.color2});">${escapeHtml(t.letter)}${iconImg(t.icon)}</div>
+                                <div class="token-name">
+                                    <span class="token-symbol">${escapeHtml(t.symbol)} ${chainBadge}${farmBadge}${athBadge}${noPriceBadge}</span>
+                                    <span class="token-sub">${escapeHtml(t.name)}</span>
+                                </div>
+                            </div>
+                        </td>`;
+                    } else if (col === 'price') {
+                        return `<td>${priceDisplay}</td>`;
+                    } else if (col === 'amount') {
+                        return `<td>${escapeHtml(t.amount)}</td>`;
+                    } else if (col === 'value') {
+                        // Wyświetlamy wartość i zmianę pod nią
+                        return `<td>
+                            <div class="value-row">
+                                <span class="value-amount">${fmtUSD(t.usd)}</span>
+                                ${changeHtml}
+                            </div>
+                        </td>`;
+                    }
+                    return '';
+                }).join('');
+
+                bodyHtml += `<tr>${cells}</tr>`;
+            }
+            bodyHtml += '</tbody>';
+
+            list.innerHTML = `<div class="table-wrap"><table class="token-table">${headerHtml}${bodyHtml}</table></div>`;
+
+            // Attach sort click handlers
+            list.querySelectorAll('.sortable').forEach(th => {
+                th.addEventListener('click', function() {
+                    const key = this.dataset.sort;
+                    if (sortConfig.key === key) {
+                        sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        sortConfig.key = key;
+                        sortConfig.direction = 'desc';
+                    }
+                    saveSortConfig();
+                    refreshView();
+                });
+            });
         }
 
         function renderFarms(farms) {
@@ -2609,7 +2855,10 @@
             const hasFarmTokens = collectFarmTokenParts(data.farms).length > 0;
             document.getElementById('farmModeRow').classList.toggle('show', activeTab === 'tokens' && hasFarmTokens);
 
-            renderTokens(buildDisplayTokens(data, farmDisplayMode));
+            // Build token list, sort, then render
+            let tokens = buildDisplayTokens(data, farmDisplayMode);
+            tokens = sortTokens(tokens);
+            renderTokens(tokens);
             renderFarms(data.farms);
         }
 
@@ -2996,7 +3245,7 @@
                 farmDisplayMode = btn.dataset.mode;
                 document.querySelectorAll('.fm-btn').forEach(b => b.classList.toggle('active', b === btn));
                 localStorage.setItem(FARM_MODE_STORAGE_KEY, farmDisplayMode);
-                renderTokens(buildDisplayTokens(getEffectiveData(), farmDisplayMode));
+                refreshView();
             });
         });
 
@@ -3172,6 +3421,8 @@
         // =================================================================
         //  INIT
         // =================================================================
+        loadSortConfig(); // wczytaj zapisane ustawienia sortowania
+
         selectedNetwork = loadNetworkFromStorage();
         combinedMode = loadCombinedModeFromStorage();
         document.getElementById('networkSelect').value = selectedNetwork;
