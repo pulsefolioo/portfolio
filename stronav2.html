@@ -1705,7 +1705,7 @@
             };
         }
 
-        function formatTokenAmount(value, maxFraction = 4) {
+        function formatTokenAmount(value, maxFraction = 1) {
             const num = Number(value);
             if (!Number.isFinite(num)) return '0';
             if (num === 0) return '0';
