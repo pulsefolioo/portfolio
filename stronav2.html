@@ -1184,20 +1184,35 @@
             font-size: 0.85em;
             color: var(--text-secondary);
         }
-        .token-table .change {
-            font-size: 0.85em;
+        .token-table .value-row {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            line-height: 1.3;
         }
-        .token-table .change.pos {
+        .token-table .value-amount {
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+        .token-table .value-change {
+            font-size: 0.85em;
+            margin-top: 2px;
+        }
+        .token-table .value-change.pos {
             color: var(--green);
         }
-        .token-table .change.neg {
+        .token-table .value-change.neg {
             color: var(--red);
         }
-        .token-table .change.ath {
+        .token-table .value-change.ath {
             color: #ffb300;
+            font-weight: 600;
         }
-        .token-table .change.multiplier {
+        .token-table .value-change.multiplier {
             color: var(--cyan);
+        }
+        .token-table .value-change.no-price {
+            color: var(--text-muted);
         }
         .token-table .no-price {
             color: var(--text-muted);
@@ -2526,6 +2541,7 @@
                     aVal = a.rawAmount || 0;
                     bVal = b.rawAmount || 0;
                 } else if (key === 'change') {
+                    // Obsługa zmiany na wypadek, gdyby została – ale nie ma kolumny, więc pomijamy
                     aVal = a.change ?? 0;
                     bVal = b.change ?? 0;
                 } else { // value
@@ -2664,7 +2680,8 @@
             }
 
             // Determine column order: active sort column moves to the right end
-            const allCols = ['token', 'price', 'change', 'amount', 'value'];
+            // Usunięto kolumnę 'change' – zmiana wyświetlana jest pod wartością
+            const allCols = ['token', 'price', 'amount', 'value'];
             const activeKey = sortConfig.key;
             const otherCols = allCols.filter(c => c !== activeKey);
             const orderedCols = [...otherCols, activeKey];
@@ -2675,7 +2692,6 @@
                 let label = col.charAt(0).toUpperCase() + col.slice(1);
                 if (col === 'token') label = 'Token';
                 if (col === 'price') label = 'Price';
-                if (col === 'change') label = 'Change';
                 if (col === 'amount') label = 'Amount';
                 if (col === 'value') label = 'Value';
                 const isActive = col === activeKey;
@@ -2689,13 +2705,22 @@
             let bodyHtml = '<tbody>';
             for (const t of tokens) {
                 const priceDisplay = t.noPrice ? '—' : formatPrice(t.price);
-                const changeHtml = athMode ?
-                    (t.isAth ? '<span class="change ath">ATH</span>' : '<span class="change">—</span>') :
-                    multiplierMode ?
-                    `<span class="change multiplier">×${multiplierValue}</span>` :
-                    (t.change === null || t.change === undefined ?
-                        '<span class="change">—</span>' :
-                        `<span class="change ${t.change >= 0 ? 'pos' : 'neg'}">${fmtPct(t.change)}</span>`);
+
+                // Przygotowanie znacznika zmiany – będzie wyświetlany pod wartością
+                let changeHtml;
+                if (athMode) {
+                    changeHtml = t.isAth ? '<span class="value-change ath">ATH</span>' : '<span class="value-change">—</span>';
+                } else if (multiplierMode) {
+                    changeHtml = `<span class="value-change multiplier">×${multiplierValue}</span>`;
+                } else {
+                    if (t.change === null || t.change === undefined) {
+                        changeHtml = '<span class="value-change no-price">—</span>';
+                    } else {
+                        const cls = t.change >= 0 ? 'pos' : 'neg';
+                        changeHtml = `<span class="value-change ${cls}">${fmtPct(t.change)}</span>`;
+                    }
+                }
+
                 const chainBadge = (combinedMode && t.network) ?
                     `<span class="chain-badge ${t.network}" style="font-size:0.7em; padding:1px 5px;">${NETWORKS[t.network].name}</span>` : '';
                 const farmBadge = t.fromFarm ? '<span class="farm-badge" style="font-size:0.7em; padding:1px 5px;">farm</span>' : '';
@@ -2718,12 +2743,16 @@
                         </td>`;
                     } else if (col === 'price') {
                         return `<td>${priceDisplay}</td>`;
-                    } else if (col === 'change') {
-                        return `<td>${changeHtml}</td>`;
                     } else if (col === 'amount') {
                         return `<td>${escapeHtml(t.amount)}</td>`;
                     } else if (col === 'value') {
-                        return `<td class="value">${fmtUSD(t.usd)}</td>`;
+                        // Wyświetlamy wartość i zmianę pod nią
+                        return `<td>
+                            <div class="value-row">
+                                <span class="value-amount">${fmtUSD(t.usd)}</span>
+                                ${changeHtml}
+                            </div>
+                        </td>`;
                     }
                     return '';
                 }).join('');
