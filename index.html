@@ -153,13 +153,32 @@
         /* ---------- portfolio bar ---------- */
         .portfolio-bar {
             display: none;
+            /* Breaks out of main's centered, max-width column so the bar's
+               background/border reach the actual browser edges. The inner
+               content is then re-centered and capped back to the app's
+               normal width by .portfolio-bar-inner below. */
+            width: 100vw;
+            position: relative;
+            left: 50%;
+            right: 50%;
+            margin-left: -50vw;
+            margin-right: -50vw;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }
+        .portfolio-bar-inner {
+            display: flex;
             align-items: center;
             justify-content: space-between;
             gap: clamp(8px, 1.5vw, 16px);
             flex-wrap: wrap;
-            padding: clamp(10px, 1.5vw, 16px) var(--header-pad);
-            border-bottom: 1px solid var(--border);
-            background: var(--surface);
+            width: 100%;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding-top: clamp(10px, 1.5vw, 16px);
+            padding-bottom: clamp(10px, 1.5vw, 16px);
+            padding-left: var(--main-pad);
+            padding-right: var(--main-pad);
         }
         .portfolio-bar-label {
             font-size: clamp(11px, 1vw, 13px);
@@ -205,7 +224,10 @@
             align-items: center;
             justify-content: space-between;
             gap: 10px;
-            padding: 10px var(--header-pad);
+            padding-top: 10px;
+            padding-bottom: 10px;
+            padding-left: max(var(--header-pad), calc((100% - var(--max-width)) / 2));
+            padding-right: max(var(--header-pad), calc((100% - var(--max-width)) / 2));
             border-bottom: 1px solid var(--border);
             background: var(--surface);
         }
@@ -287,10 +309,11 @@
         }
 
         @media (max-width: 520px) {
-            .portfolio-bar {
+            .portfolio-bar-inner {
                 flex-direction: column;
                 align-items: stretch;
-                padding: 12px 16px;
+                padding-top: 12px;
+                padding-bottom: 12px;
             }
             .portfolio-bar-actions {
                 width: 100%;
@@ -2127,10 +2150,12 @@
         </div>
 
         <div class="portfolio-bar" id="portfolioBar">
-            <div class="portfolio-bar-label" id="portfolioBarLabel">Saved portfolio</div>
-            <div class="portfolio-bar-actions">
-                <button class="btn-bar" id="editPortfolioBtn" type="button"><i class="ti ti-pencil" aria-hidden="true"></i> Edit addresses</button>
-                <button class="btn-bar" id="toggleTokenCardBtn" type="button"><i class="ti ti-coin" aria-hidden="true"></i> Missing a token? Add it</button>
+            <div class="portfolio-bar-inner">
+                <div class="portfolio-bar-label" id="portfolioBarLabel">Saved portfolio</div>
+                <div class="portfolio-bar-actions">
+                    <button class="btn-bar" id="editPortfolioBtn" type="button"><i class="ti ti-pencil" aria-hidden="true"></i> Edit addresses</button>
+                    <button class="btn-bar" id="toggleTokenCardBtn" type="button"><i class="ti ti-coin" aria-hidden="true"></i> Missing a token? Add it</button>
+                </div>
             </div>
         </div>
 
@@ -4604,15 +4629,24 @@
 
         function setPortfolioBarVisible(visible, addresses = []) {
             document.getElementById('searchCard').style.display = visible ? 'none' : 'block';
-            document.getElementById('portfolioBar').style.display = visible ? 'flex' : 'none';
             document.getElementById('portfolioSwitchBar').style.display = visible ? 'none' : 'flex';
 
-            if (visible) {
-                const label = addresses.length > 1 ?
-                    `Saved portfolio — ${addresses.length} addresses` :
-                    `Saved address — ${shortAddr(addresses[0] || '')}`;
+            // The saved-portfolio summary bar should stay visible whenever there's a
+            // saved portfolio to show — including while the address editor is open —
+            // rather than only when not in edit mode.
+            const savedAddresses = addresses.length ? addresses : (loadAddressesFromStorage() || []);
+            const portfolioBar = document.getElementById('portfolioBar');
+            if (savedAddresses.length) {
+                portfolioBar.style.display = 'block';
+                const label = savedAddresses.length > 1 ?
+                    `Saved portfolio — ${savedAddresses.length} addresses` :
+                    `Saved address — ${shortAddr(savedAddresses[0] || '')}`;
                 document.getElementById('portfolioBarLabel').textContent = label;
             } else {
+                portfolioBar.style.display = 'none';
+            }
+
+            if (!visible) {
                 const hasSaved = !!loadAddressesFromStorage();
                 document.getElementById('collapseSearchBtn').classList.toggle('show', hasSaved);
             }
