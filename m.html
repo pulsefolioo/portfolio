@@ -907,7 +907,38 @@
         }
         .other-networks-row {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+        .chart-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--surface-2);
+            border: 1px dashed var(--border);
+            color: var(--text-secondary);
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(11px, 0.85vw, 13px);
+            font-weight: 500;
+            padding: 5px 10px 5px 8px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s, color 0.2s;
+            margin-bottom: 4px;
+        }
+        .chart-toggle:hover {
+            border-color: var(--purple);
+            color: var(--text-primary);
+        }
+        .chart-toggle i {
+            font-size: 14px;
+        }
+        .chart-toggle.active {
+            background: var(--surface);
+            border-style: solid;
+            border-color: var(--purple);
+            color: var(--text-primary);
         }
         .other-networks-toggle.visible {
             display: inline-flex;
@@ -1775,7 +1806,7 @@
             Pulse<span class="grad-text">Folio</span>
         </div>
         <nav>
-            <button class="nav-watchlist-btn" id="watchlistNavBtn" type="button">⭐</button>
+            <button class="nav-watchlist-btn" id="watchlistNavBtn" type="button">Watchlist⭐</button>
             <i class="ti ti-brand-x" aria-hidden="true"></i>
             <i class="ti ti-menu-2" aria-hidden="true"></i>
         </nav>
@@ -1927,6 +1958,10 @@
             </div>
 
             <div class="other-networks-row">
+                <button class="chart-toggle" id="toggleChartBtn" type="button" title="Show portfolio value chart">
+                    <i class="ti ti-chart-line" aria-hidden="true"></i>
+                    <span>Chart</span>
+                </button>
                 <button class="other-networks-toggle" id="otherNetworksBtn" type="button" title="Also load Base, Arbitrum and BNB Chain (slower)">
                     <i class="ti ti-plus" aria-hidden="true"></i>
                     <span>Other networks</span>
@@ -4168,6 +4203,17 @@
             return mergeManualTokensIntoPortfolio(data).totalUsd;
         }
 
+        let chartVisible = false; // the chart is only rendered once the user clicks the "Chart" button
+        let chartHasData = false;
+
+        function syncChartVisibility() {
+            const container = document.getElementById('snapshotChart');
+            if (!container) return;
+            container.classList.toggle('show', chartVisible && chartHasData);
+            const btn = document.getElementById('toggleChartBtn');
+            if (btn) btn.classList.toggle('active', chartVisible);
+        }
+
         function renderSnapshotChart(addresses) {
             const container = document.getElementById('snapshotChart');
             const svg = document.getElementById('snapshotSvg');
@@ -4176,7 +4222,8 @@
 
             const points = getSnapshotsForContext(addresses);
             if (points.length < 2) {
-                container.classList.remove('show');
+                chartHasData = false;
+                syncChartVisibility();
                 return;
             }
 
@@ -4206,7 +4253,8 @@
             `;
 
             meta.textContent = `${points[0].date} → ${points[points.length - 1].date} · ${pctChange >= 0 ? '+' : ''}${pctChange.toFixed(1)}% over ${points.length} snapshots`;
-            container.classList.add('show');
+            chartHasData = true;
+            syncChartVisibility();
         }
 
         function showResults(data, addressCount = 1, opts = {}) {
@@ -4237,6 +4285,7 @@
             setStaleBadge('hidden');
             document.getElementById('notice').classList.remove('show');
             document.getElementById('summary').classList.remove('show');
+            chartHasData = false;
             document.getElementById('snapshotChart').classList.remove('show');
             document.getElementById('tabs').classList.remove('show');
             document.getElementById('athDreamRow').classList.remove('show');
@@ -4482,6 +4531,11 @@
             } else {
                 setCombinedMode(true);
             }
+        });
+
+        document.getElementById('toggleChartBtn').addEventListener('click', function() {
+            chartVisible = !chartVisible;
+            syncChartVisibility();
         });
 
         document.getElementById('otherNetworksBtn').addEventListener('click', function() {
