@@ -3,6 +3,44 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <!--
+      Content-Security-Policy — dopasowana do faktycznie używanych źródeł:
+      - script-src: jsdelivr (ethers.js) + 'unsafe-inline' (aplikacja to jeden statyczny
+        plik z logiką w inline <script>, więc nonce/hash nie są tu praktyczne bez backendu)
+      - style-src/font-src: cdnjs.cloudflare.com — stamtąd ładowany jest arkusz i czcionka
+        ikon Tabler (bez tego wszystkie ikony <i class="ti ...">  znikają)
+      - connect-src: wszystkie RPC węzłów + DexScreener + CoinGecko
+      - img-src: https: + data: (ikony tokenów pochodzą z wielu domen zwracanych przez API)
+      - object-src/base-uri/form-action/frame-ancestors zablokowane całkowicie —
+        to ogranicza najgroźniejsze scenariusze nawet gdyby unsafe-inline zostało nadużyte
+    -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'none';
+        script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
+        font-src https://fonts.gstatic.com https://cdnjs.cloudflare.com;
+        img-src https: data:;
+        connect-src 'self'
+            https://rpc.pulsechain.com
+            https://rpc.pulsechainstats.com
+            https://ethereum.publicnode.com
+            https://rpc.ankr.com
+            https://cloudflare-eth.com
+            https://eth-mainnet.public.blastapi.io
+            https://mainnet.base.org
+            https://base.publicnode.com
+            https://arb1.arbitrum.io
+            https://arbitrum.publicnode.com
+            https://bsc-dataseed.binance.org
+            https://bsc.publicnode.com
+            https://api.dexscreener.com
+            https://api.coingecko.com;
+        object-src 'none';
+        base-uri 'none';
+        form-action 'none';
+        frame-ancestors 'none';
+        upgrade-insecure-requests;
+    " />
     <title>PulseFolio — Portfolio on PulseChain & Ethereum</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Ccircle cx='13' cy='13' r='12' stroke='url(%23g)' stroke-width='1.5' fill='none'/%3E%3Cpath d='M4 13H8L10.5 6L14.5 20L17 13H22' stroke='url(%23g)' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='26' y2='26'%3E%3Cstop stop-color='%23ff2e93'/%3E%3Cstop offset='0.5' stop-color='%238b3bff'/%3E%3Cstop offset='1' stop-color='%2300d4ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -89,6 +127,26 @@
             transition: color 0.2s;
         }
         header nav i:hover {
+            color: var(--text-primary);
+        }
+        .nav-watchlist-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(11px, 0.9vw, 13px);
+            font-weight: 600;
+            color: var(--text-secondary);
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 6px 12px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .nav-watchlist-btn:hover {
+            border-color: var(--purple);
             color: var(--text-primary);
         }
 
@@ -217,6 +275,11 @@
         .btn-collapse:hover {
             border-color: var(--purple);
             color: var(--text-primary);
+        }
+        .icon-x {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
         }
 
         .addr-rows {
@@ -377,6 +440,52 @@
             background: var(--surface);
         }
 
+        .other-networks-selector {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 14px;
+            transition: opacity 0.2s;
+        }
+        .other-networks-selector.inactive {
+            opacity: 0.55;
+        }
+        .other-networks-selector-label {
+            font-size: clamp(12px, 0.9vw, 13px);
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        .other-networks-selector-label strong {
+            color: var(--text-primary);
+        }
+        .other-networks-checks {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+        .other-network-check {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(12px, 0.9vw, 14px);
+            color: var(--text-primary);
+            cursor: pointer;
+            user-select: none;
+        }
+        .other-network-checkbox {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--purple);
+            cursor: pointer;
+        }
+        .other-networks-selector-hint {
+            margin-top: 8px;
+            font-size: clamp(10.5px, 0.8vw, 12px);
+            color: var(--text-muted);
+        }
+
         /* ---------- token card ---------- */
         .token-card {
             display: none;
@@ -482,6 +591,227 @@
             line-height: 1.5;
         }
 
+        /* ---------- manual token section ---------- */
+        .manual-token-divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 16px 0 12px;
+            color: var(--text-muted);
+            font-size: clamp(10px, 0.8vw, 12px);
+        }
+        .manual-token-divider::before,
+        .manual-token-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+        .manual-token-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .manual-token-row input {
+            flex: 1;
+            min-width: 120px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: clamp(10px, 1.2vw, 14px) clamp(12px, 1.2vw, 16px);
+            color: var(--text-primary);
+            font-size: 16px;
+            font-family: 'Inter', monospace;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .manual-token-row input::placeholder {
+            color: var(--text-muted);
+        }
+        .manual-token-row input:focus {
+            border-color: var(--purple);
+        }
+        .manual-token-row .btn-grad {
+            height: clamp(40px, 5vw, 48px);
+            min-width: clamp(60px, 8vw, 80px);
+            flex-shrink: 0;
+        }
+        .manual-token-row .btn-bar {
+            height: clamp(40px, 5vw, 48px);
+            flex-shrink: 0;
+        }
+        .manual-token-result {
+            margin-top: 10px;
+            padding: 12px 14px;
+            background: var(--surface-2);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            display: none;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .manual-token-result.show {
+            display: flex;
+        }
+        .manual-token-result .mt-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            color: #07070a;
+            position: relative;
+            overflow: hidden;
+        }
+        .manual-token-result .mt-icon img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        .manual-token-result .mt-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .manual-token-result .mt-name {
+            font-weight: 600;
+            font-size: clamp(14px, 1.1vw, 17px);
+        }
+        .manual-token-result .mt-symbol {
+            font-size: clamp(11px, 0.8vw, 13px);
+            color: var(--text-secondary);
+            margin-top: 1px;
+        }
+        .manual-token-result .mt-price {
+            text-align: right;
+            flex-shrink: 0;
+            margin-left: auto;
+        }
+        .manual-token-result .mt-price .mt-usd {
+            font-weight: 600;
+            font-size: clamp(14px, 1.1vw, 17px);
+            font-variant-numeric: tabular-nums;
+        }
+        .manual-token-result .mt-price .mt-change {
+            font-size: clamp(11px, 0.8vw, 13px);
+            margin-top: 1px;
+        }
+        .manual-token-result .mt-price .mt-change.pos {
+            color: var(--green);
+        }
+        .manual-token-result .mt-price .mt-change.neg {
+            color: var(--red);
+        }
+        .manual-token-msg {
+            font-size: clamp(11px, 0.8vw, 13px);
+            margin-top: 8px;
+            display: none;
+            line-height: 1.4;
+        }
+        .manual-token-msg.show {
+            display: block;
+        }
+        .manual-token-msg.error {
+            color: var(--red);
+        }
+        .manual-token-msg.success {
+            color: var(--green);
+        }
+        .manual-token-msg.info {
+            color: var(--cyan);
+        }
+
+        .manual-token-list {
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .manual-token-list .token-chip {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 4px 6px 4px 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: clamp(11px, 0.8vw, 13px);
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        .manual-token-list .token-chip .mt-chip-icon {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            font-weight: 700;
+            color: #07070a;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .manual-token-list .token-chip .mt-chip-icon img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        .manual-token-list .token-chip-remove {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background 0.2s, color 0.2s;
+        }
+        .manual-token-list .token-chip-remove:hover {
+            background: rgba(255, 84, 112, 0.18);
+            color: var(--red);
+        }
+
+        @media (max-width: 400px) {
+            .manual-token-row {
+                flex-direction: column;
+            }
+            .manual-token-row .btn-grad,
+            .manual-token-row .btn-bar {
+                width: 100%;
+                min-width: unset;
+            }
+            .manual-token-result {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .manual-token-result .mt-price {
+                margin-left: 0;
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                padding-top: 4px;
+                border-top: 1px solid var(--border);
+            }
+        }
+
         /* ---------- notice ---------- */
         .notice {
             margin-top: 16px;
@@ -513,6 +843,14 @@
             justify-content: space-between;
             gap: 8px;
             flex-wrap: wrap;
+        }
+        .p-label-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .p-label-group .p-label {
+            margin-bottom: 0;
         }
         .network-pill {
             display: flex;
@@ -550,6 +888,77 @@
         }
         .network-pill-dot.both {
             background: linear-gradient(135deg, var(--magenta), var(--cyan));
+        }
+        .other-networks-toggle {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            background: var(--surface-2);
+            border: 1px dashed var(--border);
+            color: var(--text-secondary);
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(11px, 0.85vw, 13px);
+            font-weight: 500;
+            padding: 5px 10px 5px 8px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s, color 0.2s;
+            margin-bottom: 4px;
+        }
+        .other-networks-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+        .chart-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--surface-2);
+            border: 1px dashed var(--border);
+            color: var(--text-secondary);
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(11px, 0.85vw, 13px);
+            font-weight: 500;
+            padding: 5px 10px 5px 8px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s, color 0.2s;
+            margin-bottom: 4px;
+        }
+        .chart-toggle:hover {
+            border-color: var(--purple);
+            color: var(--text-primary);
+        }
+        .chart-toggle i {
+            font-size: 14px;
+        }
+        .chart-toggle.active {
+            background: var(--surface);
+            border-style: solid;
+            border-color: var(--purple);
+            color: var(--text-primary);
+        }
+        .other-networks-toggle.visible {
+            display: inline-flex;
+        }
+        .other-networks-toggle:hover {
+            border-color: var(--purple);
+            color: var(--text-primary);
+        }
+        .other-networks-toggle i {
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+        .other-networks-toggle.active {
+            background: var(--surface);
+            border-style: solid;
+            border-color: var(--purple);
+            color: var(--text-primary);
+        }
+        .other-networks-toggle.active i {
+            transform: rotate(45deg);
         }
         .p-value {
             font-family: 'Space Grotesk', sans-serif;
@@ -598,6 +1007,26 @@
         }
         .stale-badge.error {
             color: var(--red);
+        }
+
+        /* ---------- snapshot chart ---------- */
+        .snapshot-chart {
+            display: none;
+            margin-top: 14px;
+        }
+        .snapshot-chart.show {
+            display: block;
+        }
+        .snapshot-chart svg {
+            width: 100%;
+            height: 56px;
+            display: block;
+            overflow: visible;
+        }
+        .snapshot-meta {
+            font-size: clamp(11px, 0.85vw, 13px);
+            color: var(--text-secondary);
+            margin-top: 6px;
         }
 
         /* ---------- tabs ---------- */
@@ -1012,17 +1441,6 @@
         }
 
         /* ---------- loading ---------- */
-        .loading {
-            display: none;
-            align-items: center;
-            gap: 10px;
-            margin-top: 24px;
-            color: var(--text-secondary);
-            font-size: clamp(12px, 0.9vw, 14px);
-        }
-        .loading.show {
-            display: flex;
-        }
         .spinner {
             width: 16px;
             height: 16px;
@@ -1031,6 +1449,19 @@
             border-top-color: var(--purple);
             animation: spin 0.7s linear infinite;
             flex-shrink: 0;
+        }
+        .inline-spinner {
+            display: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            border-top-color: var(--purple);
+            animation: spin 0.7s linear infinite;
+            flex-shrink: 0;
+        }
+        .inline-spinner.show {
+            display: inline-block;
         }
         @keyframes spin {
             to {
@@ -1375,6 +1806,7 @@
             Pulse<span class="grad-text">Folio</span>
         </div>
         <nav>
+            <button class="nav-watchlist-btn" id="watchlistNavBtn" type="button">⭐</button>
             <i class="ti ti-brand-x" aria-hidden="true"></i>
             <i class="ti ti-menu-2" aria-hidden="true"></i>
         </nav>
@@ -1385,7 +1817,7 @@
         <div class="search-card" id="searchCard">
             <div class="search-card-head">
                 <div class="search-label">Wallet addresses — PulseChain / Ethereum</div>
-                <button class="btn-collapse" id="collapseSearchBtn" type="button" title="Collapse — back to saved portfolio" aria-label="Collapse"><i class="ti ti-chevron-up" aria-hidden="true"></i></button>
+                <button class="btn-collapse" id="collapseSearchBtn" type="button" title="Collapse — back to saved portfolio" aria-label="Collapse"><svg class="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="M6 6l12 12"></path></svg></button>
             </div>
 
             <div class="network-selector">
@@ -1393,7 +1825,31 @@
                 <select id="networkSelect">
                     <option value="pulsechain">PulseChain</option>
                     <option value="ethereum">Ethereum</option>
+                    <option value="base">Base</option>
+                    <option value="arbitrum">Arbitrum</option>
+                    <option value="bsc">BNB Chain</option>
                 </select>
+            </div>
+
+            <div class="other-networks-selector" id="otherNetworksSelector">
+                <div class="other-networks-selector-label">
+                    Also include, when viewing <strong>PulseChain + Ethereum</strong> combined:
+                </div>
+                <div class="other-networks-checks">
+                    <label class="other-network-check">
+                        <input type="checkbox" class="other-network-checkbox" data-network="base" />
+                        <span>Base</span>
+                    </label>
+                    <label class="other-network-check">
+                        <input type="checkbox" class="other-network-checkbox" data-network="arbitrum" />
+                        <span>Arbitrum</span>
+                    </label>
+                    <label class="other-network-check">
+                        <input type="checkbox" class="other-network-checkbox" data-network="bsc" />
+                        <span>BNB Chain</span>
+                    </label>
+                </div>
+                <div class="other-networks-selector-hint">Leave unchecked for the fastest load — each extra network adds a separate fetch.</div>
             </div>
 
             <div class="addr-rows" id="addrRows">
@@ -1420,27 +1876,105 @@
             <div class="token-msg" id="tokenMsg"></div>
             <div class="token-chip-row" id="customTokenChips"></div>
             <div class="token-empty-hint" id="tokenEmptyHint">Tokens you add here are saved in this browser only and are included whenever balances are checked.</div>
+
+            <!-- Manual token addition from any network via CoinGecko -->
+            <div class="manual-token-divider"><span>or manually add from any network</span></div>
+
+            <div class="manual-token-row">
+                <input id="manualTokenSymbol" type="text" placeholder="Token symbol (e.g. BTC, DOGE, SOL)" autocomplete="off" />
+                <button class="btn-grad" id="manualTokenCheckBtn" type="button">Check</button>
+            </div>
+
+            <div class="manual-token-result" id="manualTokenResult">
+                <div class="mt-icon" id="mtIcon">?</div>
+                <div class="mt-info">
+                    <div class="mt-name" id="mtName">—</div>
+                    <div class="mt-symbol" id="mtSymbol">—</div>
+                </div>
+                <div class="mt-price">
+                    <div class="mt-usd" id="mtPrice">—</div>
+                    <div class="mt-change" id="mtChange">—</div>
+                </div>
+            </div>
+
+            <div class="manual-token-row" id="manualTokenAmountRow" style="display:none; margin-top:10px;">
+                <input id="manualTokenAmount" type="number" placeholder="Amount held" step="any" min="0" autocomplete="off" />
+                <button class="btn-grad" id="manualTokenAddBtn" type="button">Add to portfolio</button>
+                <button class="btn-bar" id="manualTokenCancelBtn" type="button">Cancel</button>
+            </div>
+
+            <div class="manual-token-msg" id="manualTokenMsg"></div>
+
+            <div class="manual-token-list" id="manualTokenList"></div>
         </div>
 
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <span id="loadingText">Connecting to PulseChain…</span>
+        <div class="token-card" id="watchlistCard">
+            <div class="search-card-head">
+                <div class="search-label">Watchlist — track prices without a wallet</div>
+                <button class="btn-collapse show" id="closeWatchlistBtn" type="button" title="Close" aria-label="Close"><svg class="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="M6 6l12 12"></path></svg></button>
+            </div>
+
+            <div class="manual-token-row">
+                <input id="watchlistSymbolInput" type="text" placeholder="Token symbol (e.g. BTC, HEX, SOL)" autocomplete="off" />
+                <button class="btn-grad" id="watchlistSearchBtn" type="button">Search</button>
+            </div>
+
+            <div class="manual-token-result" id="watchlistPreview">
+                <div class="mt-icon" id="wlIcon">?</div>
+                <div class="mt-info">
+                    <div class="mt-name" id="wlName">—</div>
+                    <div class="mt-symbol" id="wlSymbol">—</div>
+                </div>
+                <div class="mt-price">
+                    <div class="mt-usd" id="wlPrice">—</div>
+                    <div class="mt-change" id="wlChange">—</div>
+                </div>
+            </div>
+
+            <div class="manual-token-row" id="watchlistAddRow" style="display:none; margin-top:10px;">
+                <button class="btn-grad" id="watchlistAddBtn" type="button" style="flex:1;">Add to watchlist</button>
+                <button class="btn-bar" id="watchlistCancelBtn" type="button">Cancel</button>
+            </div>
+
+            <div class="manual-token-msg" id="watchlistMsg"></div>
+
+            <div id="watchlistItems"></div>
+            <div class="token-empty-hint" id="watchlistEmptyHint">Tokens you watch here are saved in this browser only — no wallet needed.</div>
         </div>
 
         <div class="notice" id="notice"></div>
 
         <div class="portfolio-summary" id="summary">
             <div class="p-label-row">
-                <div class="p-label" id="summaryLabel">Portfolio value</div>
+                <div class="p-label-group">
+                    <div class="p-label" id="summaryLabel">Portfolio value</div>
+                    <span class="inline-spinner" id="loadingSpinner"></span>
+                </div>
                 <button class="network-pill" id="networkPillBtn" type="button" title="Switch network">
                     <span class="network-pill-dot" id="networkPillDot"></span>
                     <span id="networkPillText">PulseChain</span>
                     <i class="ti ti-selector" aria-hidden="true"></i>
                 </button>
             </div>
+
+            <div class="other-networks-row">
+                <button class="chart-toggle" id="toggleChartBtn" type="button" title="Show portfolio value chart">
+                    <i class="ti ti-chart-line" aria-hidden="true"></i>
+                    <span>Chart 📈</span>
+                </button>
+                <button class="other-networks-toggle" id="otherNetworksBtn" type="button" title="Also load Base, Arbitrum and BNB Chain (slower)">
+                    <i class="ti ti-plus" aria-hidden="true"></i>
+                    <span>Other networks</span>
+                </button>
+            </div>
             <div class="stale-badge" id="staleBadge"><i class="ti ti-refresh" aria-hidden="true"></i> <span id="staleBadgeText">Cached data — refreshing…</span></div>
             <div class="p-value" id="totalValue">$0</div>
             <div class="p-change pos" id="totalChange">+0%</div>
+
+            <div class="snapshot-chart" id="snapshotChart">
+                <svg id="snapshotSvg" viewBox="0 0 300 60" preserveAspectRatio="none"></svg>
+                <div class="snapshot-meta" id="snapshotMeta"></div>
+            </div>
         </div>
 
         <div class="ath-dream-row" id="athDreamRow">
@@ -1538,17 +2072,18 @@
                     { address: '0x9b59b6a9c1f8d0ff8d4ea0b2c1fa3ec5b6b9d7e1', symbol: 'ATROPA', name: 'Atropa', decimals: 18 },
                     { address: '0xe83034A7A78fC148c69defebD6D4C80f8Bb4f710', symbol: 'PINU', name: 'Pulse Inu',
                     decimals: 18 },
-                    { address: '0xcFCFfE432A48dB53F59c301422d2EdD77B2A88d7', symbol: 'TEXAN', name: 'Texan', decimals: 18, isCustom: true},
+                    { address: '0xcFCFfE432A48dB53F59c301422d2EdD77B2A88d7', symbol: 'TEXAN', name: 'Texan', decimals: 18,
+                        isCustom: true },
                 ]
             },
             ethereum: {
                 name: 'Ethereum',
                 chainId: 1,
                 rpcUrls: [
+                    'https://ethereum.publicnode.com',
                     'https://rpc.ankr.com/eth',
                     'https://cloudflare-eth.com',
                     'https://eth-mainnet.public.blastapi.io',
-                    'https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161'
                 ],
                 dexChain: 'ethereum',
                 nativeSymbol: 'ETH',
@@ -1564,12 +2099,72 @@
                         decimals: 18 },
                     { address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599', symbol: 'WBTC', name: 'Wrapped BTC',
                         decimals: 8 },
+                    { address: '0x06450dEe7FD2Fb8E39061434BAbCFC05599a6Fb8', symbol: 'XEN', name: 'XEN Crypto',
+                        decimals: 18 },
+                ]
+            },
+            base: {
+                name: 'Base',
+                chainId: 8453,
+                rpcUrls: ['https://mainnet.base.org', 'https://base.publicnode.com'],
+                dexChain: 'base',
+                nativeSymbol: 'ETH',
+                nativeToken: { symbol: 'ETH', name: 'Ether', address: '0x4200000000000000000000000000000000000006' },
+                // NOTE: contract addresses below are best-effort and should be double-checked
+                // on a block explorer (e.g. basescan.org) before relying on them.
+                knownTokens: [
+                    { address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', symbol: 'USDC', name: 'USD Coin',
+                        decimals: 6 },
+                    { address: '0x4200000000000000000000000000000000000006', symbol: 'WETH', name: 'Wrapped Ether',
+                        decimals: 18 },
+                    { address: '0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb', symbol: 'DAI', name: 'Dai Stablecoin',
+                        decimals: 18 },
+                ]
+            },
+            arbitrum: {
+                name: 'Arbitrum',
+                chainId: 42161,
+                rpcUrls: ['https://arb1.arbitrum.io/rpc', 'https://arbitrum.publicnode.com'],
+                dexChain: 'arbitrum',
+                nativeSymbol: 'ETH',
+                nativeToken: { symbol: 'ETH', name: 'Ether', address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1' },
+                // NOTE: contract addresses below are best-effort and should be double-checked
+                // on a block explorer (e.g. arbiscan.io) before relying on them.
+                knownTokens: [
+                    { address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', symbol: 'USDC', name: 'USD Coin',
+                        decimals: 6 },
+                    { address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9', symbol: 'USDT', name: 'Tether USD',
+                        decimals: 6 },
+                    { address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1', symbol: 'WETH', name: 'Wrapped Ether',
+                        decimals: 18 },
+                ]
+            },
+            bsc: {
+                name: 'BNB Chain',
+                chainId: 56,
+                rpcUrls: ['https://bsc-dataseed.binance.org', 'https://bsc.publicnode.com'],
+                dexChain: 'bsc',
+                nativeSymbol: 'BNB',
+                nativeToken: { symbol: 'BNB', name: 'BNB', address: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c' },
+                // NOTE: contract addresses below are best-effort and should be double-checked
+                // on a block explorer (e.g. bscscan.com) before relying on them.
+                knownTokens: [
+                    { address: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c', symbol: 'WBNB', name: 'Wrapped BNB',
+                        decimals: 18 },
+                    { address: '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56', symbol: 'BUSD', name: 'Binance USD',
+                        decimals: 18 },
+                    { address: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', symbol: 'USDC', name: 'USD Coin',
+                        decimals: 18 },
+                    { address: '0x55d398326f99059fF775485246999027B3197955', symbol: 'USDT', name: 'Tether USD',
+                        decimals: 18 },
                 ]
             }
         };
 
         let selectedNetwork = 'pulsechain';
         let combinedMode = false; // true = show PulseChain + Ethereum together
+        let otherNetworksSelected = new Set(); // extra network keys (base/arbitrum/bsc) to also load in combined mode
+        const OTHER_NETWORK_KEYS = ['base', 'arbitrum', 'bsc']; // networks the user can optionally add on top of PulseChain + Ethereum
 
         function getNetwork() {
             return NETWORKS[selectedNetwork];
@@ -1578,31 +2173,63 @@
         // -----------------------------------------------------------------
         //  withFallback – próbuje kolejne RPC, aż znajdzie działający
         // -----------------------------------------------------------------
+        const RPC_TIMEOUT_MS = 6000;
+
+        // Pamięć ostatniego działającego RPC per sieć (chainId -> url).
+        // Dzięki temu kolejne wywołania od razu trafiają w sprawdzony węzeł
+        // zamiast za każdym razem zaczynać od początku listy.
+        const lastGoodRpc = {};
+
+        function makeProvider(url, net) {
+            // Obiekt zamiast samego stringa pozwala ustawić `timeout` na poziomie
+            // ethers.js (fetchJson) — bez tego martwy/wolny RPC potrafił wisieć
+            // znacznie dłużej niż potrzeba, zanim padał na network error.
+            return new ethers.providers.JsonRpcProvider(
+                { url, timeout: RPC_TIMEOUT_MS },
+                { chainId: net.chainId, name: net.name }
+            );
+        }
+
+        function isRateLimited(err) {
+            const status = err?.status ?? err?.error?.status;
+            return status === 429 || /429|rate.?limit/i.test(err?.message || '');
+        }
+
+        async function tryRpc(url, net, fn) {
+            const provider = makeProvider(url, net);
+            await provider.getNetwork(); // szybki test dostępności/chainId
+            const result = await fn(provider);
+            lastGoodRpc[net.chainId] = url; // zapamiętaj na następny raz
+            return result;
+        }
+
         async function withFallback(fn, maxRetries = 3) {
             const net = getNetwork();
-            const urls = net.rpcUrls;
+
+            // Ostatni sprawny RPC próbujemy jako pierwszy w kolejności.
+            const urls = [...net.rpcUrls];
+            const remembered = lastGoodRpc[net.chainId];
+            if (remembered && urls.includes(remembered)) {
+                urls.splice(urls.indexOf(remembered), 1);
+                urls.unshift(remembered);
+            }
+
             let lastError = null;
 
             for (let attempt = 0; attempt < maxRetries; attempt++) {
                 for (const url of urls) {
                     try {
-                        const provider = new ethers.providers.JsonRpcProvider(url, {
-                            chainId: net.chainId,
-                            name: net.name
-                        });
-                        // Sprawdź, czy provider wykrywa sieć – to rzuci błąd jeśli nie
-                        await provider.getNetwork();
-                        // Jeśli doszliśmy tu, provider działa – wykonaj funkcję
-                        return await fn(provider);
+                        return await tryRpc(url, net, fn);
                     } catch (err) {
                         lastError = err;
-                        console.warn(`RPC ${url} failed:`, err.message);
-                        // przejdź do następnego URL
+                        if (lastGoodRpc[net.chainId] === url) delete lastGoodRpc[net.chainId];
+                        const tag = isRateLimited(err) ? ' (rate limited)' : '';
+                        console.warn(`RPC ${url} failed${tag}:`, err.message);
                     }
                 }
-                // Jeśli wszystkie RPC zawiodły, poczekaj przed kolejną próbą
                 if (attempt < maxRetries - 1) {
-                    await sleep(600 * (attempt + 1));
+                    // backoff wykładniczy: 600ms, 1200ms, 2400ms...
+                    await sleep(600 * Math.pow(2, attempt));
                 }
             }
             throw lastError || new Error('All RPC attempts failed.');
@@ -1660,10 +2287,48 @@
             PINU: { color1: '#ff2e93', color2: '#8b3bff', letter: 'P' },
             INCOGNITO: { color1: '#00d4ff', color2: '#8b3bff', letter: 'I' },
             TEXAN: { color1: '#ff8a1e', color2: '#ffd34d', letter: 'T' },
+            BTC: { color1: '#f7931a', color2: '#f9a825', letter: 'B' },
+            DOGE: { color1: '#c2a633', color2: '#e8c94d', letter: 'D' },
+            SOL: { color1: '#9945ff', color2: '#00d18c', letter: 'S' },
+            ADA: { color1: '#0033ad', color2: '#0033ad', letter: 'A' },
+            DOT: { color1: '#e6007a', color2: '#e6007a', letter: 'D' },
+            AVAX: { color1: '#e84142', color2: '#e84142', letter: 'A' },
+            MATIC: { color1: '#8247e5', color2: '#8247e5', letter: 'M' },
+            BNB: { color1: '#f0b90b', color2: '#f0b90b', letter: 'B' },
+            XRP: { color1: '#00aae4', color2: '#00aae4', letter: 'X' },
+            LTC: { color1: '#345d9d', color2: '#345d9d', letter: 'L' },
+            LINK: { color1: '#2a5ada', color2: '#2a5ada', letter: 'L' },
+            UNI: { color1: '#ff007a', color2: '#ff007a', letter: 'U' },
+            ATOM: { color1: '#2e3148', color2: '#2e3148', letter: 'A' },
+            FIL: { color1: '#0090ff', color2: '#0090ff', letter: 'F' },
+            ICP: { color1: '#3b00b9', color2: '#3b00b9', letter: 'I' },
+            APT: { color1: '#00bfa5', color2: '#00bfa5', letter: 'A' },
+            ARB: { color1: '#2d374b', color2: '#2d374b', letter: 'A' },
+            OP: { color1: '#ff0420', color2: '#ff0420', letter: 'O' },
+            SUI: { color1: '#4da2ff', color2: '#4da2ff', letter: 'S' },
         };
 
         const ICON_OVERRIDES = {
             WETH: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png',
+            BTC: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/bitcoin/info/logo.png',
+            DOGE: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/dogecoin/info/logo.png',
+            SOL: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/info/logo.png',
+            ADA: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/cardano/info/logo.png',
+            DOT: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/polkadot/info/logo.png',
+            AVAX: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/avalanchec/info/logo.png',
+            MATIC: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/polygon/info/logo.png',
+            BNB: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/binance/info/logo.png',
+            XRP: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/xrp/info/logo.png',
+            LTC: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/litecoin/info/logo.png',
+            LINK: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x514910771AF9Ca656af840dff83E8264EcF986CA/logo.png',
+            UNI: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984/logo.png',
+            ATOM: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/cosmos/info/logo.png',
+            FIL: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/filecoin/info/logo.png',
+            ICP: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/icp/info/logo.png',
+            APT: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/aptos/info/logo.png',
+            ARB: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/arbitrum/info/logo.png',
+            OP: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/optimism/info/logo.png',
+            SUI: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/sui/info/logo.png',
         };
 
         // =================================================================
@@ -1716,8 +2381,9 @@
             return num.toExponential(2);
         }
 
-        function setLoading(text) {
-            document.getElementById('loadingText').textContent = text;
+        function setLoading() {
+            // No-op: only the spinner next to "Portfolio value" indicates loading now,
+            // the step-by-step text messages have been removed entirely.
         }
 
         function resolveIcon(symbol, fetchedIcon) {
@@ -1758,8 +2424,10 @@
         const FARM_MODE_STORAGE_KEY = 'pulsefolio_farm_display_mode';
         const NETWORK_STORAGE_KEY = 'pulsefolio_selected_network';
         const COMBINED_MODE_STORAGE_KEY = 'pulsefolio_combined_mode';
+        const OTHER_NETWORKS_STORAGE_KEY = 'pulsefolio_other_networks';
         const PORTFOLIO_CACHE_KEY = 'pulsefolio_portfolio_cache';
         const SORT_STORAGE_KEY = 'pulsefolio_sort_config';
+        const MANUAL_TOKENS_STORAGE_KEY = 'pulsefolio_manual_tokens';
 
         function saveAddressesToStorage(addresses) {
             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(addresses)); } catch (err) { console.warn(err); }
@@ -1811,8 +2479,20 @@
             try { localStorage.setItem(COMBINED_MODE_STORAGE_KEY, val ? '1' : '0'); } catch (err) { console.warn(err); }
         }
 
-        // Caches the last successfully loaded portfolio so it can be shown instantly
-        // (as a "stale" preview) the next time the page opens, while fresh data loads.
+        function loadOtherNetworksFromStorage() {
+            try {
+                const raw = localStorage.getItem(OTHER_NETWORKS_STORAGE_KEY);
+                if (!raw) return new Set();
+                const parsed = JSON.parse(raw);
+                if (!Array.isArray(parsed)) return new Set();
+                return new Set(parsed.filter(k => OTHER_NETWORK_KEYS.includes(k)));
+            } catch { return new Set(); }
+        }
+
+        function saveOtherNetworksToStorage(set) {
+            try { localStorage.setItem(OTHER_NETWORKS_STORAGE_KEY, JSON.stringify(Array.from(set))); } catch (err) { console.warn(err); }
+        }
+
         function savePortfolioToCache(data, addressCount, addresses) {
             try {
                 const snapshot = {
@@ -1821,6 +2501,7 @@
                     addresses: addresses.map(a => a.toLowerCase()),
                     network: selectedNetwork,
                     combined: combinedMode,
+                    otherNetworks: combinedMode ? Array.from(otherNetworksSelected).sort() : [],
                     savedAt: Date.now(),
                 };
                 localStorage.setItem(PORTFOLIO_CACHE_KEY, JSON.stringify(snapshot));
@@ -1837,15 +2518,603 @@
             } catch { return null; }
         }
 
-        // True if a cached snapshot matches the currently loaded addresses/network/mode
         function cacheMatchesCurrentContext(cached, addresses) {
             if (!cached) return false;
             if (cached.network !== selectedNetwork || !!cached.combined !== combinedMode) return false;
+            if (combinedMode) {
+                const cachedOther = Array.isArray(cached.otherNetworks) ? cached.otherNetworks.slice().sort() : [];
+                const currentOther = Array.from(otherNetworksSelected).sort();
+                if (cachedOther.length !== currentOther.length || cachedOther.some((k, i) => k !== currentOther[i])) return false;
+            }
             const currentSet = addresses.map(a => a.toLowerCase());
             if (currentSet.length !== cached.addresses.length) return false;
             const cachedSet = new Set(cached.addresses);
             return currentSet.every(a => cachedSet.has(a));
         }
+
+        // =================================================================
+        //  MANUAL TOKENS (CoinGecko)
+        // =================================================================
+        function loadManualTokensFromStorage() {
+            try {
+                const raw = localStorage.getItem(MANUAL_TOKENS_STORAGE_KEY);
+                if (!raw) return [];
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (err) { return []; }
+        }
+
+        function saveManualTokensToStorage(tokens) {
+            try { localStorage.setItem(MANUAL_TOKENS_STORAGE_KEY, JSON.stringify(tokens)); } catch (err) { console.warn(err); }
+        }
+
+        let manualTokens = loadManualTokensFromStorage();
+
+        // CoinGecko API – search by symbol
+        async function searchTokenOnCoingecko(symbol) {
+            const query = symbol.trim().toLowerCase();
+            if (!query) throw new Error('Enter a token symbol.');
+
+            const url = `https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(query)}`;
+            const resp = await fetch(url);
+            if (!resp.ok) {
+                if (resp.status === 429) throw new Error('CoinGecko rate limit. Please wait a moment and try again.');
+                throw new Error(`CoinGecko API error (${resp.status})`);
+            }
+            const data = await resp.json();
+            const coins = data.coins || [];
+
+            // Filter to exact symbol match (case-insensitive)
+            const exact = coins.filter(c => c.symbol && c.symbol.toLowerCase() === query);
+
+            // If no exact match, use all results
+            const candidates = exact.length ? exact : coins;
+
+            if (!candidates.length) {
+                throw new Error(`No token found with symbol "${symbol.toUpperCase()}" on CoinGecko.`);
+            }
+
+            // Sort by market cap rank (lower is better), then by name
+            candidates.sort((a, b) => (a.market_cap_rank ?? 9999) - (b.market_cap_rank ?? 9999));
+
+            // Fetch price for the top candidate
+            const top = candidates[0];
+            const priceData = await fetchTokenPrice(top.id);
+
+            return {
+                id: top.id,
+                symbol: top.symbol.toUpperCase(),
+                name: top.name,
+                icon: top.thumb || top.small || null,
+                price: priceData.price,
+                change24h: priceData.change24h,
+                marketCapRank: top.market_cap_rank,
+                candidates: candidates.map(c => ({ id: c.id, symbol: c.symbol.toUpperCase(), name: c.name })),
+            };
+        }
+
+        async function fetchTokenPrice(coinId) {
+            const url =
+                `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(coinId)}&vs_currencies=usd&include_24hr_change=true`;
+            const resp = await fetch(url);
+            if (!resp.ok) {
+                if (resp.status === 429) throw new Error('CoinGecko rate limit. Please wait a moment and try again.');
+                throw new Error(`CoinGecko price error (${resp.status})`);
+            }
+            const data = await resp.json();
+            const entry = data[coinId];
+            if (!entry || entry.usd === undefined) {
+                return { price: null, change24h: null };
+            }
+            return {
+                price: entry.usd,
+                change24h: entry.usd_24h_change ?? null,
+            };
+        }
+
+        // Add a manual token to the portfolio
+        function addManualToken(symbol, amount, tokenData) {
+            const existing = manualTokens.find(t => t.coingeckoId === tokenData.id);
+            if (existing) {
+                // Update amount
+                existing.amount = amount;
+                existing.price = tokenData.price;
+                existing.change24h = tokenData.change24h;
+                existing.icon = tokenData.icon || existing.icon;
+                existing.name = tokenData.name || existing.name;
+            } else {
+                manualTokens.push({
+                    coingeckoId: tokenData.id,
+                    symbol: tokenData.symbol.toUpperCase(),
+                    name: tokenData.name || tokenData.symbol.toUpperCase(),
+                    amount: amount,
+                    price: tokenData.price,
+                    change24h: tokenData.change24h,
+                    icon: tokenData.icon,
+                    manuallyAdded: true,
+                    addedAt: Date.now(),
+                });
+            }
+            saveManualTokensToStorage(manualTokens);
+            renderManualTokenChips();
+            // Rebuild portfolio view if it's showing
+            if (document.getElementById('summary').classList.contains('show')) {
+                refreshView();
+            }
+        }
+
+        function removeManualToken(coingeckoId) {
+            manualTokens = manualTokens.filter(t => t.coingeckoId !== coingeckoId);
+            saveManualTokensToStorage(manualTokens);
+            renderManualTokenChips();
+            if (document.getElementById('summary').classList.contains('show')) {
+                refreshView();
+            }
+        }
+
+        // Merge manual tokens into portfolio data
+        function mergeManualTokensIntoPortfolio(portfolioData) {
+            if (!manualTokens.length) return portfolioData;
+
+            const existingSymbols = new Set(portfolioData.tokens.map(t => t.symbol.toUpperCase()));
+            const manualTokenObjects = [];
+
+            for (const mt of manualTokens) {
+                // If a token with the same symbol already exists (e.g., on-chain BTC), skip or merge?
+                // We'll add it as a separate entry with a "manual" flag.
+                const style = tokenStyle(mt.symbol);
+                const usd = mt.amount * mt.price;
+                const change = mt.change24h ?? null;
+
+                // Check if a token with the same symbol already exists in the portfolio
+                const existing = portfolioData.tokens.find(t => t.symbol.toUpperCase() === mt.symbol.toUpperCase() && !t
+                .manuallyAdded);
+                if (existing) {
+                    // Merge: add amount and usd, but keep the on-chain data as primary
+                    // We'll add the manual amount as an additional entry with a "manual" flag
+                    // Or we can merge them - let's add as separate with a manual badge
+                    manualTokenObjects.push({
+                        symbol: mt.symbol.toUpperCase(),
+                        name: mt.name || mt.symbol.toUpperCase(),
+                        amount: formatTokenAmount(mt.amount),
+                        rawAmount: mt.amount,
+                        usd: usd,
+                        change: change,
+                        icon: resolveIcon(mt.symbol, mt.icon),
+                        address: `manual_${mt.coingeckoId}`,
+                        manuallyAdded: true,
+                        price: mt.price,
+                        noPrice: !mt.price || mt.price === 0,
+                        ...style,
+                    });
+                } else {
+                    manualTokenObjects.push({
+                        symbol: mt.symbol.toUpperCase(),
+                        name: mt.name || mt.symbol.toUpperCase(),
+                        amount: formatTokenAmount(mt.amount),
+                        rawAmount: mt.amount,
+                        usd: usd,
+                        change: change,
+                        icon: resolveIcon(mt.symbol, mt.icon),
+                        address: `manual_${mt.coingeckoId}`,
+                        manuallyAdded: true,
+                        price: mt.price,
+                        noPrice: !mt.price || mt.price === 0,
+                        ...style,
+                    });
+                }
+            }
+
+            // Merge into portfolioData.tokens
+            const allTokens = [...portfolioData.tokens, ...manualTokenObjects];
+            // Sort by USD value
+            allTokens.sort((a, b) => (b.usd || 0) - (a.usd || 0));
+
+            // Recalculate total USD and weighted change
+            const tokenUsd = allTokens.reduce((sum, t) => sum + (t.usd || 0), 0);
+            const farmUsd = portfolioData.farms.reduce((sum, f) => sum + (f.principal || 0), 0);
+            const totalUsd = tokenUsd + farmUsd;
+
+            let weightedChange = portfolioData.weightedChange;
+            const pricedTokens = allTokens.filter(t => t.usd > 0 && t.change !== null && t.change !== undefined);
+            if (pricedTokens.length && tokenUsd > 0) {
+                weightedChange = pricedTokens.reduce((sum, t) => sum + t.usd * t.change, 0) / tokenUsd;
+            }
+
+            return {
+                ...portfolioData,
+                tokens: allTokens,
+                totalUsd: totalUsd,
+                weightedChange: weightedChange,
+            };
+        }
+
+        // Render manual token chips in the token card
+        function renderManualTokenChips() {
+            const container = document.getElementById('manualTokenList');
+            if (!manualTokens.length) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = manualTokens.map(mt => {
+                const style = tokenStyle(mt.symbol);
+                const iconHtml = mt.icon ? iconImg(mt.icon) : '';
+                return `
+              <div class="token-chip" title="${escapeHtml(mt.name)} (${escapeHtml(mt.symbol)}) · ${fmtUSD(mt.amount * mt.price)}">
+                <span class="mt-chip-icon" style="background: linear-gradient(135deg, ${style.color1}, ${style.color2});">${escapeHtml(style.letter)}${iconHtml}</span>
+                ${escapeHtml(mt.symbol.toUpperCase())}
+                <span style="color:var(--text-muted);font-weight:400;font-size:0.85em;">${formatTokenAmount(mt.amount)}</span>
+                <button class="token-chip-remove" type="button" data-id="${escapeHtml(mt.coingeckoId)}" title="Remove ${escapeHtml(mt.symbol)}" aria-label="Remove ${escapeHtml(mt.symbol)}">×</button>
+              </div>
+            `;
+            }).join('');
+
+            container.querySelectorAll('.token-chip-remove').forEach(btn => {
+                btn.addEventListener('click', () => removeManualToken(btn.dataset.id));
+            });
+        }
+
+        // -----------------------------------------------------------------
+        //  MANUAL TOKEN UI LOGIC
+        // -----------------------------------------------------------------
+        let lastCheckedToken = null;
+
+        async function handleManualTokenCheck() {
+            const input = document.getElementById('manualTokenSymbol');
+            const btn = document.getElementById('manualTokenCheckBtn');
+            const resultEl = document.getElementById('manualTokenResult');
+            const msgEl = document.getElementById('manualTokenMsg');
+            const amountRow = document.getElementById('manualTokenAmountRow');
+            const symbol = input.value.trim();
+
+            clearManualTokenMsg();
+            resultEl.classList.remove('show');
+            amountRow.style.display = 'none';
+            btn.disabled = true;
+            btn.textContent = '…';
+
+            try {
+                if (!symbol) {
+                    throw new Error('Please enter a token symbol (e.g. BTC, DOGE, SOL).');
+                }
+
+                const data = await searchTokenOnCoingecko(symbol);
+
+                // Show result
+                const style = tokenStyle(data.symbol);
+                const iconEl = document.getElementById('mtIcon');
+                const nameEl = document.getElementById('mtName');
+                const symbolEl = document.getElementById('mtSymbol');
+                const priceEl = document.getElementById('mtPrice');
+                const changeEl = document.getElementById('mtChange');
+
+                iconEl.style.background = `linear-gradient(135deg, ${style.color1}, ${style.color2})`;
+                iconEl.textContent = style.letter;
+                if (data.icon) {
+                    iconEl.innerHTML = iconImg(data.icon);
+                }
+
+                nameEl.textContent = data.name;
+                symbolEl.textContent = `${data.symbol} ${data.marketCapRank ? `· #${data.marketCapRank}` : ''}`;
+
+                if (data.price !== null && data.price !== undefined) {
+                    priceEl.textContent = formatPrice(data.price);
+                    if (data.change24h !== null && data.change24h !== undefined) {
+                        const cls = data.change24h >= 0 ? 'pos' : 'neg';
+                        changeEl.textContent = fmtPct(data.change24h);
+                        changeEl.className = `mt-change ${cls}`;
+                    } else {
+                        changeEl.textContent = '—';
+                        changeEl.className = 'mt-change';
+                    }
+                } else {
+                    priceEl.textContent = '—';
+                    changeEl.textContent = '—';
+                    changeEl.className = 'mt-change';
+                }
+
+                resultEl.classList.add('show');
+                amountRow.style.display = 'flex';
+
+                // Store checked token data
+                lastCheckedToken = {
+                    id: data.id,
+                    symbol: data.symbol,
+                    name: data.name,
+                    icon: data.icon,
+                    price: data.price,
+                    change24h: data.change24h,
+                };
+
+                // Focus amount input
+                document.getElementById('manualTokenAmount').focus();
+
+                setManualTokenMsg(`Found ${data.name} (${data.symbol}) — enter the amount you hold.`, 'info');
+
+            } catch (err) {
+                setManualTokenMsg(err.message, 'error');
+                resultEl.classList.remove('show');
+                amountRow.style.display = 'none';
+                lastCheckedToken = null;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Check';
+            }
+        }
+
+        function handleManualTokenAdd() {
+            const amountInput = document.getElementById('manualTokenAmount');
+            const amount = parseFloat(amountInput.value);
+            const msgEl = document.getElementById('manualTokenMsg');
+
+            if (!lastCheckedToken) {
+                setManualTokenMsg('Please check a token first.', 'error');
+                return;
+            }
+
+            if (!Number.isFinite(amount) || amount <= 0) {
+                setManualTokenMsg('Please enter a valid amount greater than 0.', 'error');
+                amountInput.focus();
+                return;
+            }
+
+            // Add the token
+            addManualToken(
+                lastCheckedToken.symbol,
+                amount,
+                {
+                    id: lastCheckedToken.id,
+                    symbol: lastCheckedToken.symbol,
+                    name: lastCheckedToken.name,
+                    icon: lastCheckedToken.icon,
+                    price: lastCheckedToken.price,
+                    change24h: lastCheckedToken.change24h,
+                }
+            );
+
+            // Reset UI
+            setManualTokenMsg(`${lastCheckedToken.symbol.toUpperCase()} added to your portfolio!`, 'success');
+            document.getElementById('manualTokenSymbol').value = '';
+            document.getElementById('manualTokenAmount').value = '';
+            document.getElementById('manualTokenResult').classList.remove('show');
+            document.getElementById('manualTokenAmountRow').style.display = 'none';
+            lastCheckedToken = null;
+
+            // Refresh view if portfolio is showing
+            if (document.getElementById('summary').classList.contains('show')) {
+                refreshView();
+            }
+        }
+
+        function handleManualTokenCancel() {
+            document.getElementById('manualTokenResult').classList.remove('show');
+            document.getElementById('manualTokenAmountRow').style.display = 'none';
+            document.getElementById('manualTokenMsg').className = 'manual-token-msg';
+            document.getElementById('manualTokenMsg').textContent = '';
+            document.getElementById('manualTokenSymbol').value = '';
+            document.getElementById('manualTokenAmount').value = '';
+            lastCheckedToken = null;
+        }
+
+        function setManualTokenMsg(text, type) {
+            const el = document.getElementById('manualTokenMsg');
+            el.textContent = text;
+            el.className = `manual-token-msg show${type ? ` ${type}` : ''}`;
+        }
+
+        function clearManualTokenMsg() {
+            const el = document.getElementById('manualTokenMsg');
+            el.textContent = '';
+            el.className = 'manual-token-msg';
+        }
+
+        // =================================================================
+        //  WATCHLIST (CoinGecko, no wallet needed)
+        // =================================================================
+        const WATCHLIST_STORAGE_KEY = 'pulsefolio_watchlist';
+
+        function loadWatchlistFromStorage() {
+            try {
+                const raw = localStorage.getItem(WATCHLIST_STORAGE_KEY);
+                const parsed = raw ? JSON.parse(raw) : [];
+                return Array.isArray(parsed) ? parsed : [];
+            } catch { return []; }
+        }
+
+        function saveWatchlistToStorage(items) {
+            try { localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(items)); } catch (err) { console.warn(err); }
+        }
+
+        let watchlist = loadWatchlistFromStorage();
+        let lastCheckedWatchToken = null;
+
+        // Batch price fetch — one request for every tracked coin instead of one per token.
+        async function fetchTokenPrices(coinIds) {
+            if (!coinIds.length) return {};
+            const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(coinIds.join(','))}&vs_currencies=usd&include_24hr_change=true`;
+            const resp = await fetch(url);
+            if (!resp.ok) {
+                if (resp.status === 429) throw new Error('CoinGecko rate limit. Please wait a moment and try again.');
+                throw new Error(`CoinGecko price error (${resp.status})`);
+            }
+            const data = await resp.json();
+            const map = {};
+            for (const id of coinIds) {
+                const entry = data[id];
+                map[id] = entry ? { price: entry.usd, change24h: entry.usd_24h_change ?? null } : { price: null, change24h: null };
+            }
+            return map;
+        }
+
+        function addToWatchlist(tokenData) {
+            const exists = watchlist.some(w => w.coingeckoId === tokenData.id);
+            if (exists) {
+                setWatchlistMsg(`${tokenData.symbol} is already on your watchlist.`, 'error');
+                return;
+            }
+            watchlist.push({
+                coingeckoId: tokenData.id,
+                symbol: tokenData.symbol.toUpperCase(),
+                name: tokenData.name || tokenData.symbol.toUpperCase(),
+                icon: tokenData.icon || null,
+                price: tokenData.price,
+                change24h: tokenData.change24h,
+                addedAt: Date.now(),
+            });
+            saveWatchlistToStorage(watchlist);
+            renderWatchlist();
+            setWatchlistMsg(`${tokenData.symbol} added to your watchlist.`, 'success');
+        }
+
+        function removeFromWatchlist(coingeckoId) {
+            watchlist = watchlist.filter(w => w.coingeckoId !== coingeckoId);
+            saveWatchlistToStorage(watchlist);
+            renderWatchlist();
+        }
+
+        function setWatchlistMsg(text, type) {
+            const el = document.getElementById('watchlistMsg');
+            el.textContent = text;
+            el.className = `manual-token-msg show${type ? ` ${type}` : ''}`;
+        }
+
+        function clearWatchlistMsg() {
+            const el = document.getElementById('watchlistMsg');
+            el.textContent = '';
+            el.className = 'manual-token-msg';
+        }
+
+        // Renders the current list and refreshes prices for everything tracked in one batch call.
+        async function renderWatchlist() {
+            const container = document.getElementById('watchlistItems');
+            const emptyHint = document.getElementById('watchlistEmptyHint');
+
+            if (!watchlist.length) {
+                container.innerHTML = '';
+                emptyHint.style.display = 'block';
+                return;
+            }
+            emptyHint.style.display = 'none';
+
+            const renderRows = () => {
+                container.innerHTML = watchlist.map(w => {
+                    const style = tokenStyle(w.symbol);
+                    const price = w.price ? formatPrice(w.price) : '—';
+                    const hasChange = w.change24h !== null && w.change24h !== undefined;
+                    const changeCls = hasChange ? (w.change24h >= 0 ? 'pos' : 'neg') : '';
+                    const changeText = hasChange ? fmtPct(w.change24h) : '—';
+                    return `
+                    <div class="row">
+                        <div class="icon" style="background: linear-gradient(135deg, ${style.color1}, ${style.color2});">${escapeHtml(style.letter)}${iconImg(w.icon)}</div>
+                        <div class="row-info">
+                            <div class="row-name">${escapeHtml(w.symbol)}</div>
+                            <div class="row-sub">${escapeHtml(w.name)}</div>
+                        </div>
+                        <div class="row-right">
+                            <div class="row-amount">${price}</div>
+                            <div class="row-change ${changeCls}">${changeText}</div>
+                        </div>
+                        <button class="token-chip-remove" type="button" data-id="${escapeHtml(w.coingeckoId)}" style="margin-left:10px;" title="Remove ${escapeHtml(w.symbol)}" aria-label="Remove ${escapeHtml(w.symbol)}">×</button>
+                    </div>`;
+                }).join('');
+
+                container.querySelectorAll('.token-chip-remove').forEach(btn => {
+                    btn.addEventListener('click', () => removeFromWatchlist(btn.dataset.id));
+                });
+            };
+
+            renderRows(); // show cached prices immediately, then refresh in the background
+
+            try {
+                const priceMap = await fetchTokenPrices(watchlist.map(w => w.coingeckoId));
+                for (const w of watchlist) {
+                    const fresh = priceMap[w.coingeckoId];
+                    if (fresh && fresh.price !== null) {
+                        w.price = fresh.price;
+                        w.change24h = fresh.change24h;
+                    }
+                }
+                saveWatchlistToStorage(watchlist);
+                renderRows();
+            } catch (err) {
+                console.warn('Watchlist price refresh failed:', err.message);
+            }
+        }
+
+        async function handleWatchlistSearch() {
+            const input = document.getElementById('watchlistSymbolInput');
+            const btn = document.getElementById('watchlistSearchBtn');
+            const value = input.value.trim();
+
+            clearWatchlistMsg();
+            document.getElementById('watchlistPreview').classList.remove('show');
+            document.getElementById('watchlistAddRow').style.display = 'none';
+
+            if (!value) {
+                input.focus();
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Searching…';
+
+            try {
+                const result = await searchTokenOnCoingecko(value);
+                lastCheckedWatchToken = result;
+
+                document.getElementById('wlIcon').innerHTML = result.icon ? iconImg(result.icon) : escapeHtml(result.symbol[0] || '?');
+                document.getElementById('wlName').textContent = result.name;
+                document.getElementById('wlSymbol').textContent = result.symbol;
+                document.getElementById('wlPrice').textContent = result.price ? formatPrice(result.price) : 'No price data';
+                const changeEl = document.getElementById('wlChange');
+                if (result.change24h !== null && result.change24h !== undefined) {
+                    changeEl.textContent = fmtPct(result.change24h);
+                    changeEl.className = `mt-change ${result.change24h >= 0 ? 'pos' : 'neg'}`;
+                } else {
+                    changeEl.textContent = '—';
+                    changeEl.className = 'mt-change';
+                }
+
+                document.getElementById('watchlistPreview').classList.add('show');
+                document.getElementById('watchlistAddRow').style.display = 'flex';
+            } catch (err) {
+                setWatchlistMsg(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Search';
+            }
+        }
+
+        function handleWatchlistAdd() {
+            if (!lastCheckedWatchToken) return;
+            addToWatchlist(lastCheckedWatchToken);
+            handleWatchlistCancel();
+        }
+
+        function handleWatchlistCancel() {
+            document.getElementById('watchlistPreview').classList.remove('show');
+            document.getElementById('watchlistAddRow').style.display = 'none';
+            document.getElementById('watchlistSymbolInput').value = '';
+            lastCheckedWatchToken = null;
+        }
+
+        document.getElementById('watchlistSearchBtn').addEventListener('click', handleWatchlistSearch);
+        document.getElementById('watchlistSymbolInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') handleWatchlistSearch();
+        });
+        document.getElementById('watchlistAddBtn').addEventListener('click', handleWatchlistAdd);
+        document.getElementById('watchlistCancelBtn').addEventListener('click', handleWatchlistCancel);
+
+        document.getElementById('watchlistNavBtn').addEventListener('click', () => {
+            document.getElementById('watchlistCard').classList.toggle('show');
+            renderWatchlist();
+        });
+        document.getElementById('closeWatchlistBtn').addEventListener('click', () => {
+            document.getElementById('watchlistCard').classList.remove('show');
+        });
+
+        renderWatchlist();
 
         // =================================================================
         //  FETCHING FUNCTIONS
@@ -1871,7 +3140,6 @@
                 console.warn('Multicall failed, falling back to individual calls:', err.message);
             }
 
-            // Use withFallback to get a working provider for individual calls
             return withFallback(async (provider) => {
                 return await fetchTokenBalancesIndividual(address, provider);
             });
@@ -1943,7 +3211,6 @@
                 } catch (err) {
                     console.warn(`Failed to fetch balance for ${meta.symbol}:`, err.message);
                 }
-                // Małe opóźnienie, by nie przeciążać RPC
                 await sleep(50);
             }
 
@@ -2237,7 +3504,6 @@
             const nativeAddr = getNetwork().nativeToken.address;
             if (nativeAddr) priceAddresses.push(nativeAddr);
 
-            // Dla Ethereum, dodajemy WETH do pobrania ceny ETH (bo DexScreener nie ma ceny dla 0xEeeee...)
             if (selectedNetwork === 'ethereum') {
                 const wethAddr = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2';
                 if (!priceAddresses.some(a => a.toLowerCase() === wethAddr.toLowerCase())) {
@@ -2252,7 +3518,6 @@
             setLoading('Fetching prices from DexScreener…');
             const priceMap = await fetchPrices(priceAddresses);
 
-            // Ustal cenę native tokena (dla ETH używamy ceny WETH, jeśli native nie ma ceny)
             let finalNativePrice = priceMap[nativeAddr.toLowerCase()]?.price ?? null;
             let finalNativeChange = priceMap[nativeAddr.toLowerCase()]?.change24h ?? null;
             let finalNativeIcon = priceMap[nativeAddr.toLowerCase()]?.icon ?? null;
@@ -2404,7 +3669,10 @@
         // tagging every token/farm with the network it came from so the UI can badge them.
         async function loadCombinedPortfolio(addresses) {
             const prevNetwork = selectedNetwork;
-            const networkKeys = Object.keys(NETWORKS);
+            // By default only PulseChain + Ethereum load (fast). Base/Arbitrum/BNB Chain
+            // are only fetched when the user explicitly selects them (see Edit portfolio).
+            const networkKeys = ['pulsechain', 'ethereum', ...Array.from(otherNetworksSelected)]
+                .filter(k => NETWORKS[k]);
             const perNetworkResults = [];
             const failedNetworks = [];
 
@@ -2508,7 +3776,6 @@
         // =================================================================
         let sortConfig = { key: 'value', direction: 'desc' };
 
-        // Load sort config from localStorage
         function loadSortConfig() {
             try {
                 const raw = localStorage.getItem(SORT_STORAGE_KEY);
@@ -2520,7 +3787,6 @@
                     }
                 }
             } catch (e) {}
-            // default
             sortConfig = { key: 'value', direction: 'desc' };
         }
 
@@ -2542,10 +3808,9 @@
                     aVal = a.rawAmount || 0;
                     bVal = b.rawAmount || 0;
                 } else if (key === 'change') {
-                    // Obsługa zmiany na wypadek, gdyby została – ale nie ma kolumny, więc pomijamy
                     aVal = a.change ?? 0;
                     bVal = b.change ?? 0;
-                } else { // value
+                } else {
                     aVal = a.usd || 0;
                     bVal = b.usd || 0;
                 }
@@ -2664,7 +3929,6 @@
                 result = combined;
             }
 
-            // Add price field (usd / rawAmount) to every token
             for (const t of result) {
                 t.price = t.rawAmount > 0 ? (t.usd || 0) / t.rawAmount : 0;
             }
@@ -2680,14 +3944,11 @@
                 return;
             }
 
-            // Determine column order: active sort column moves to the right end
-            // Usunięto kolumnę 'change' – zmiana wyświetlana jest pod wartością
             const allCols = ['token', 'price', 'amount', 'value'];
             const activeKey = sortConfig.key;
             const otherCols = allCols.filter(c => c !== activeKey);
             const orderedCols = [...otherCols, activeKey];
 
-            // Build header
             let headerHtml = '<thead><tr>';
             for (const col of orderedCols) {
                 let label = col.charAt(0).toUpperCase() + col.slice(1);
@@ -2702,12 +3963,10 @@
             }
             headerHtml += '</tr></thead>';
 
-            // Build body
             let bodyHtml = '<tbody>';
             for (const t of tokens) {
                 const priceDisplay = t.noPrice ? '—' : formatPrice(t.price);
 
-                // Przygotowanie znacznika zmiany – będzie wyświetlany pod wartością
                 let changeHtml;
                 if (athMode) {
                     changeHtml = t.isAth ? '<span class="value-change ath">ATH</span>' : '<span class="value-change">—</span>';
@@ -2729,15 +3988,16 @@
                     '';
                 const athBadge = athMode && t.isAth ? '<span class="ath-badge" style="font-size:0.7em; padding:1px 5px;">ATH</span>' :
                     '';
+                const manualBadge = t.manuallyAdded ? '<span class="farm-badge" style="font-size:0.7em; padding:1px 5px; background:rgba(0,212,255,0.14); border-color:rgba(0,212,255,0.35); color:var(--cyan);">manual</span>' :
+                    '';
 
-                // Build cells in the same order
                 const cells = orderedCols.map(col => {
                     if (col === 'token') {
                         return `<td>
                             <div class="token-cell">
                                 <div class="icon-sm" style="background: linear-gradient(135deg, ${t.color1}, ${t.color2});">${escapeHtml(t.letter)}${iconImg(t.icon)}</div>
                                 <div class="token-name">
-                                    <span class="token-symbol">${escapeHtml(t.symbol)} ${chainBadge}${farmBadge}${athBadge}${noPriceBadge}</span>
+                                    <span class="token-symbol">${escapeHtml(t.symbol)} ${chainBadge}${farmBadge}${manualBadge}${athBadge}${noPriceBadge}</span>
                                     <span class="token-sub">${escapeHtml(t.name)}</span>
                                 </div>
                             </div>
@@ -2747,7 +4007,6 @@
                     } else if (col === 'amount') {
                         return `<td>${escapeHtml(t.amount)}</td>`;
                     } else if (col === 'value') {
-                        // Wyświetlamy wartość i zmianę pod nią
                         return `<td>
                             <div class="value-row">
                                 <span class="value-amount">${fmtUSD(t.usd)}</span>
@@ -2764,7 +4023,6 @@
 
             list.innerHTML = `<div class="table-wrap"><table class="token-table">${headerHtml}${bodyHtml}</table></div>`;
 
-            // Attach sort click handlers
             list.querySelectorAll('.sortable').forEach(th => {
                 th.addEventListener('click', function() {
                     const key = this.dataset.sort;
@@ -2821,9 +4079,19 @@
         }
 
         function getEffectiveData() {
-            if (athMode) return applyAthPricing(portfolioData);
-            if (multiplierMode) return applyMultiplierPricing(portfolioData, multiplierValue);
-            return portfolioData;
+            let data = athMode ? applyAthPricing(portfolioData) :
+                multiplierMode ? applyMultiplierPricing(portfolioData, multiplierValue) :
+                portfolioData;
+
+            // Merge manual tokens (always, unless ATH/multiplier mode overrides)
+            // Actually, manual tokens should be merged before ATH/multiplier so they get adjusted too
+            // But we need to merge them into portfolioData first, then apply ATH/multiplier
+            // Let's merge manual tokens into portfolioData before applying ATH/multiplier
+            const mergedData = mergeManualTokensIntoPortfolio(portfolioData);
+
+            if (athMode) return applyAthPricing(mergedData);
+            if (multiplierMode) return applyMultiplierPricing(mergedData, multiplierValue);
+            return mergedData;
         }
 
         function refreshView() {
@@ -2856,7 +4124,6 @@
             const hasFarmTokens = collectFarmTokenParts(data.farms).length > 0;
             document.getElementById('farmModeRow').classList.toggle('show', activeTab === 'tokens' && hasFarmTokens);
 
-            // Build token list, sort, then render
             let tokens = buildDisplayTokens(data, farmDisplayMode);
             tokens = sortTokens(tokens);
             renderTokens(tokens);
@@ -2869,13 +4136,128 @@
             const badge = document.getElementById('staleBadge');
             const badgeText = document.getElementById('staleBadgeText');
             if (!badge || !badgeText) return;
-            if (mode === 'hidden') {
+            if (mode === 'hidden' || mode === 'loading') {
+                // The "Cached data — refreshing…" notice is intentionally suppressed —
+                // the inline spinner next to "Portfolio value" is the only loading cue now.
                 badge.classList.remove('show', 'error');
                 return;
             }
             badge.classList.add('show');
             badge.classList.toggle('error', mode === 'error');
-            badgeText.textContent = text || (mode === 'error' ? "Couldn't refresh — showing cached data" : 'Cached data — refreshing…');
+            badgeText.textContent = text || "Couldn't refresh — showing cached data";
+        }
+
+        // =================================================================
+        //  SNAPSHOTS — portfolio value over time
+        // =================================================================
+        const SNAPSHOTS_STORAGE_KEY = 'pulsefolio_snapshots';
+        const MAX_SNAPSHOTS_PER_CONTEXT = 90;
+
+        // Snapshots are scoped per "context" (network/combined-mode + exact address set),
+        // so switching wallets or networks doesn't mix unrelated history together.
+        // Note: toggling which extra networks (Base/Arbitrum/BNB) are included does NOT
+        // start a new history — otherwise the chart would reset/disable every time that
+        // selection changes, since it needs at least 2 recorded points to render.
+        function getSnapshotContextKey(addresses) {
+            const scope = combinedMode ? 'combined' : selectedNetwork;
+            const addrKey = [...addresses].map(a => a.toLowerCase()).sort().join(',');
+            return `${scope}::${addrKey}`;
+        }
+
+        function loadAllSnapshots() {
+            try {
+                const raw = localStorage.getItem(SNAPSHOTS_STORAGE_KEY);
+                const parsed = raw ? JSON.parse(raw) : {};
+                return (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
+            } catch { return {}; }
+        }
+
+        function saveAllSnapshots(all) {
+            try { localStorage.setItem(SNAPSHOTS_STORAGE_KEY, JSON.stringify(all)); } catch (err) { console.warn(err); }
+        }
+
+        function getSnapshotsForContext(addresses) {
+            const all = loadAllSnapshots();
+            return all[getSnapshotContextKey(addresses)] || [];
+        }
+
+        // Records (or updates) today's value for this wallet/network context.
+        // Only one entry per calendar day is kept, so repeated checks don't spam the history.
+        function recordSnapshot(addresses, value) {
+            if (!addresses || !addresses.length || !Number.isFinite(value)) return;
+            const key = getSnapshotContextKey(addresses);
+            const all = loadAllSnapshots();
+            const list = all[key] || [];
+            const today = new Date().toISOString().slice(0, 10);
+
+            const last = list[list.length - 1];
+            if (last && last.date === today) {
+                last.value = value;
+            } else {
+                list.push({ date: today, value });
+            }
+
+            all[key] = list.slice(-MAX_SNAPSHOTS_PER_CONTEXT);
+            saveAllSnapshots(all);
+        }
+
+        // Ignores ATH/multiplier "dream" pricing — snapshots should reflect real value only.
+        function getRealTotalUsd(data) {
+            return mergeManualTokensIntoPortfolio(data).totalUsd;
+        }
+
+        let chartVisible = false; // the chart is only rendered once the user clicks the "Chart" button
+        let chartHasData = false;
+
+        function syncChartVisibility() {
+            const container = document.getElementById('snapshotChart');
+            if (!container) return;
+            container.classList.toggle('show', chartVisible && chartHasData);
+            const btn = document.getElementById('toggleChartBtn');
+            if (btn) btn.classList.toggle('active', chartVisible);
+        }
+
+        function renderSnapshotChart(addresses) {
+            const container = document.getElementById('snapshotChart');
+            const svg = document.getElementById('snapshotSvg');
+            const meta = document.getElementById('snapshotMeta');
+            if (!container || !svg || !addresses) return;
+
+            const points = getSnapshotsForContext(addresses);
+            if (points.length < 2) {
+                chartHasData = false;
+                syncChartVisibility();
+                return;
+            }
+
+            const values = points.map(p => p.value);
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            const range = (max - min) || 1;
+            const w = 300, h = 60, pad = 4;
+
+            const coords = points.map((p, i) => {
+                const x = pad + (i / (points.length - 1)) * (w - pad * 2);
+                const y = h - pad - ((p.value - min) / range) * (h - pad * 2);
+                return [x, y];
+            });
+
+            const linePath = coords.map((c, i) => `${i === 0 ? 'M' : 'L'}${c[0].toFixed(1)},${c[1].toFixed(1)}`).join(' ');
+            const areaPath = `${linePath} L${coords[coords.length - 1][0].toFixed(1)},${h} L${coords[0][0].toFixed(1)},${h} Z`;
+
+            const first = values[0];
+            const lastVal = values[values.length - 1];
+            const pctChange = first ? ((lastVal - first) / Math.abs(first)) * 100 : 0;
+            const color = pctChange >= 0 ? '#35d68b' : '#ff5470'; // matches --green / --red
+
+            svg.innerHTML = `
+                <path d="${areaPath}" fill="${color}" opacity="0.14" stroke="none"></path>
+                <path d="${linePath}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>
+            `;
+
+            meta.textContent = `${points[0].date} → ${points[points.length - 1].date} · ${pctChange >= 0 ? '+' : ''}${pctChange.toFixed(1)}% over ${points.length} snapshots`;
+            chartHasData = true;
+            syncChartVisibility();
         }
 
         function showResults(data, addressCount = 1, opts = {}) {
@@ -2890,6 +4272,15 @@
             setStaleBadge(showingStale ? 'loading' : 'hidden');
 
             refreshView();
+
+            if (Array.isArray(opts.addresses) && opts.addresses.length) {
+                // Only record a new data point for genuinely fresh data, not cached/stale renders —
+                // but always redraw the chart so history still shows while a stale view is up.
+                if (!showingStale) {
+                    recordSnapshot(opts.addresses, getRealTotalUsd(data));
+                }
+                renderSnapshotChart(opts.addresses);
+            }
         }
 
         function showError(message) {
@@ -2897,6 +4288,8 @@
             setStaleBadge('hidden');
             document.getElementById('notice').classList.remove('show');
             document.getElementById('summary').classList.remove('show');
+            chartHasData = false;
+            document.getElementById('snapshotChart').classList.remove('show');
             document.getElementById('tabs').classList.remove('show');
             document.getElementById('athDreamRow').classList.remove('show');
             document.getElementById('multiplierInputRow').classList.remove('show');
@@ -2931,16 +4324,16 @@
             }
 
             const btn = document.getElementById('loadBtn');
-            const loading = document.getElementById('loading');
+            const loading = document.getElementById('loadingSpinner');
 
             btn.disabled = true;
             loading.classList.add('show');
+            document.getElementById('summary').classList.add('show');
             document.getElementById('emptyState').style.display = 'none';
-            setLoading(combinedMode ? 'Connecting to PulseChain + Ethereum…' : `Connecting to ${getNetwork().name}…`);
 
             try {
                 const data = combinedMode ? await loadCombinedPortfolio(addresses) : await loadMultiPortfolio(addresses);
-                showResults(data, addresses.length);
+                showResults(data, addresses.length, { addresses });
                 document.getElementById('tokenList').classList.add('show');
                 document.getElementById('farmList').classList.remove('show');
                 document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'tokens'));
@@ -2957,7 +4350,6 @@
             } catch (err) {
                 console.error(err);
                 if (showingStale) {
-                    // Keep showing the cached snapshot instead of wiping the view; just flag the refresh failure.
                     setStaleBadge('error', `Couldn't refresh (${err.message || 'network error'}) — showing cached data`);
                 } else {
                     showError(err.message || 'Failed to fetch portfolio data.');
@@ -3036,7 +4428,15 @@
             }
         }
 
-        // Keep the network pill (next to "Portfolio value") in sync with the selected network
+        function syncOtherNetworkCheckboxes() {
+            const selector = document.getElementById('otherNetworksSelector');
+            if (!selector) return;
+            selector.classList.toggle('inactive', !combinedMode);
+            selector.querySelectorAll('.other-network-checkbox').forEach(cb => {
+                cb.checked = otherNetworksSelected.has(cb.dataset.network);
+            });
+        }
+
         function updateNetworkPill() {
             const pillText = document.getElementById('networkPillText');
             const pillDot = document.getElementById('networkPillDot');
@@ -3044,9 +4444,24 @@
             pillText.textContent = combinedMode ? 'PulseChain + Ethereum' : getNetwork().name;
             pillDot.classList.toggle('ethereum', !combinedMode && selectedNetwork === 'ethereum');
             pillDot.classList.toggle('both', combinedMode);
+
+            const otherBtn = document.getElementById('otherNetworksBtn');
+            if (otherBtn) {
+                // Only relevant in combined mode — hidden otherwise so it doesn't imply
+                // it affects a single-network view.
+                const count = otherNetworksSelected.size;
+                otherBtn.classList.toggle('visible', combinedMode);
+                otherBtn.classList.toggle('active', count > 0);
+                otherBtn.querySelector('span').textContent = count > 0
+                    ? `Other networks (${count})`
+                    : 'Other networks';
+                otherBtn.title = count > 0
+                    ? `Also loading: ${Array.from(otherNetworksSelected).map(k => NETWORKS[k].name).join(', ')} — click to change`
+                    : 'Also load Base, Arbitrum or BNB Chain — click to choose';
+            }
+            syncOtherNetworkCheckboxes();
         }
 
-        // Resets the view and (re)loads any saved addresses after a network/mode change
         function reloadForNetworkChange() {
             const saved = loadAddressesFromStorage();
             if (saved && saved.length) {
@@ -3059,7 +4474,7 @@
 
                 const cached = loadPortfolioFromCache();
                 if (cacheMatchesCurrentContext(cached, saved)) {
-                    showResults(cached.data, cached.addressCount, { stale: true });
+                    showResults(cached.data, cached.addressCount, { stale: true, addresses: saved });
                     document.getElementById('tokenList').classList.add('show');
                     document.getElementById('farmList').classList.remove('show');
                     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'tokens'));
@@ -3089,7 +4504,6 @@
             }
         }
 
-        // Explicit single-network switch (from the "Network:" dropdown)
         function switchNetwork(newNet) {
             if (!NETWORKS[newNet]) return;
             if (newNet === selectedNetwork && !combinedMode) return;
@@ -3102,7 +4516,6 @@
             reloadForNetworkChange();
         }
 
-        // Toggle the combined "PulseChain + Ethereum" view
         function setCombinedMode(val) {
             if (combinedMode === val) return;
             combinedMode = val;
@@ -3115,24 +4528,37 @@
             switchNetwork(this.value);
         });
 
-        /* 3 state cycle for the network pill button was removed in favor of a simpler toggle between PulseChain and PulseChain + Ethereum
         document.getElementById('networkPillBtn').addEventListener('click', function() {
-            // Cycles: PulseChain -> Ethereum -> PulseChain + Ethereum -> PulseChain ...
-            if (combinedMode) {
-                switchNetwork('pulsechain');
-            } else if (selectedNetwork === 'pulsechain') {
-                switchNetwork('ethereum');
-            } else {
-                setCombinedMode(true);
-            }
-        });*/
-        document.getElementById('networkPillBtn').addEventListener('click', function() {
-            // Przełączanie między trybem PulseChain (sam) a PulseChain + Ethereum
             if (combinedMode) {
                 switchNetwork('pulsechain');
             } else {
                 setCombinedMode(true);
             }
+        });
+
+        document.getElementById('toggleChartBtn').addEventListener('click', function() {
+            chartVisible = !chartVisible;
+            syncChartVisibility();
+        });
+
+        document.getElementById('otherNetworksBtn').addEventListener('click', function() {
+            // Only meaningful while combined mode is active. Opens the address editor
+            // where the exact set of extra networks can be picked via checkboxes.
+            if (!combinedMode) return;
+            setPortfolioBarVisible(false);
+            document.getElementById('tokenCard').classList.remove('show');
+            document.getElementById('otherNetworksSelector')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+
+        document.querySelectorAll('.other-network-checkbox').forEach(cb => {
+            cb.addEventListener('change', function() {
+                const key = this.dataset.network;
+                if (this.checked) otherNetworksSelected.add(key);
+                else otherNetworksSelected.delete(key);
+                saveOtherNetworksToStorage(otherNetworksSelected);
+                updateNetworkPill();
+                if (combinedMode) reloadForNetworkChange();
+            });
         });
 
         document.getElementById('addAddrBtn').addEventListener('click', () => {
@@ -3386,6 +4812,22 @@
         renderCustomTokenChips();
 
         // =================================================================
+        //  MANUAL TOKEN UI BINDINGS
+        // =================================================================
+        document.getElementById('manualTokenCheckBtn').addEventListener('click', handleManualTokenCheck);
+        document.getElementById('manualTokenSymbol').addEventListener('keydown', e => {
+            if (e.key === 'Enter') handleManualTokenCheck();
+        });
+        document.getElementById('manualTokenAddBtn').addEventListener('click', handleManualTokenAdd);
+        document.getElementById('manualTokenAmount').addEventListener('keydown', e => {
+            if (e.key === 'Enter') handleManualTokenAdd();
+        });
+        document.getElementById('manualTokenCancelBtn').addEventListener('click', handleManualTokenCancel);
+
+        // Render manual token chips on load
+        renderManualTokenChips();
+
+        // =================================================================
         //  CONSTANTS
         // =================================================================
         const CONFIG_DEMO_ADDRESS = '0xd523699345eac2e601382939b3ef16002d95ed6f';
@@ -3431,10 +4873,11 @@
         // =================================================================
         //  INIT
         // =================================================================
-        loadSortConfig(); // wczytaj zapisane ustawienia sortowania
+        loadSortConfig();
 
         selectedNetwork = loadNetworkFromStorage();
         combinedMode = loadCombinedModeFromStorage();
+        otherNetworksSelected = loadOtherNetworksFromStorage();
         document.getElementById('networkSelect').value = selectedNetwork;
         updateNetworkPill();
 
@@ -3450,7 +4893,7 @@
 
             const cached = loadPortfolioFromCache();
             if (cacheMatchesCurrentContext(cached, savedAddresses)) {
-                showResults(cached.data, cached.addressCount, { stale: true });
+                showResults(cached.data, cached.addressCount, { stale: true, addresses: savedAddresses });
                 document.getElementById('tokenList').classList.add('show');
                 document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'tokens'));
             }
