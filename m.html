@@ -1960,7 +1960,7 @@
             <div class="other-networks-row">
                 <button class="chart-toggle" id="toggleChartBtn" type="button" title="Show portfolio value chart">
                     <i class="ti ti-chart-line" aria-hidden="true"></i>
-                    <span>Chart</span>
+                    <span>Chart 📈</span>
                 </button>
                 <button class="other-networks-toggle" id="otherNetworksBtn" type="button" title="Also load Base, Arbitrum and BNB Chain (slower)">
                     <i class="ti ti-plus" aria-hidden="true"></i>
@@ -4153,10 +4153,11 @@
 
         // Snapshots are scoped per "context" (network/combined-mode + exact address set),
         // so switching wallets or networks doesn't mix unrelated history together.
+        // Note: toggling which extra networks (Base/Arbitrum/BNB) are included does NOT
+        // start a new history — otherwise the chart would reset/disable every time that
+        // selection changes, since it needs at least 2 recorded points to render.
         function getSnapshotContextKey(addresses) {
-            const scope = combinedMode
-                ? (otherNetworksSelected.size ? `combined+${Array.from(otherNetworksSelected).sort().join(',')}` : 'combined')
-                : selectedNetwork;
+            const scope = combinedMode ? 'combined' : selectedNetwork;
             const addrKey = [...addresses].map(a => a.toLowerCase()).sort().join(',');
             return `${scope}::${addrKey}`;
         }
