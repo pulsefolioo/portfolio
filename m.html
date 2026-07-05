@@ -153,13 +153,32 @@
         /* ---------- portfolio bar ---------- */
         .portfolio-bar {
             display: none;
+            /* Breaks out of main's centered, max-width column so the bar's
+               background/border reach the actual browser edges. The inner
+               content is then re-centered and capped back to the app's
+               normal width by .portfolio-bar-inner below. github*/
+            width: 100vw;
+            position: relative;
+            left: 50%;
+            right: 50%;
+            margin-left: -50vw;
+            margin-right: -50vw;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }
+        .portfolio-bar-inner {
+            display: flex;
             align-items: center;
             justify-content: space-between;
             gap: clamp(8px, 1.5vw, 16px);
             flex-wrap: wrap;
-            padding: clamp(10px, 1.5vw, 16px) var(--header-pad);
-            border-bottom: 1px solid var(--border);
-            background: var(--surface);
+            width: 100%;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding-top: clamp(10px, 1.5vw, 16px);
+            padding-bottom: clamp(10px, 1.5vw, 16px);
+            padding-left: var(--main-pad);
+            padding-right: var(--main-pad);
         }
         .portfolio-bar-label {
             font-size: clamp(11px, 1vw, 13px);
@@ -199,11 +218,102 @@
             color: #ff2e93;
         }
 
+        /* ---------- portfolio switcher ---------- */
+        .portfolio-switch-bar {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            padding-left: max(var(--header-pad), calc((100% - var(--max-width)) / 2));
+            padding-right: max(var(--header-pad), calc((100% - var(--max-width)) / 2));
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }
+        .portfolio-switch-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            color: var(--text-secondary);
+        }
+        .portfolio-switch-left > i {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .portfolio-select {
+            appearance: none;
+            -webkit-appearance: none;
+            background: var(--surface-2);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 7px 28px 7px 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(12px, 1vw, 14px);
+            font-weight: 600;
+            max-width: 46vw;
+            text-overflow: ellipsis;
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a8a96' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 14px;
+        }
+        .portfolio-select:hover, .portfolio-select:focus {
+            border-color: var(--purple);
+            outline: none;
+        }
+        .portfolio-switch-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .btn-icon-sm {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            line-height: 1;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .icon-txt {
+            font-size: 15px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .btn-icon-sm:hover {
+            border-color: var(--purple);
+            color: var(--text-primary);
+        }
+        .btn-icon-sm:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+        .btn-icon-sm:disabled:hover {
+            border-color: var(--border);
+            color: var(--text-secondary);
+        }
+        #deletePortfolioBtn:hover:not(:disabled) {
+            border-color: var(--red);
+            color: var(--red);
+        }
+
         @media (max-width: 520px) {
-            .portfolio-bar {
+            .portfolio-bar-inner {
                 flex-direction: column;
                 align-items: stretch;
-                padding: 12px 16px;
+                padding-top: 12px;
+                padding-bottom: 12px;
             }
             .portfolio-bar-actions {
                 width: 100%;
@@ -412,6 +522,13 @@
         .hint-chip:hover {
             border-color: var(--purple);
             color: var(--text-primary);
+        }
+        .search-card-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
         }
 
         .network-selector {
@@ -1187,6 +1304,11 @@
             background: rgba(0, 212, 255, 0.14);
             border: 1px solid rgba(0, 212, 255, 0.35);
         }
+        .chain-badge.combined {
+            color: var(--purple);
+            background: rgba(139, 59, 255, 0.14);
+            border: 1px solid rgba(139, 59, 255, 0.35);
+        }
 
         /* ---------- ATH dream ---------- */
         .ath-dream-row {
@@ -1323,6 +1445,45 @@
             white-space: nowrap;
         }
         .fm-btn.active {
+            background: var(--surface-2);
+            color: var(--text-primary);
+        }
+
+        /* ---------- manual token merge toggle ---------- */
+        .manual-merge-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 10px 0 4px;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .manual-merge-label {
+            font-size: clamp(11px, 0.8vw, 13px);
+            color: var(--text-secondary);
+        }
+        .manual-merge-toggle {
+            display: flex;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 3px;
+            gap: 2px;
+        }
+        .mm-btn {
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: clamp(10px, 0.7vw, 12px);
+            font-weight: 600;
+            padding: clamp(5px, 0.6vw, 8px) clamp(10px, 1vw, 14px);
+            border-radius: 16px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+        .mm-btn.active {
             background: var(--surface-2);
             color: var(--text-primary);
         }
@@ -1572,6 +1733,37 @@
         .token-table th.sortable:hover {
             color: var(--text-primary);
         }
+        .token-th-inner {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .merge-toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 11px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+        }
+        .merge-toggle-btn:hover {
+            color: var(--text-primary);
+            border-color: var(--text-secondary);
+        }
+        .merge-toggle-btn.active {
+            color: var(--cyan);
+            background: rgba(0, 212, 255, 0.14);
+            border-color: rgba(0, 212, 255, 0.35);
+        }
         .token-table td {
             padding: 8px 6px;
             border-bottom: 1px solid var(--border);
@@ -1812,6 +2004,18 @@
         </nav>
     </header>
 
+    <div class="portfolio-switch-bar" id="portfolioSwitchBar">
+        <div class="portfolio-switch-left">
+            <span class="icon-txt" aria-hidden="true">💼</span>
+            <select id="portfolioSelect" class="portfolio-select" aria-label="Select portfolio"></select>
+        </div>
+        <div class="portfolio-switch-actions">
+            <button class="btn-icon-sm" id="renamePortfolioBtn" type="button" title="Rename portfolio" aria-label="Rename portfolio">✎</button>
+            <button class="btn-icon-sm" id="deletePortfolioBtn" type="button" title="Delete portfolio" aria-label="Delete portfolio">🗑</button>
+            <button class="btn-icon-sm" id="addPortfolioBtn" type="button" title="Create new portfolio" aria-label="Create new portfolio">+</button>
+        </div>
+    </div>
+
     <main>
 
         <div class="search-card" id="searchCard">
@@ -1865,10 +2069,16 @@
             <div class="hint-row">
                 <div class="hint-chip" data-demo="1">Use demo address</div>
             </div>
+            <div class="search-card-footer">
+                <button class="btn-bar" id="newPortfolioBtn" type="button">⟳ Clear addresses</button>
+            </div>
         </div>
 
         <div class="token-card" id="tokenCard">
-            <div class="search-label">Missing a token? Add it</div>
+            <div class="search-card-head">
+                <div class="search-label">Missing a token? Add it</div>
+                <button class="btn-collapse show" id="closeTokenCardBtn" type="button" title="Close" aria-label="Close"><svg class="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="M6 6l12 12"></path></svg></button>
+            </div>
             <div class="token-add-row">
                 <input id="customTokenInput" type="text" placeholder="Token contract address 0x…" autocomplete="off" />
                 <button class="btn-grad" id="addTokenBtn" type="button">Add</button>
@@ -1883,6 +2093,15 @@
             <div class="manual-token-row">
                 <input id="manualTokenSymbol" type="text" placeholder="Token symbol (e.g. BTC, DOGE, SOL)" autocomplete="off" />
                 <button class="btn-grad" id="manualTokenCheckBtn" type="button">Check</button>
+            </div>
+            <div class="token-empty-hint">Use this for tokens you hold on an exchange (Binance, Coinbase…) or on a blockchain this app doesn't scan directly — enter the amount you hold and its live price gets tracked here alongside your wallet balances.</div>
+
+            <div class="manual-merge-row">
+                <span class="manual-merge-label">If a manual token matches one already in your portfolio</span>
+                <div class="manual-merge-toggle">
+                    <button class="mm-btn" data-mmmode="separate" type="button" title="Show manually added tokens as their own separate row">Keep separate</button>
+                    <button class="mm-btn" data-mmmode="merge" type="button" title="Add the manual amount on top of the matching on-chain token">Sum with matching token</button>
+                </div>
             </div>
 
             <div class="manual-token-result" id="manualTokenResult">
@@ -2014,11 +2233,12 @@
         </div>
 
         <div class="portfolio-bar" id="portfolioBar">
-            <div class="portfolio-bar-label" id="portfolioBarLabel">Saved portfolio</div>
-            <div class="portfolio-bar-actions">
-                <button class="btn-bar" id="editPortfolioBtn" type="button"><i class="ti ti-pencil" aria-hidden="true"></i> Edit portfolio</button>
-                <button class="btn-bar" id="toggleTokenCardBtn" type="button"><i class="ti ti-coin" aria-hidden="true"></i> Missing a token? Add it</button>
-                <button class="btn-bar" id="newPortfolioBtn" type="button"><i class="ti ti-plus" aria-hidden="true"></i> Create new portfolio</button>
+            <div class="portfolio-bar-inner">
+                <div class="portfolio-bar-label" id="portfolioBarLabel">Saved portfolio</div>
+                <div class="portfolio-bar-actions">
+                    <button class="btn-bar" id="editPortfolioBtn" type="button"><i class="ti ti-pencil" aria-hidden="true"></i> Edit addresses</button>
+                    <button class="btn-bar" id="toggleTokenCardBtn" type="button"><i class="ti ti-coin" aria-hidden="true"></i> Missing a token? Add it</button>
+                </div>
             </div>
         </div>
 
@@ -2160,6 +2380,59 @@
                 ]
             }
         };
+
+        // =================================================================
+        //  PORTFOLIOS (multiple saved wallets, switchable)
+        // =================================================================
+        const PORTFOLIOS_LIST_KEY = 'pulsefolio_portfolios_list';
+        const ACTIVE_PORTFOLIO_KEY = 'pulsefolio_active_portfolio_id';
+
+        function loadPortfoliosList() {
+            try {
+                const raw = localStorage.getItem(PORTFOLIOS_LIST_KEY);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) && parsed.length ? parsed : null;
+            } catch (err) { return null; }
+        }
+
+        function savePortfoliosList(list) {
+            try { localStorage.setItem(PORTFOLIOS_LIST_KEY, JSON.stringify(list)); } catch (err) { console.warn(err); }
+        }
+
+        function loadActivePortfolioId(list) {
+            try {
+                const val = localStorage.getItem(ACTIVE_PORTFOLIO_KEY);
+                if (val && list.some(p => p.id === val)) return val;
+            } catch (err) {}
+            return list[0].id;
+        }
+
+        function saveActivePortfolioId(id) {
+            try { localStorage.setItem(ACTIVE_PORTFOLIO_KEY, id); } catch (err) { console.warn(err); }
+        }
+
+        function generatePortfolioId() {
+            return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+        }
+
+        // The very first portfolio keeps the plain, unsuffixed storage keys so anyone
+        // upgrading from a single-portfolio version of PulseFolio keeps their data with
+        // zero migration. Any portfolio created afterwards gets its own suffix.
+        let portfoliosList = loadPortfoliosList();
+        if (!portfoliosList) {
+            portfoliosList = [{ id: 'default', name: 'Portfolio 1' }];
+            savePortfoliosList(portfoliosList);
+        }
+        let activePortfolioId = loadActivePortfolioId(portfoliosList);
+
+        function portfolioSuffix() {
+            return activePortfolioId && activePortfolioId !== 'default' ? `__${activePortfolioId}` : '';
+        }
+
+        function getActivePortfolio() {
+            return portfoliosList.find(p => p.id === activePortfolioId) || portfoliosList[0];
+        }
 
         let selectedNetwork = 'pulsechain';
         let combinedMode = false; // true = show PulseChain + Ethereum together
@@ -2310,6 +2583,10 @@
 
         const ICON_OVERRIDES = {
             WETH: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png',
+            ETH: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png',
+            DAI: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png',
+            USDC: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png',
+            USDT: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png',
             BTC: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/bitcoin/info/logo.png',
             DOGE: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/dogecoin/info/logo.png',
             SOL: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/info/logo.png',
@@ -2347,8 +2624,62 @@
                 .replace(/"/g, '&quot;');
         }
 
+        // ---------- icon caching ----------
+        // Token icons (from GitHub/DexScreener/CoinGecko) are small, unchanging images that
+        // get re-rendered constantly (every sort click, tab switch, merge toggle re-draws the
+        // whole table). Relying only on the browser's HTTP cache means they can still be
+        // re-fetched over the network once their Cache-Control lifetime expires. Instead we
+        // fetch each icon once, store it as a data URL in localStorage, and reuse that data URL
+        // directly as the <img src> from then on — zero network requests for icons already seen,
+        // even across page reloads.
+        const ICON_CACHE_STORAGE_KEY = 'pulsefolio_icon_cache_v1';
+        const ICON_CACHE_MAX_ENTRIES = 250;
+        let iconDataCache = {};
+        try {
+            const rawIconCache = localStorage.getItem(ICON_CACHE_STORAGE_KEY);
+            if (rawIconCache) iconDataCache = JSON.parse(rawIconCache) || {};
+        } catch (err) { iconDataCache = {}; }
+        const iconCachePending = new Set();
+
+        function persistIconCache() {
+            const keys = Object.keys(iconDataCache);
+            if (keys.length > ICON_CACHE_MAX_ENTRIES) {
+                // Simple FIFO eviction so the cache can't grow without bound.
+                for (const k of keys.slice(0, keys.length - ICON_CACHE_MAX_ENTRIES)) delete iconDataCache[k];
+            }
+            try { localStorage.setItem(ICON_CACHE_STORAGE_KEY, JSON.stringify(iconDataCache)); }
+            catch (err) { /* storage full/blocked — icon just won't persist, no functional impact */ }
+        }
+
+        function cacheIconInBackground(url) {
+            if (!url || iconDataCache[url] || iconCachePending.has(url)) return;
+            iconCachePending.add(url);
+            fetch(url)
+                .then(resp => { if (!resp.ok) throw new Error('bad status'); return resp.blob(); })
+                .then(blob => new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                }))
+                .then(dataUrl => {
+                    iconDataCache[url] = dataUrl;
+                    persistIconCache();
+                })
+                .catch(() => { /* CORS-blocked or network error — icon still loads directly, just not cached */ })
+                .finally(() => iconCachePending.delete(url));
+        }
+
         function iconImg(url) {
             if (!url) return '';
+            const cached = iconDataCache[url];
+            if (cached) {
+                // Already cached — served straight from localStorage, no network request at all.
+                return `<img src="${cached}" alt="" loading="lazy" onerror="this.style.display='none'" />`;
+            }
+            // First time seeing this icon — load it normally now, and cache it in the
+            // background so the next render (or the next visit) doesn't hit the network again.
+            cacheIconInBackground(url);
             return `<img src="${escapeHtml(url)}" alt="" loading="lazy" onerror="this.style.display='none'" />`;
         }
 
@@ -2419,23 +2750,29 @@
         // =================================================================
         //  LOCAL STORAGE
         // =================================================================
-        const STORAGE_KEY = 'pulsefolio_saved_addresses';
-        const TOKENS_STORAGE_KEY = 'pulsefolio_custom_tokens';
+        // NOTE: these are functions (not plain strings) because each one is namespaced
+        // to the currently active portfolio via portfolioSuffix() — this is what lets
+        // several portfolios keep independent addresses/tokens/network/cache.
+        const STORAGE_KEY = () => 'pulsefolio_saved_addresses' + portfolioSuffix();
+        const TOKENS_STORAGE_KEY = () => 'pulsefolio_custom_tokens' + portfolioSuffix();
         const FARM_MODE_STORAGE_KEY = 'pulsefolio_farm_display_mode';
-        const NETWORK_STORAGE_KEY = 'pulsefolio_selected_network';
-        const COMBINED_MODE_STORAGE_KEY = 'pulsefolio_combined_mode';
-        const OTHER_NETWORKS_STORAGE_KEY = 'pulsefolio_other_networks';
-        const PORTFOLIO_CACHE_KEY = 'pulsefolio_portfolio_cache';
+        const NETWORK_STORAGE_KEY = () => 'pulsefolio_selected_network' + portfolioSuffix();
+        const COMBINED_MODE_STORAGE_KEY = () => 'pulsefolio_combined_mode' + portfolioSuffix();
+        const OTHER_NETWORKS_STORAGE_KEY = () => 'pulsefolio_other_networks' + portfolioSuffix();
+        const PORTFOLIO_CACHE_KEY = () => 'pulsefolio_portfolio_cache' + portfolioSuffix();
         const SORT_STORAGE_KEY = 'pulsefolio_sort_config';
-        const MANUAL_TOKENS_STORAGE_KEY = 'pulsefolio_manual_tokens';
+        const MANUAL_TOKENS_STORAGE_KEY = () => 'pulsefolio_manual_tokens' + portfolioSuffix();
+        const MANUAL_MERGE_MODE_STORAGE_KEY = () => 'pulsefolio_manual_merge_mode' + portfolioSuffix();
+        const WRAP_MERGE_STORAGE_KEY = () => 'pulsefolio_wrap_merge_enabled' + portfolioSuffix();
+        const COINGECKO_ICONS_CACHE_KEY = 'pulsefolio_coingecko_icons_cache';
 
         function saveAddressesToStorage(addresses) {
-            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(addresses)); } catch (err) { console.warn(err); }
+            try { localStorage.setItem(STORAGE_KEY(), JSON.stringify(addresses)); } catch (err) { console.warn(err); }
         }
 
         function loadAddressesFromStorage() {
             try {
-                const raw = localStorage.getItem(STORAGE_KEY);
+                const raw = localStorage.getItem(STORAGE_KEY());
                 if (!raw) return null;
                 const parsed = JSON.parse(raw);
                 return Array.isArray(parsed) && parsed.length ? parsed : null;
@@ -2443,12 +2780,12 @@
         }
 
         function clearAddressesFromStorage() {
-            try { localStorage.removeItem(STORAGE_KEY); } catch (err) {}
+            try { localStorage.removeItem(STORAGE_KEY()); } catch (err) {}
         }
 
         function loadCustomTokensFromStorage() {
             try {
-                const raw = localStorage.getItem(TOKENS_STORAGE_KEY);
+                const raw = localStorage.getItem(TOKENS_STORAGE_KEY());
                 if (!raw) return [];
                 const parsed = JSON.parse(raw);
                 return Array.isArray(parsed) ? parsed : [];
@@ -2456,32 +2793,32 @@
         }
 
         function saveCustomTokensToStorage(tokens) {
-            try { localStorage.setItem(TOKENS_STORAGE_KEY, JSON.stringify(tokens)); } catch (err) { console.warn(err); }
+            try { localStorage.setItem(TOKENS_STORAGE_KEY(), JSON.stringify(tokens)); } catch (err) { console.warn(err); }
         }
 
         function loadNetworkFromStorage() {
             try {
-                const val = localStorage.getItem(NETWORK_STORAGE_KEY);
+                const val = localStorage.getItem(NETWORK_STORAGE_KEY());
                 if (val && NETWORKS[val]) return val;
                 return 'pulsechain';
             } catch { return 'pulsechain'; }
         }
 
         function saveNetworkToStorage(net) {
-            try { localStorage.setItem(NETWORK_STORAGE_KEY, net); } catch (err) { console.warn(err); }
+            try { localStorage.setItem(NETWORK_STORAGE_KEY(), net); } catch (err) { console.warn(err); }
         }
 
         function loadCombinedModeFromStorage() {
-            try { return localStorage.getItem(COMBINED_MODE_STORAGE_KEY) === '1'; } catch { return false; }
+            try { return localStorage.getItem(COMBINED_MODE_STORAGE_KEY()) === '1'; } catch { return false; }
         }
 
         function saveCombinedModeToStorage(val) {
-            try { localStorage.setItem(COMBINED_MODE_STORAGE_KEY, val ? '1' : '0'); } catch (err) { console.warn(err); }
+            try { localStorage.setItem(COMBINED_MODE_STORAGE_KEY(), val ? '1' : '0'); } catch (err) { console.warn(err); }
         }
 
         function loadOtherNetworksFromStorage() {
             try {
-                const raw = localStorage.getItem(OTHER_NETWORKS_STORAGE_KEY);
+                const raw = localStorage.getItem(OTHER_NETWORKS_STORAGE_KEY());
                 if (!raw) return new Set();
                 const parsed = JSON.parse(raw);
                 if (!Array.isArray(parsed)) return new Set();
@@ -2490,7 +2827,7 @@
         }
 
         function saveOtherNetworksToStorage(set) {
-            try { localStorage.setItem(OTHER_NETWORKS_STORAGE_KEY, JSON.stringify(Array.from(set))); } catch (err) { console.warn(err); }
+            try { localStorage.setItem(OTHER_NETWORKS_STORAGE_KEY(), JSON.stringify(Array.from(set))); } catch (err) { console.warn(err); }
         }
 
         function savePortfolioToCache(data, addressCount, addresses) {
@@ -2504,13 +2841,13 @@
                     otherNetworks: combinedMode ? Array.from(otherNetworksSelected).sort() : [],
                     savedAt: Date.now(),
                 };
-                localStorage.setItem(PORTFOLIO_CACHE_KEY, JSON.stringify(snapshot));
+                localStorage.setItem(PORTFOLIO_CACHE_KEY(), JSON.stringify(snapshot));
             } catch (err) { console.warn(err); }
         }
 
         function loadPortfolioFromCache() {
             try {
-                const raw = localStorage.getItem(PORTFOLIO_CACHE_KEY);
+                const raw = localStorage.getItem(PORTFOLIO_CACHE_KEY());
                 if (!raw) return null;
                 const parsed = JSON.parse(raw);
                 if (!parsed || !parsed.data || !Array.isArray(parsed.addresses)) return null;
@@ -2533,11 +2870,84 @@
         }
 
         // =================================================================
+        //  COINGECKO ICONS CACHE (dla sieci innych niż PulseChain)
+        // =================================================================
+        function loadCoinGeckoIconsCache() {
+            try {
+                const raw = localStorage.getItem(COINGECKO_ICONS_CACHE_KEY);
+                if (!raw) return {};
+                const parsed = JSON.parse(raw);
+                if (typeof parsed !== 'object') return {};
+                // Usuń wpisy starsze niż 30 dni
+                const now = Date.now();
+                const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+                for (const symbol in parsed) {
+                    if (parsed[symbol].timestamp && (now - parsed[symbol].timestamp) > thirtyDaysMs) {
+                        delete parsed[symbol];
+                    }
+                }
+                return parsed;
+            } catch { return {}; }
+        }
+
+        function saveCoinGeckoIconsCache(cache) {
+            try { localStorage.setItem(COINGECKO_ICONS_CACHE_KEY, JSON.stringify(cache)); } catch (err) { console.warn(err); }
+        }
+
+        let coingeckoIconsCache = loadCoinGeckoIconsCache();
+
+        async function fetchCoinGeckoIcon(symbol) {
+            const key = (symbol || '').toUpperCase();
+            if (!key) return null;
+
+            // Sprawdź cache
+            if (coingeckoIconsCache[key] && coingeckoIconsCache[key].icon) {
+                return coingeckoIconsCache[key].icon;
+            }
+
+            // Nie pobieraj ponownie jeśli wiadomo, że ikony nie ma
+            if (coingeckoIconsCache[key] && coingeckoIconsCache[key].notFound) {
+                return null;
+            }
+
+            try {
+                const url = `https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(key)}`;
+                const resp = await fetch(url);
+                if (!resp.ok) {
+                    if (resp.status === 429) {
+                        console.warn('CoinGecko rate limit dla ikony');
+                    }
+                    return null;
+                }
+                const data = await resp.json();
+                const coins = data.coins || [];
+
+                // Szukaj dokładnego dopasowania symbolu
+                const exact = coins.find(c => c.symbol && c.symbol.toLowerCase() === key.toLowerCase());
+                const candidate = exact || coins[0];
+
+                if (!candidate) {
+                    coingeckoIconsCache[key] = { notFound: true, timestamp: Date.now() };
+                    saveCoinGeckoIconsCache(coingeckoIconsCache);
+                    return null;
+                }
+
+                const icon = candidate.thumb || candidate.small || null;
+                coingeckoIconsCache[key] = { icon, timestamp: Date.now() };
+                saveCoinGeckoIconsCache(coingeckoIconsCache);
+                return icon;
+            } catch (err) {
+                console.error('Błąd pobierania ikony z CoinGecko:', err);
+                return null;
+            }
+        }
+
+        // =================================================================
         //  MANUAL TOKENS (CoinGecko)
         // =================================================================
         function loadManualTokensFromStorage() {
             try {
-                const raw = localStorage.getItem(MANUAL_TOKENS_STORAGE_KEY);
+                const raw = localStorage.getItem(MANUAL_TOKENS_STORAGE_KEY());
                 if (!raw) return [];
                 const parsed = JSON.parse(raw);
                 return Array.isArray(parsed) ? parsed : [];
@@ -2545,10 +2955,29 @@
         }
 
         function saveManualTokensToStorage(tokens) {
-            try { localStorage.setItem(MANUAL_TOKENS_STORAGE_KEY, JSON.stringify(tokens)); } catch (err) { console.warn(err); }
+            try { localStorage.setItem(MANUAL_TOKENS_STORAGE_KEY(), JSON.stringify(tokens)); } catch (err) { console.warn(err); }
         }
 
         let manualTokens = loadManualTokensFromStorage();
+
+        // 'separate' (default) = manually added tokens always get their own row with a "manual" badge.
+        // 'merge' = if the symbol already exists on-chain, the manual amount is summed into that row instead.
+        function loadManualMergeModeFromStorage() {
+            try {
+                const val = localStorage.getItem(MANUAL_MERGE_MODE_STORAGE_KEY());
+                return val === 'merge' ? 'merge' : 'separate';
+            } catch (err) { return 'separate'; }
+        }
+        function saveManualMergeModeToStorage(val) {
+            try { localStorage.setItem(MANUAL_MERGE_MODE_STORAGE_KEY(), val); } catch (err) { console.warn(err); }
+        }
+        let manualMergeMode = loadManualMergeModeFromStorage();
+
+        function syncManualMergeButtons() {
+            document.querySelectorAll('.mm-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mmmode === manualMergeMode);
+            });
+        }
 
         // CoinGecko API – search by symbol
         async function searchTokenOnCoingecko(symbol) {
@@ -2652,41 +3081,155 @@
             }
         }
 
+        // Whether wrapped tokens (WETH, etc.) get folded into their native counterpart (ETH).
+        // Toggled from the small button next to the "Token" column header; on by default.
+        function loadWrapMergeFromStorage() {
+            try {
+                const val = localStorage.getItem(WRAP_MERGE_STORAGE_KEY());
+                return val === null ? true : val === 'true';
+            } catch (err) { return true; }
+        }
+        function saveWrapMergeToStorage(val) {
+            try { localStorage.setItem(WRAP_MERGE_STORAGE_KEY(), val ? 'true' : 'false'); } catch (err) { console.warn(err); }
+        }
+        let wrapMergeEnabled = loadWrapMergeFromStorage();
+
+        // Tokens that should always be summed together into one row, since they represent
+        // the same underlying asset (e.g. wrapped vs. native). Key = symbol to fold in,
+        // value = canonical symbol it gets summed into.
+        const TOKEN_EQUIVALENTS = {
+            WETH: 'ETH',
+        };
+
+        function canonicalSymbol(symbol) {
+            const upper = (symbol || '').toUpperCase();
+            return TOKEN_EQUIVALENTS[upper] || upper;
+        }
+
+        // Symbols that participate in an equivalence mapping (either as the wrapped side,
+        // like WETH, or as the canonical target, like ETH). Only these get folded together;
+        // every other symbol is left exactly as-is, even if it repeats across networks
+        // (e.g. USDC on PulseChain and USDC on Ethereum stay as two separate, badged rows).
+        const EQUIVALENCE_RELEVANT_SYMBOLS = new Set([
+            ...Object.keys(TOKEN_EQUIVALENTS),
+            ...Object.values(TOKEN_EQUIVALENTS),
+        ]);
+
+        // Folds equivalent-asset rows (e.g. WETH into ETH) into a single row, summing
+        // amount/usd and keeping the canonical token's identity (icon, name, network badge).
+        // Works across networks and farm-derived rows alike — anything that reaches this
+        // function with a symbol in TOKEN_EQUIVALENTS (or its canonical target) gets folded
+        // together. Symbols with no equivalence mapping (e.g. USDC) pass through untouched,
+        // so unrelated same-symbol tokens from different networks are never merged.
+        function applyTokenEquivalents(tokens) {
+            if (!wrapMergeEnabled) return tokens;
+
+            const passthrough = [];
+            const order = []; // preserves first-seen order of canonical symbols
+            const bySymbol = new Map();
+            const networksSeen = new Map(); // canon -> Set of networks contributing to it
+
+            for (const t of tokens) {
+                const upperSymbol = (t.symbol || '').toUpperCase();
+                if (!EQUIVALENCE_RELEVANT_SYMBOLS.has(upperSymbol)) {
+                    passthrough.push(t);
+                    continue;
+                }
+                const canon = canonicalSymbol(upperSymbol);
+                const isEquivalent = canon !== upperSymbol;
+
+                const existing = bySymbol.get(canon);
+                if (!existing) {
+                    const merged = { ...t };
+                    if (isEquivalent) {
+                        // Only an equivalent (e.g. WETH) was found so far — display it under
+                        // the canonical symbol/name while we wait to see if ETH also shows up.
+                        merged.symbol = canon;
+                        merged.name = canon;
+                        const style = tokenStyle(canon);
+                        Object.assign(merged, style);
+                    }
+                    if (t.manuallyAdded && isEquivalent) merged.summedManual = true;
+                    bySymbol.set(canon, merged);
+                    order.push(canon);
+                    networksSeen.set(canon, new Set(t.network ? [t.network] : []));
+                } else {
+                    const prevRaw = existing.rawAmount || 0;
+                    const addedRaw = t.rawAmount || 0;
+                    const prevUsd = existing.usd || 0;
+                    const addedUsd = t.usd || 0;
+                    const newUsd = prevUsd + addedUsd;
+                    const prevChange = existing.change ?? 0;
+                    const addedChange = t.change ?? 0;
+                    existing.change = newUsd > 0 ?
+                        (prevChange * prevUsd + addedChange * addedUsd) / newUsd :
+                        (existing.change ?? t.change);
+                    existing.rawAmount = prevRaw + addedRaw;
+                    existing.amount = formatTokenAmount(existing.rawAmount);
+                    existing.usd = newUsd;
+                    if (existing.noPrice && !t.noPrice) existing.noPrice = false;
+                    if (t.manuallyAdded || existing.manuallyAdded) {
+                        // A manual row got folded in alongside an on-chain row — flag it,
+                        // but the combined row itself is no longer purely "manual".
+                        existing.summedManual = true;
+                        existing.manuallyAdded = false;
+                    }
+                    // A farm-derived row folded into a wallet row (or vice versa) — keep the
+                    // "farm" badge if any of the contributing rows came from a farm, but the
+                    // combined row itself isn't wallet-only anymore.
+                    existing.fromFarm = existing.fromFarm || t.fromFarm || false;
+                    existing.isAth = existing.isAth || t.isAth || false;
+                    // Prefer the canonical (non-equivalent) token's icon/name if we have one.
+                    if (!isEquivalent) {
+                        existing.symbol = canon;
+                        existing.name = t.name || existing.name;
+                        existing.icon = t.icon || existing.icon;
+                        if (t.address) existing.address = t.address;
+                    }
+                    if (t.network) networksSeen.get(canon).add(t.network);
+                }
+            }
+
+            // If a merged row combines tokens from more than one network, a single specific
+            // network badge would be misleading — show a "Combined" tag instead.
+            for (const [canon, nets] of networksSeen) {
+                if (nets.size > 1) bySymbol.get(canon).network = 'combined';
+            }
+
+            return [...passthrough, ...order.map(sym => bySymbol.get(sym))];
+        }
+
         // Merge manual tokens into portfolio data
         function mergeManualTokensIntoPortfolio(portfolioData) {
-            if (!manualTokens.length) return portfolioData;
-
-            const existingSymbols = new Set(portfolioData.tokens.map(t => t.symbol.toUpperCase()));
+            // Work on a shallow copy of on-chain tokens so summed ones can be mutated
+            // without touching the objects cached elsewhere.
+            const baseTokens = portfolioData.tokens.map(t => ({ ...t }));
             const manualTokenObjects = [];
 
             for (const mt of manualTokens) {
-                // If a token with the same symbol already exists (e.g., on-chain BTC), skip or merge?
-                // We'll add it as a separate entry with a "manual" flag.
                 const style = tokenStyle(mt.symbol);
                 const usd = mt.amount * mt.price;
                 const change = mt.change24h ?? null;
 
-                // Check if a token with the same symbol already exists in the portfolio
-                const existing = portfolioData.tokens.find(t => t.symbol.toUpperCase() === mt.symbol.toUpperCase() && !t
-                .manuallyAdded);
+                // Check if a non-manual token with the same symbol already exists in the portfolio
+                const existing = manualMergeMode === 'merge' ?
+                    baseTokens.find(t => t.symbol.toUpperCase() === mt.symbol.toUpperCase() && !t.manuallyAdded) :
+                    null;
+
                 if (existing) {
-                    // Merge: add amount and usd, but keep the on-chain data as primary
-                    // We'll add the manual amount as an additional entry with a "manual" flag
-                    // Or we can merge them - let's add as separate with a manual badge
-                    manualTokenObjects.push({
-                        symbol: mt.symbol.toUpperCase(),
-                        name: mt.name || mt.symbol.toUpperCase(),
-                        amount: formatTokenAmount(mt.amount),
-                        rawAmount: mt.amount,
-                        usd: usd,
-                        change: change,
-                        icon: resolveIcon(mt.symbol, mt.icon),
-                        address: `manual_${mt.coingeckoId}`,
-                        manuallyAdded: true,
-                        price: mt.price,
-                        noPrice: !mt.price || mt.price === 0,
-                        ...style,
-                    });
+                    // Sum mode: fold the manual amount into the matching on-chain token
+                    // instead of adding a separate row.
+                    const existingRaw = existing.rawAmount || 0;
+                    const newRaw = existingRaw + mt.amount;
+                    const newUsd = (existing.usd || 0) + usd;
+                    existing.rawAmount = newRaw;
+                    existing.amount = formatTokenAmount(newRaw);
+                    existing.usd = newUsd;
+                    existing.summedManual = true;
+                    if (existing.noPrice && mt.price) {
+                        existing.noPrice = false;
+                        existing.price = mt.price;
+                    }
                 } else {
                     manualTokenObjects.push({
                         symbol: mt.symbol.toUpperCase(),
@@ -2706,7 +3249,9 @@
             }
 
             // Merge into portfolioData.tokens
-            const allTokens = [...portfolioData.tokens, ...manualTokenObjects];
+            let allTokens = [...baseTokens, ...manualTokenObjects];
+            // Fold equivalent-asset rows together (e.g. WETH summed into ETH)
+            allTokens = applyTokenEquivalents(allTokens);
             // Sort by USD value
             allTokens.sort((a, b) => (b.usd || 0) - (a.usd || 0));
 
@@ -2742,7 +3287,7 @@
                 const iconHtml = mt.icon ? iconImg(mt.icon) : '';
                 return `
               <div class="token-chip" title="${escapeHtml(mt.name)} (${escapeHtml(mt.symbol)}) · ${fmtUSD(mt.amount * mt.price)}">
-                <span class="mt-chip-icon" style="background: linear-gradient(135deg, ${style.color1}, ${style.color2});">${escapeHtml(style.letter)}${iconHtml}</span>
+                <span class="mt-chip-icon" style="background: ${mt.icon ? 'var(--surface-2)' : `linear-gradient(135deg, ${style.color1}, ${style.color2})`}; display: flex; align-items: center; justify-content: center;">${mt.icon ? '' : escapeHtml(style.letter)}${iconHtml}</span>
                 ${escapeHtml(mt.symbol.toUpperCase())}
                 <span style="color:var(--text-muted);font-weight:400;font-size:0.85em;">${formatTokenAmount(mt.amount)}</span>
                 <button class="token-chip-remove" type="button" data-id="${escapeHtml(mt.coingeckoId)}" title="Remove ${escapeHtml(mt.symbol)}" aria-label="Remove ${escapeHtml(mt.symbol)}">×</button>
@@ -2789,10 +3334,17 @@
                 const priceEl = document.getElementById('mtPrice');
                 const changeEl = document.getElementById('mtChange');
 
-                iconEl.style.background = `linear-gradient(135deg, ${style.color1}, ${style.color2})`;
-                iconEl.textContent = style.letter;
                 if (data.icon) {
+                    iconEl.style.background = 'var(--surface-2)';
+                    iconEl.style.display = 'flex';
+                    iconEl.style.alignItems = 'center';
+                    iconEl.style.justifyContent = 'center';
+                    iconEl.textContent = '';
                     iconEl.innerHTML = iconImg(data.icon);
+                } else {
+                    iconEl.style.background = `linear-gradient(135deg, ${style.color1}, ${style.color2})`;
+                    iconEl.style.display = 'block';
+                    iconEl.textContent = style.letter;
                 }
 
                 nameEl.textContent = data.name;
@@ -3006,7 +3558,7 @@
                     const changeText = hasChange ? fmtPct(w.change24h) : '—';
                     return `
                     <div class="row">
-                        <div class="icon" style="background: linear-gradient(135deg, ${style.color1}, ${style.color2});">${escapeHtml(style.letter)}${iconImg(w.icon)}</div>
+                        <div class="icon" style="background: ${w.icon ? 'var(--surface-2)' : `linear-gradient(135deg, ${style.color1}, ${style.color2})`}; display: flex; align-items: center; justify-content: center;">${w.icon ? '' : escapeHtml(style.letter)}${iconImg(w.icon)}</div>
                         <div class="row-info">
                             <div class="row-name">${escapeHtml(w.symbol)}</div>
                             <div class="row-sub">${escapeHtml(w.name)}</div>
@@ -3063,7 +3615,16 @@
                 const result = await searchTokenOnCoingecko(value);
                 lastCheckedWatchToken = result;
 
-                document.getElementById('wlIcon').innerHTML = result.icon ? iconImg(result.icon) : escapeHtml(result.symbol[0] || '?');
+                const wlIconEl = document.getElementById('wlIcon');
+                const style = tokenStyle(result.symbol);
+                if (result.icon) {
+                    wlIconEl.style.background = 'var(--surface-2)';
+                    wlIconEl.textContent = '';
+                    wlIconEl.innerHTML = iconImg(result.icon);
+                } else {
+                    wlIconEl.style.background = `linear-gradient(135deg, ${style.color1}, ${style.color2})`;
+                    wlIconEl.textContent = escapeHtml(result.symbol[0] || '?');
+                }
                 document.getElementById('wlName').textContent = result.name;
                 document.getElementById('wlSymbol').textContent = result.symbol;
                 document.getElementById('wlPrice').textContent = result.price ? formatPrice(result.price) : 'No price data';
@@ -3223,6 +3784,7 @@
             const unique = [...new Set(addresses.map(a => a.toLowerCase()))];
             const priceMap = {};
             const chain = getNetwork().dexChain;
+            const isNonPulseChain = selectedNetwork !== 'pulsechain';
 
             for (const chunk of chunkArray(unique, 30)) {
                 const url = `https://api.dexscreener.com/tokens/v1/${chain}/${chunk.join(',')}`;
@@ -3231,13 +3793,14 @@
                     const json = await res.json();
                     const pairs = Array.isArray(json) ? json : (json.pairs || []);
                     const byBase = {};
+                    const byQuote = {};
 
                     for (const pair of pairs) {
                         if (pair.chainId !== chain) continue;
                         const base = pair.baseToken?.address?.toLowerCase();
-                        if (!base) continue;
-                        if (!byBase[base]) byBase[base] = [];
-                        byBase[base].push(pair);
+                        const quote = pair.quoteToken?.address?.toLowerCase();
+                        if (base) (byBase[base] ??= []).push(pair);
+                        if (quote) (byQuote[quote] ??= []).push(pair);
                     }
 
                     for (const [addr, pairsList] of Object.entries(byBase)) {
@@ -3249,12 +3812,50 @@
                             price,
                             change24h: bestPair.priceChange?.h24 ?? null,
                             icon: iconPair?.info?.imageUrl ?? null,
+                            symbol: bestPair.baseToken?.symbol || null,
+                        };
+                    }
+
+                    // Some tokens — stablecoins like DAI/USDC/USDT especially — are almost
+                    // always the *quote* side of a pair (e.g. "WPLS/DAI") rather than the
+                    // base, so they'd never get a price above. Derive their USD price from
+                    // the pair's base-in-USD price divided by the base/quote exchange rate.
+                    for (const [addr, pairsList] of Object.entries(byQuote)) {
+                        if (priceMap[addr]) continue; // already priced as a base token
+                        const bestPair = pairsList.sort((a, b) => (b.liquidity?.usd ?? 0) - (a.liquidity?.usd ?? 0))[0];
+                        const baseUsd = parseFloat(bestPair.priceUsd);
+                        const nativeRate = parseFloat(bestPair.priceNative);
+                        if (Number.isNaN(baseUsd) || !Number.isFinite(nativeRate) || nativeRate <= 0) continue;
+                        priceMap[addr] = {
+                            price: baseUsd / nativeRate,
+                            change24h: null, // base token's 24h % change doesn't translate to the quote side
+                            icon: null,
+                            symbol: bestPair.quoteToken?.symbol || null,
                         };
                     }
                 } catch (err) {
                     console.error('DexScreener error:', err);
                 }
                 await sleep(150);
+            }
+
+            // Dla sieci innych niż PulseChain, pobierz ikony z CoinGecko dla tokenów bez ikony
+            if (isNonPulseChain) {
+                const tokensNeedingIcons = Object.entries(priceMap)
+                    .filter(([addr, data]) => !data.icon && data.symbol)
+                    .map(([addr, data]) => ({ addr, symbol: data.symbol }));
+
+                for (const { addr, symbol } of tokensNeedingIcons) {
+                    try {
+                        const iconFromCoinGecko = await fetchCoinGeckoIcon(symbol);
+                        if (iconFromCoinGecko) {
+                            priceMap[addr].icon = iconFromCoinGecko;
+                        }
+                    } catch (err) {
+                        console.warn(`Błąd pobierania ikony z CoinGecko dla ${symbol}:`, err);
+                    }
+                    await sleep(100); // Rate limiting dla CoinGecko
+                }
             }
 
             return priceMap;
@@ -3781,7 +4382,7 @@
                 const raw = localStorage.getItem(SORT_STORAGE_KEY);
                 if (raw) {
                     const parsed = JSON.parse(raw);
-                    if (parsed.key && parsed.direction) {
+                    if (parsed.key && parsed.key !== 'token' && parsed.direction) {
                         sortConfig = parsed;
                         return;
                     }
@@ -3929,6 +4530,10 @@
                 result = combined;
             }
 
+            // Fold equivalent-asset rows together (e.g. WETH summed into ETH), including
+            // rows that came from farms/staking and rows from other networks.
+            result = applyTokenEquivalents(result);
+
             for (const t of result) {
                 t.price = t.rawAmount > 0 ? (t.usd || 0) / t.rawAmount : 0;
             }
@@ -3958,8 +4563,13 @@
                 if (col === 'value') label = 'Value';
                 const isActive = col === activeKey;
                 const arrow = isActive ? (sortConfig.direction === 'asc' ? ' ↑' : ' ↓') : '';
-                const cls = isActive ? 'sortable active' : 'sortable';
-                headerHtml += `<th class="${cls}" data-sort="${col}">${label}${arrow}</th>`;
+                const cls = col === 'token' ? 'unsortable' : (isActive ? 'sortable active' : 'sortable');
+                if (col === 'token') {
+                    const mergeBtn = `<button class="merge-toggle-btn ${wrapMergeEnabled ? 'active' : ''}" id="wrapMergeToggleBtn" type="button" title="${wrapMergeEnabled ? 'Wrapped tokens (e.g. WETH) are merged into their native token — click to split them apart' : 'Wrapped tokens are shown separately — click to merge them into their native token (e.g. WETH into ETH)'}">⇄</button>`;
+                    headerHtml += `<th class="${cls}"><span class="token-th-inner">${label}${mergeBtn}</span></th>`;
+                } else {
+                    headerHtml += `<th class="${cls}" data-sort="${col}">${label}${arrow}</th>`;
+                }
             }
             headerHtml += '</tr></thead>';
 
@@ -3982,20 +4592,24 @@
                 }
 
                 const chainBadge = (combinedMode && t.network) ?
-                    `<span class="chain-badge ${t.network}" style="font-size:0.7em; padding:1px 5px;">${NETWORKS[t.network].name}</span>` : '';
+                    `<span class="chain-badge ${t.network}" style="font-size:0.7em; padding:1px 5px;">${t.network === 'combined' ? 'Combined' : NETWORKS[t.network].name}</span>` : '';
                 const farmBadge = t.fromFarm ? '<span class="farm-badge" style="font-size:0.7em; padding:1px 5px;">farm</span>' : '';
                 const noPriceBadge = (!athMode && t.noPrice) ? '<span class="no-price-badge" style="font-size:0.7em; padding:1px 5px;">no price</span>' :
                     '';
                 const athBadge = athMode && t.isAth ? '<span class="ath-badge" style="font-size:0.7em; padding:1px 5px;">ATH</span>' :
                     '';
                 const manualBadge = t.manuallyAdded ? '<span class="farm-badge" style="font-size:0.7em; padding:1px 5px; background:rgba(0,212,255,0.14); border-color:rgba(0,212,255,0.35); color:var(--cyan);">manual</span>' :
-                    '';
+                    (t.summedManual ? '<span class="farm-badge" style="font-size:0.7em; padding:1px 5px; background:rgba(0,212,255,0.14); border-color:rgba(0,212,255,0.35); color:var(--cyan);">+ manual</span>' :
+                    '');
 
                 const cells = orderedCols.map(col => {
                     if (col === 'token') {
+                        const iconHtml = t.icon ? 
+                            `<div class="icon-sm" style="background: var(--surface-2); display: flex; align-items: center; justify-content: center;">${iconImg(t.icon)}</div>` :
+                            `<div class="icon-sm" style="background: linear-gradient(135deg, ${t.color1}, ${t.color2});">${escapeHtml(t.letter)}</div>`;
                         return `<td>
                             <div class="token-cell">
-                                <div class="icon-sm" style="background: linear-gradient(135deg, ${t.color1}, ${t.color2});">${escapeHtml(t.letter)}${iconImg(t.icon)}</div>
+                                ${iconHtml}
                                 <div class="token-name">
                                     <span class="token-symbol">${escapeHtml(t.symbol)} ${chainBadge}${farmBadge}${manualBadge}${athBadge}${noPriceBadge}</span>
                                     <span class="token-sub">${escapeHtml(t.name)}</span>
@@ -4036,6 +4650,16 @@
                     refreshView();
                 });
             });
+
+            const wrapMergeBtn = document.getElementById('wrapMergeToggleBtn');
+            if (wrapMergeBtn) {
+                wrapMergeBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    wrapMergeEnabled = !wrapMergeEnabled;
+                    saveWrapMergeToStorage(wrapMergeEnabled);
+                    refreshView();
+                });
+            }
         }
 
         function renderFarms(farms) {
@@ -4051,7 +4675,7 @@
             list.innerHTML = farms.map(f => `
             <div class="farm-card">
               <div class="farm-head">
-                <div class="icon" style="background: linear-gradient(135deg, ${f.color1}, ${f.color2});">${escapeHtml(f.letter)}${iconImg(f.icon)}</div>
+                <div class="icon" style="background: ${f.icon ? 'var(--surface-2)' : `linear-gradient(135deg, ${f.color1}, ${f.color2})`}; display: flex; align-items: center; justify-content: center;">${f.icon ? '' : escapeHtml(f.letter)}${iconImg(f.icon)}</div>
                 <div class="farm-proto-col">
                   <div class="farm-proto">${escapeHtml(f.proto)}${(combinedMode && f.network) ? ` <span class="chain-badge ${f.network}">${NETWORKS[f.network].name}</span>` : ''}</div>
                   ${multiWallet ? `<div class="farm-wallet">${escapeHtml(shortAddr(f.sourceAddress))}</div>` : ''}
@@ -4415,14 +5039,24 @@
 
         function setPortfolioBarVisible(visible, addresses = []) {
             document.getElementById('searchCard').style.display = visible ? 'none' : 'block';
-            document.getElementById('portfolioBar').style.display = visible ? 'flex' : 'none';
+            document.getElementById('portfolioSwitchBar').style.display = visible ? 'none' : 'flex';
 
-            if (visible) {
-                const label = addresses.length > 1 ?
-                    `Saved portfolio — ${addresses.length} addresses` :
-                    `Saved address — ${shortAddr(addresses[0] || '')}`;
+            // The saved-portfolio summary bar should stay visible whenever there's a
+            // saved portfolio to show — including while the address editor is open —
+            // rather than only when not in edit mode.
+            const savedAddresses = addresses.length ? addresses : (loadAddressesFromStorage() || []);
+            const portfolioBar = document.getElementById('portfolioBar');
+            if (savedAddresses.length) {
+                portfolioBar.style.display = 'block';
+                const label = savedAddresses.length > 1 ?
+                    `Saved portfolio — ${savedAddresses.length} addresses` :
+                    `Saved address — ${shortAddr(savedAddresses[0] || '')}`;
                 document.getElementById('portfolioBarLabel').textContent = label;
             } else {
+                portfolioBar.style.display = 'none';
+            }
+
+            if (!visible) {
                 const hasSaved = !!loadAddressesFromStorage();
                 document.getElementById('collapseSearchBtn').classList.toggle('show', hasSaved);
             }
@@ -4583,10 +5217,16 @@
         document.getElementById('editPortfolioBtn').addEventListener('click', () => {
             setPortfolioBarVisible(false);
             document.getElementById('tokenCard').classList.remove('show');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
 
         document.getElementById('toggleTokenCardBtn').addEventListener('click', () => {
             document.getElementById('tokenCard').classList.toggle('show');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        document.getElementById('closeTokenCardBtn').addEventListener('click', () => {
+            document.getElementById('tokenCard').classList.remove('show');
         });
 
         document.getElementById('collapseSearchBtn').addEventListener('click', () => {
@@ -4682,6 +5322,20 @@
                 document.querySelectorAll('.fm-btn').forEach(b => b.classList.toggle('active', b === btn));
                 localStorage.setItem(FARM_MODE_STORAGE_KEY, farmDisplayMode);
                 refreshView();
+            });
+        });
+
+        // Manual token merge toggle (separate rows vs. sum into matching on-chain token)
+        syncManualMergeButtons();
+        document.querySelectorAll('.mm-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.dataset.mmmode === manualMergeMode) return;
+                manualMergeMode = btn.dataset.mmmode;
+                syncManualMergeButtons();
+                saveManualMergeModeToStorage(manualMergeMode);
+                if (document.getElementById('summary').classList.contains('show')) {
+                    refreshView();
+                }
             });
         });
 
@@ -4871,37 +5525,148 @@
         ];
 
         // =================================================================
+        //  PORTFOLIO SWITCHER — UI wiring for creating/renaming/deleting/
+        //  switching between multiple saved portfolios
+        // =================================================================
+        function renderPortfolioSelect() {
+            const select = document.getElementById('portfolioSelect');
+            if (!select) return;
+            select.innerHTML = portfoliosList.map(p =>
+                `<option value="${escapeHtml(p.id)}"${p.id === activePortfolioId ? ' selected' : ''}>${escapeHtml(p.name)}</option>`
+            ).join('');
+            const deleteBtn = document.getElementById('deletePortfolioBtn');
+            if (deleteBtn) deleteBtn.disabled = portfoliosList.length <= 1;
+        }
+
+        // Reloads every piece of UI/state that's namespaced per-portfolio (addresses,
+        // custom tokens, manual tokens, network choice, cached results). Used both on
+        // first load and every time the person switches to a different portfolio.
+        function loadPortfolioIntoUI() {
+            portfolioData = { tokens: [], farms: [], totalUsd: 0, weightedChange: null };
+            athMode = false;
+            multiplierMode = false;
+            document.getElementById('athDreamBtn').classList.remove('active');
+            document.getElementById('multiplierBtn').classList.remove('active');
+            document.getElementById('multiplierInputRow').classList.remove('show');
+            document.getElementById('notice').classList.remove('show');
+            document.getElementById('summary').classList.remove('show');
+            document.getElementById('tabs').classList.remove('show');
+            document.getElementById('athDreamRow').classList.remove('show');
+            document.getElementById('farmModeRow').classList.remove('show');
+            document.getElementById('tokenList').classList.remove('show');
+            document.getElementById('farmList').classList.remove('show');
+            document.getElementById('emptyState').style.display = 'block';
+            document.getElementById('emptyState').textContent = 'Paste a wallet address to see a summary — token balances and farm/staking positions.';
+            document.getElementById('tokenCard').classList.remove('show');
+
+            selectedNetwork = loadNetworkFromStorage();
+            combinedMode = loadCombinedModeFromStorage();
+            otherNetworksSelected = loadOtherNetworksFromStorage();
+            document.getElementById('networkSelect').value = selectedNetwork;
+            updateNetworkPill();
+            syncOtherNetworkCheckboxes();
+
+            customTokens = loadCustomTokensFromStorage();
+            renderCustomTokenChips();
+
+            manualTokens = loadManualTokensFromStorage();
+            renderManualTokenChips();
+
+            manualMergeMode = loadManualMergeModeFromStorage();
+            syncManualMergeButtons();
+
+            wrapMergeEnabled = loadWrapMergeFromStorage();
+
+            const savedAddresses = loadAddressesFromStorage();
+            if (savedAddresses && savedAddresses.length) {
+                resetAddrRows(savedAddresses[0]);
+                const addrRowsContainer = document.getElementById('addrRows');
+                for (const addr of savedAddresses.slice(1)) {
+                    addrRowsContainer.appendChild(createAddrRow(addr));
+                }
+                updateRemoveButtons();
+                setPortfolioBarVisible(true, savedAddresses);
+
+                const cached = loadPortfolioFromCache();
+                if (cacheMatchesCurrentContext(cached, savedAddresses)) {
+                    showResults(cached.data, cached.addressCount, { stale: true, addresses: savedAddresses });
+                    document.getElementById('tokenList').classList.add('show');
+                    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'tokens'));
+                }
+
+                handleLoad();
+            } else {
+                resetAddrRows();
+                setPortfolioBarVisible(false);
+            }
+        }
+
+        function switchPortfolio(id) {
+            if (id === activePortfolioId || !portfoliosList.some(p => p.id === id)) return;
+            activePortfolioId = id;
+            saveActivePortfolioId(id);
+            renderPortfolioSelect();
+            loadPortfolioIntoUI();
+        }
+
+        function createNewPortfolio() {
+            const name = (prompt('Name for the new portfolio:', `Portfolio ${portfoliosList.length + 1}`) || '').trim();
+            if (!name) return;
+            const id = generatePortfolioId();
+            portfoliosList.push({ id, name });
+            savePortfoliosList(portfoliosList);
+            switchPortfolio(id);
+        }
+
+        function renameActivePortfolio() {
+            const current = getActivePortfolio();
+            const name = (prompt('Rename portfolio:', current.name) || '').trim();
+            if (!name || name === current.name) return;
+            current.name = name;
+            savePortfoliosList(portfoliosList);
+            renderPortfolioSelect();
+        }
+
+        function deleteActivePortfolio() {
+            if (portfoliosList.length <= 1) return;
+            const current = getActivePortfolio();
+            const confirmed = confirm(`Delete "${current.name}"? Its saved addresses and tokens will be removed from this browser.`);
+            if (!confirmed) return;
+
+            clearAddressesFromStorage();
+            try {
+                localStorage.removeItem(TOKENS_STORAGE_KEY());
+                localStorage.removeItem(MANUAL_TOKENS_STORAGE_KEY());
+                localStorage.removeItem(MANUAL_MERGE_MODE_STORAGE_KEY());
+                localStorage.removeItem(WRAP_MERGE_STORAGE_KEY());
+                localStorage.removeItem(NETWORK_STORAGE_KEY());
+                localStorage.removeItem(COMBINED_MODE_STORAGE_KEY());
+                localStorage.removeItem(OTHER_NETWORKS_STORAGE_KEY());
+                localStorage.removeItem(PORTFOLIO_CACHE_KEY());
+            } catch (err) { console.warn(err); }
+
+            portfoliosList = portfoliosList.filter(p => p.id !== current.id);
+            savePortfoliosList(portfoliosList);
+
+            activePortfolioId = portfoliosList[0].id;
+            saveActivePortfolioId(activePortfolioId);
+            renderPortfolioSelect();
+            loadPortfolioIntoUI();
+        }
+
+        document.getElementById('portfolioSelect').addEventListener('change', (e) => {
+            switchPortfolio(e.target.value);
+        });
+        document.getElementById('addPortfolioBtn').addEventListener('click', createNewPortfolio);
+        document.getElementById('renamePortfolioBtn').addEventListener('click', renameActivePortfolio);
+        document.getElementById('deletePortfolioBtn').addEventListener('click', deleteActivePortfolio);
+
+        // =================================================================
         //  INIT
         // =================================================================
         loadSortConfig();
-
-        selectedNetwork = loadNetworkFromStorage();
-        combinedMode = loadCombinedModeFromStorage();
-        otherNetworksSelected = loadOtherNetworksFromStorage();
-        document.getElementById('networkSelect').value = selectedNetwork;
-        updateNetworkPill();
-
-        const savedAddresses = loadAddressesFromStorage();
-        if (savedAddresses && savedAddresses.length) {
-            resetAddrRows(savedAddresses[0]);
-            const addrRowsContainer = document.getElementById('addrRows');
-            for (const addr of savedAddresses.slice(1)) {
-                addrRowsContainer.appendChild(createAddrRow(addr));
-            }
-            updateRemoveButtons();
-            setPortfolioBarVisible(true, savedAddresses);
-
-            const cached = loadPortfolioFromCache();
-            if (cacheMatchesCurrentContext(cached, savedAddresses)) {
-                showResults(cached.data, cached.addressCount, { stale: true, addresses: savedAddresses });
-                document.getElementById('tokenList').classList.add('show');
-                document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'tokens'));
-            }
-
-            handleLoad();
-        } else {
-            resetAddrRows();
-        }
+        renderPortfolioSelect();
+        loadPortfolioIntoUI();
     </script>
 
 </body>
