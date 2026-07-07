@@ -842,6 +842,12 @@
             font-size: clamp(11px, 0.8vw, 13px);
             font-weight: 500;
             color: var(--text-primary);
+            cursor: pointer;
+            transition: border-color 0.15s ease, background 0.15s ease;
+        }
+        .manual-token-list .token-chip:hover {
+            border-color: var(--cyan);
+            background: var(--surface-3, var(--surface-2));
         }
         .manual-token-list .token-chip .mt-chip-icon {
             width: 18px;
@@ -1200,17 +1206,10 @@
 
         /* ---------- tabs ---------- */
         .tabs {
-            display: flex;
-            gap: 6px;
-            margin-top: clamp(20px, 3vw, 32px);
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 4px;
-            display: none;
+            display: none !important;
         }
         .tabs.show {
-            display: flex;
+            display: none !important;
         }
         .tab {
             flex: 1;
@@ -2168,7 +2167,7 @@
             </div>
 
             <div class="manual-token-row" id="manualTokenAmountRow" style="display:none; margin-top:10px;">
-                <input id="manualTokenAmount" type="number" placeholder="Amount held" step="any" min="0" autocomplete="off" />
+                <input id="manualTokenAmount" type="number" placeholder="Amount held (0 to just watch)" step="any" min="0" autocomplete="off" />
                 <button class="btn-grad" id="manualTokenAddBtn" type="button">Add to portfolio</button>
                 <button class="btn-bar" id="manualTokenCancelBtn" type="button">Cancel</button>
             </div>
@@ -2241,12 +2240,10 @@
         </div>
 
         <div class="tabs" id="tabs">
-            <div class="tab active" data-tab="tokens">Tokens</div>
-            <div class="tab" data-tab="farms">Farms &amp; staking</div>
         </div>
 
         <div class="farm-mode-row" id="farmModeRow">
-            <span class="farm-mode-label">Farm tokens</span>
+            <span class="farm-mode-label">Farm &amp; staked tokens</span>
             <div class="farm-mode-toggle">
                 <button class="fm-btn" data-mode="separate" type="button">Separate</button>
                 <button class="fm-btn" data-mode="merge" type="button">Merge with portfolio</button>
@@ -2821,6 +2818,13 @@
         const WRAP_MERGE_STORAGE_KEY = () => 'pulsefolio_wrap_merge_enabled' + portfolioSuffix();
         const HIDE_MANUAL_STORAGE_KEY = () => 'pulsefolio_hide_manual_tokens' + portfolioSuffix();
         const COINGECKO_ICONS_CACHE_KEY = 'pulsefolio_coingecko_icons_cache';
+        const TOKEN_PRICE_CACHE_KEY = 'pulsefolio_token_price_cache';
+        // Jak często maksymalnie odpytujemy CoinGecko o cenę TEGO SAMEGO tokenu.
+        // 60 * 1000 = co najwyżej raz na minutę. Zmień na 5 * 60 * 1000 dla limitu co 5 minut.
+        const TOKEN_PRICE_CACHE_TTL_MS = 60 * 1000;
+        const DEX_PRICE_CACHE_KEY = 'pulsefolio_dex_price_cache';
+        // To samo, ale dla cen z DexScreener (adresy kontraktów per sieć).
+        const DEX_PRICE_CACHE_TTL_MS = 60 * 1000;
 
         function saveAddressesToStorage(addresses) {
             try { localStorage.setItem(STORAGE_KEY(), JSON.stringify(addresses)); } catch (err) { console.warn(err); }
@@ -2951,6 +2955,39 @@
         }
 
         let coingeckoIconsCache = loadCoinGeckoIconsCache();
+
+        // =================================================================
+        //  COINGECKO PRICE CACHE (throttling — max 1 zapytanie / TTL na token)
+        // =================================================================
+        function loadTokenPriceCache() {
+            try {
+                const raw = localStorage.getItem(TOKEN_PRICE_CACHE_KEY);
+                if (!raw) return {};
+                const parsed = JSON.parse(raw);
+                return (parsed && typeof parsed === 'object') ? parsed : {};
+            } catch { return {}; }
+        }
+
+        function saveTokenPriceCache(cache) {
+            try { localStorage.setItem(TOKEN_PRICE_CACHE_KEY, JSON.stringify(cache)); } catch (err) { console.warn(err); }
+        }
+
+        let tokenPriceCache = loadTokenPriceCache();
+
+        function loadDexPriceCache() {
+            try {
+                const raw = localStorage.getItem(DEX_PRICE_CACHE_KEY);
+                if (!raw) return {};
+                const parsed = JSON.parse(raw);
+                return (parsed && typeof parsed === 'object') ? parsed : {};
+            } catch { return {}; }
+        }
+
+        function saveDexPriceCache(cache) {
+            try { localStorage.setItem(DEX_PRICE_CACHE_KEY, JSON.stringify(cache)); } catch (err) { console.warn(err); }
+        }
+
+        let dexPriceCache = loadDexPriceCache();
 
         async function fetchCoinGeckoIcon(symbol) {
             const key = (symbol || '').toUpperCase();
@@ -3307,9 +3344,12 @@
                 const style = tokenStyle(mt.symbol);
                 const usd = mt.amount * mt.price;
                 const change = mt.change24h ?? null;
+                const isWatched = mt.amount === 0;
 
-                // Check if a non-manual token with the same symbol already exists in the portfolio
-                const existing = manualMergeMode === 'merge' ?
+                // Check if a non-manual token with the same symbol already exists in the portfolio.
+                // Watch-only tokens (amount 0) never get folded in — there's nothing to add, and
+                // they need to stay their own row so they can be pinned to the bottom of the list.
+                const existing = (manualMergeMode === 'merge' && !isWatched) ?
                     baseTokens.find(t => t.symbol.toUpperCase() === mt.symbol.toUpperCase() && !t.manuallyAdded) :
                     null;
 
@@ -3338,6 +3378,7 @@
                         icon: resolveIcon(mt.symbol, mt.icon),
                         address: `manual_${mt.coingeckoId}`,
                         manuallyAdded: true,
+                        isWatched: isWatched,
                         price: mt.price,
                         noPrice: !mt.price || mt.price === 0,
                         ...style,
@@ -3383,17 +3424,27 @@
                 const style = tokenStyle(mt.symbol);
                 const iconHtml = mt.icon ? iconImg(mt.icon) : '';
                 return `
-              <div class="token-chip" title="${escapeHtml(mt.name)} (${escapeHtml(mt.symbol)}) · ${fmtUSD(mt.amount * mt.price)}">
+              <div class="token-chip mt-chip-editable" data-id="${escapeHtml(mt.coingeckoId)}" title="Click to edit ${escapeHtml(mt.name)} (${escapeHtml(mt.symbol)}) · ${fmtUSD(mt.amount * mt.price)}">
                 <span class="mt-chip-icon" style="background: ${mt.icon ? 'var(--surface-2)' : `linear-gradient(135deg, ${style.color1}, ${style.color2})`}; display: flex; align-items: center; justify-content: center;">${mt.icon ? '' : escapeHtml(style.letter)}${iconHtml}</span>
                 ${escapeHtml(mt.symbol.toUpperCase())}
-                <span style="color:var(--text-muted);font-weight:400;font-size:0.85em;">${formatTokenAmount(mt.amount)}</span>
+                <span style="color:var(--text-muted);font-weight:400;font-size:0.85em;">${mt.amount === 0 ? '⭐ watching' : formatTokenAmount(mt.amount)}</span>
                 <button class="token-chip-remove" type="button" data-id="${escapeHtml(mt.coingeckoId)}" title="Remove ${escapeHtml(mt.symbol)}" aria-label="Remove ${escapeHtml(mt.symbol)}">×</button>
               </div>
             `;
             }).join('');
 
+            container.querySelectorAll('.mt-chip-editable').forEach(chip => {
+                chip.addEventListener('click', (e) => {
+                    if (e.target.closest('.token-chip-remove')) return;
+                    editManualToken(chip.dataset.id);
+                });
+            });
+
             container.querySelectorAll('.token-chip-remove').forEach(btn => {
-                btn.addEventListener('click', () => removeManualToken(btn.dataset.id));
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    removeManualToken(btn.dataset.id);
+                });
             });
         }
 
@@ -3502,13 +3553,15 @@
                 return;
             }
 
-            if (!Number.isFinite(amount) || amount <= 0) {
-                setManualTokenMsg('Please enter a valid amount greater than 0.', 'error');
+            if (!Number.isFinite(amount) || amount < 0) {
+                setManualTokenMsg('Please enter a valid amount (0 or greater — use 0 to just watch the price).', 'error');
                 amountInput.focus();
                 return;
             }
 
-            // Add the token
+            // Add the token (if editing an existing entry, addManualToken() below
+            // matches on coingeckoId and updates it in place instead of duplicating)
+            const wasEditing = manualTokens.some(t => t.coingeckoId === lastCheckedToken.id);
             addManualToken(
                 lastCheckedToken.symbol,
                 amount,
@@ -3523,11 +3576,12 @@
             );
 
             // Reset UI
-            setManualTokenMsg(`${lastCheckedToken.symbol.toUpperCase()} added to your portfolio!`, 'success');
+            setManualTokenMsg(wasEditing ? `${lastCheckedToken.symbol.toUpperCase()} updated!` : `${lastCheckedToken.symbol.toUpperCase()} added to your portfolio!`, 'success');
             document.getElementById('manualTokenSymbol').value = '';
             document.getElementById('manualTokenAmount').value = '';
             document.getElementById('manualTokenResult').classList.remove('show');
             document.getElementById('manualTokenAmountRow').style.display = 'none';
+            document.getElementById('manualTokenAddBtn').textContent = 'Add to portfolio';
             lastCheckedToken = null;
 
             // Refresh view if portfolio is showing
@@ -3543,7 +3597,83 @@
             document.getElementById('manualTokenMsg').textContent = '';
             document.getElementById('manualTokenSymbol').value = '';
             document.getElementById('manualTokenAmount').value = '';
+            document.getElementById('manualTokenAddBtn').textContent = 'Add to portfolio';
             lastCheckedToken = null;
+        }
+
+        // Populates the add-token form with an existing manual token's data so its
+        // amount (or price/icon, via a re-check) can be edited. Re-uses the same
+        // "Check" result panel and Add button — since addManualToken() matches on
+        // coingeckoId, submitting just updates the existing entry instead of adding
+        // a duplicate row.
+        function editManualToken(coingeckoId) {
+            const mt = manualTokens.find(t => t.coingeckoId === coingeckoId);
+            if (!mt) return;
+
+            // Make sure the add-token card is open and scrolled into view.
+            document.getElementById('tokenCard').classList.add('show');
+
+            const style = tokenStyle(mt.symbol);
+            const iconEl = document.getElementById('mtIcon');
+            const nameEl = document.getElementById('mtName');
+            const symbolEl = document.getElementById('mtSymbol');
+            const priceEl = document.getElementById('mtPrice');
+            const changeEl = document.getElementById('mtChange');
+
+            if (mt.icon) {
+                iconEl.style.background = 'var(--surface-2)';
+                iconEl.style.display = 'flex';
+                iconEl.style.alignItems = 'center';
+                iconEl.style.justifyContent = 'center';
+                iconEl.textContent = '';
+                iconEl.innerHTML = iconImg(mt.icon);
+            } else {
+                iconEl.style.background = `linear-gradient(135deg, ${style.color1}, ${style.color2})`;
+                iconEl.style.display = 'block';
+                iconEl.textContent = style.letter;
+            }
+
+            nameEl.textContent = mt.name;
+            symbolEl.textContent = mt.symbol;
+
+            if (mt.price !== null && mt.price !== undefined) {
+                priceEl.textContent = formatPrice(mt.price);
+                if (mt.change24h !== null && mt.change24h !== undefined) {
+                    const cls = mt.change24h >= 0 ? 'pos' : 'neg';
+                    changeEl.textContent = fmtPct(mt.change24h);
+                    changeEl.className = `mt-change ${cls}`;
+                } else {
+                    changeEl.textContent = '—';
+                    changeEl.className = 'mt-change';
+                }
+            } else {
+                priceEl.textContent = '—';
+                changeEl.textContent = '—';
+                changeEl.className = 'mt-change';
+            }
+
+            document.getElementById('manualTokenSymbol').value = mt.symbol;
+            document.getElementById('manualTokenResult').classList.add('show');
+            document.getElementById('manualTokenAmountRow').style.display = 'flex';
+
+            const amountInput = document.getElementById('manualTokenAmount');
+            amountInput.value = mt.amount;
+            document.getElementById('manualTokenAddBtn').textContent = 'Save changes';
+
+            lastCheckedToken = {
+                id: mt.coingeckoId,
+                symbol: mt.symbol,
+                name: mt.name,
+                icon: mt.icon,
+                price: mt.price,
+                change24h: mt.change24h,
+            };
+
+            setManualTokenMsg(`Editing ${mt.symbol.toUpperCase()} — update the amount and click "Save changes".`, 'info');
+
+            document.getElementById('tokenCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            amountInput.focus();
+            amountInput.select();
         }
 
         function setManualTokenMsg(text, type) {
@@ -3560,20 +3690,70 @@
 
         // Batch price fetch — one request for every tracked coin instead of one per token.
         // Used by the manual-token price refresh.
+        //
+        // Throttling: każdy coinId ma znacznik czasu ostatniego pobrania. Jeśli cena jest
+        // "świeższa" niż TOKEN_PRICE_CACHE_TTL_MS, w ogóle nie pytamy CoinGecko o ten token —
+        // oddajemy wartość z cache. Do API trafiają tylko id, które faktycznie wygasły.
+        // Dzięki temu wielokrotne kliknięcie "Check" w krótkim czasie nie generuje nowych
+        // requestów i nie zbliża nas do limitu 429.
         async function fetchTokenPrices(coinIds) {
             if (!coinIds.length) return {};
-            const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(coinIds.join(','))}&vs_currencies=usd&include_24hr_change=true`;
-            const resp = await fetch(url);
-            if (!resp.ok) {
-                if (resp.status === 429) throw new Error('CoinGecko rate limit. Please wait a moment and try again.');
-                throw new Error(`CoinGecko price error (${resp.status})`);
-            }
-            const data = await resp.json();
+            const now = Date.now();
             const map = {};
+            const idsToFetch = [];
+
             for (const id of coinIds) {
-                const entry = data[id];
-                map[id] = entry ? { price: entry.usd, change24h: entry.usd_24h_change ?? null } : { price: null, change24h: null };
+                const cached = tokenPriceCache[id];
+                if (cached && (now - cached.timestamp) < TOKEN_PRICE_CACHE_TTL_MS) {
+                    map[id] = { price: cached.price, change24h: cached.change24h };
+                } else {
+                    idsToFetch.push(id);
+                }
             }
+
+            if (!idsToFetch.length) return map;
+
+            try {
+                const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(idsToFetch.join(','))}&vs_currencies=usd&include_24hr_change=true`;
+                const resp = await fetch(url);
+
+                if (!resp.ok) {
+                    if (resp.status === 429) {
+                        console.warn('CoinGecko rate limit — używam ostatnich znanych cen z cache');
+                    } else {
+                        console.warn(`CoinGecko price error (${resp.status}) — używam ostatnich znanych cen z cache`);
+                    }
+                    // Fallback: nie wywalaj całego odświeżenia — użyj tego, co mamy w cache
+                    // (nawet jeśli jest przeterminowane), zamiast rzucać błędem dla wszystkich.
+                    for (const id of idsToFetch) {
+                        const stale = tokenPriceCache[id];
+                        map[id] = stale ? { price: stale.price, change24h: stale.change24h } : { price: null, change24h: null };
+                    }
+                    return map;
+                }
+
+                const data = await resp.json();
+                for (const id of idsToFetch) {
+                    const entry = data[id];
+                    const result = entry
+                        ? { price: entry.usd, change24h: entry.usd_24h_change ?? null }
+                        : { price: null, change24h: null };
+                    map[id] = result;
+                    if (result.price != null) {
+                        tokenPriceCache[id] = { price: result.price, change24h: result.change24h, timestamp: now };
+                    }
+                }
+                saveTokenPriceCache(tokenPriceCache);
+            } catch (err) {
+                console.warn('Błąd sieci przy pobieraniu cen z CoinGecko — używam ostatnich znanych cen:', err);
+                for (const id of idsToFetch) {
+                    if (!map[id]) {
+                        const stale = tokenPriceCache[id];
+                        map[id] = stale ? { price: stale.price, change24h: stale.change24h } : { price: null, change24h: null };
+                    }
+                }
+            }
+
             return map;
         }
 
@@ -3679,14 +3859,32 @@
         }
 
         // Prices from DexScreener (no RPC needed)
+        //
+        // Throttling: tak samo jak fetchTokenPrices dla CoinGecko — każdy adres (per sieć)
+        // ma znacznik czasu ostatniego pobrania w dexPriceCache. Jeśli jest świeższy niż
+        // DEX_PRICE_CACHE_TTL_MS, w ogóle nie trafia do zapytania do DexScreener, tylko
+        // bierzemy wynik z cache. Do API idą tylko adresy, które faktycznie wygasły —
+        // dzięki temu częste odświeżanie portfela nie mnoży requestów do DexScreener.
         async function fetchPrices(addresses) {
             if (!addresses.length) return {};
             const unique = [...new Set(addresses.map(a => a.toLowerCase()))];
-            const priceMap = {};
             const chain = getNetwork().dexChain;
             const isNonPulseChain = selectedNetwork !== 'pulsechain';
+            const now = Date.now();
 
-            for (const chunk of chunkArray(unique, 30)) {
+            const priceMap = {};
+            const toFetch = [];
+            for (const addr of unique) {
+                const cacheKey = `${chain}:${addr}`;
+                const cached = dexPriceCache[cacheKey];
+                if (cached && (now - cached.timestamp) < DEX_PRICE_CACHE_TTL_MS) {
+                    priceMap[addr] = { price: cached.price, change24h: cached.change24h, icon: cached.icon, symbol: cached.symbol };
+                } else {
+                    toFetch.push(addr);
+                }
+            }
+
+            for (const chunk of chunkArray(toFetch, 30)) {
                 const url = `https://api.dexscreener.com/tokens/v1/${chain}/${chunk.join(',')}`;
                 try {
                     const res = await fetch(url);
@@ -3735,8 +3933,29 @@
                     }
                 } catch (err) {
                     console.error('DexScreener error:', err);
+                    // Fallback: dla adresów z tego chunka, których nie udało się pobrać,
+                    // spróbuj oddać ostatnią znaną (choćby przeterminowaną) cenę z cache
+                    // zamiast zostawiać je bez ceny.
+                    for (const addr of chunk) {
+                        if (priceMap[addr]) continue;
+                        const stale = dexPriceCache[`${chain}:${addr}`];
+                        if (stale) {
+                            priceMap[addr] = { price: stale.price, change24h: stale.change24h, icon: stale.icon, symbol: stale.symbol };
+                        }
+                    }
                 }
                 await sleep(150);
+            }
+
+            // Zapisz do cache świeżo pobrane ceny (tylko te, które faktycznie odpytaliśmy)
+            if (toFetch.length) {
+                for (const addr of toFetch) {
+                    const result = priceMap[addr];
+                    if (result && result.price != null) {
+                        dexPriceCache[`${chain}:${addr}`] = { ...result, timestamp: now };
+                    }
+                }
+                saveDexPriceCache(dexPriceCache);
             }
 
             // Dla sieci innych niż PulseChain, pobierz ikony z CoinGecko dla tokenów bez ikony
@@ -3764,7 +3983,7 @@
         // =================================================================
         //  HEX STAKING (only on PulseChain)
         // =================================================================
-        async function getHexStakes(address, hexPrice, hexIcon) {
+        async function getHexStakes(address, hexPrice, hexIcon, hexChange) {
             if (selectedNetwork !== 'pulsechain') return [];
 
             return withFallback(async (p) => {
@@ -3787,6 +4006,7 @@
                 ).flat();
 
                 const style = tokenStyle('HEX');
+                const hexAddr = HEX_ADDR.toLowerCase();
                 const stakes = [];
 
                 for (const stake of rawStakes) {
@@ -3814,6 +4034,12 @@
                         color1: style.color1,
                         color2: style.color2,
                         icon: hexIcon,
+                        // Lets staked HEX be folded into (or split out from) the regular
+                        // token list, same as PulseX LP farm holdings — see farm-mode-label.
+                        tokenParts: [
+                            { address: hexAddr, symbol: 'HEX', amount: hexAmount, usd,
+                                change: hexChange ?? null, icon: hexIcon },
+                        ],
                     });
                 }
 
@@ -4088,9 +4314,10 @@
             setLoading('Reading HEX staking and PulseX farms…');
             const hexPrice = priceMap[HEX_ADDR.toLowerCase()]?.price ?? null;
             const hexIcon = priceMap[HEX_ADDR.toLowerCase()]?.icon ?? null;
+            const hexChange = priceMap[HEX_ADDR.toLowerCase()]?.change24h ?? null;
             const [farms, hexStakes] = await Promise.all([
                 getPulseXFarms(normalized, priceMap),
-                getHexStakes(normalized, hexPrice, hexIcon),
+                getHexStakes(normalized, hexPrice, hexIcon, hexChange),
             ]);
 
             const allFarms = [...hexStakes, ...farms].map(f => ({ ...f, sourceAddress: normalized }));
@@ -4311,6 +4538,10 @@
             const { key, direction } = sortConfig;
             const sorted = [...tokens];
             sorted.sort((a, b) => {
+                // Watch-only tokens (amount 0, just tracking a price) always sink to the
+                // bottom, regardless of which column is sorted or in which direction.
+                if (!!a.isWatched !== !!b.isWatched) return a.isWatched ? 1 : -1;
+
                 let aVal, bVal;
                 if (key === 'price') {
                     aVal = a.price || 0;
@@ -4445,7 +4676,14 @@
             result = applyTokenEquivalents(result);
 
             for (const t of result) {
-                t.price = t.rawAmount > 0 ? (t.usd || 0) / t.rawAmount : 0;
+                if (t.rawAmount > 0) {
+                    t.price = (t.usd || 0) / t.rawAmount;
+                } else if (t.price == null) {
+                    // Zero-amount rows with no price already set (e.g. normal on-chain
+                    // dust with nothing to divide by) fall back to 0. Watch-only manual
+                    // tokens already carry their fetched price and must keep it here.
+                    t.price = 0;
+                }
             }
 
             return result;
@@ -4509,7 +4747,9 @@
                     '';
                 const athBadge = athMode && t.isAth ? '<span class="ath-badge" style="font-size:0.7em; padding:1px 5px;">ATH</span>' :
                     '';
-                const manualBadge = t.manuallyAdded ? '<span class="farm-badge" style="font-size:0.7em; padding:1px 5px; background:rgba(0,212,255,0.14); border-color:rgba(0,212,255,0.35); color:var(--cyan);">manual</span>' :
+                const manualBadge = t.manuallyAdded ? (t.isWatched ?
+                        '<span class="farm-badge" style="font-size:0.7em; padding:1px 5px; background:rgba(255,193,7,0.16); border-color:rgba(255,193,7,0.4); color:#ffc107;">watching</span>' :
+                        '<span class="farm-badge" style="font-size:0.7em; padding:1px 5px; background:rgba(0,212,255,0.14); border-color:rgba(0,212,255,0.35); color:var(--cyan);">manual</span>') :
                     (t.summedManual ? '<span class="farm-badge" style="font-size:0.7em; padding:1px 5px; background:rgba(0,212,255,0.14); border-color:rgba(0,212,255,0.35); color:var(--cyan);">+ manual</span>' :
                     '');
 
@@ -4530,7 +4770,7 @@
                     } else if (col === 'price') {
                         return `<td>${priceDisplay}</td>`;
                     } else if (col === 'amount') {
-                        return `<td>${escapeHtml(t.amount)}</td>`;
+                        return `<td>${t.isWatched ? '<span title="Watched — no amount held">⭐</span>' : escapeHtml(t.amount)}</td>`;
                     } else if (col === 'value') {
                         return `<td>
                             <div class="value-row">
@@ -4700,6 +4940,8 @@
         const MAX_SNAPSHOTS_PER_CONTEXT = 500;
         const SNAPSHOT_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // keep ~30 days of history
         const SNAPSHOT_MIN_GAP_MS = 60 * 60 * 1000; // collapse refreshes closer than 1 hour together
+        const SNAPSHOT_MAX_PER_DAY = 24; // hard cap: never add more than 24 NEW points in any rolling 24h window,
+                                          // even if refreshes happen to land exactly on the 1‑hour boundary
 
         // Snapshots are scoped per "context" (network/combined-mode + exact address set),
         // so switching wallets or networks doesn't mix unrelated history together.
@@ -4750,9 +4992,20 @@
             const now = Date.now();
 
             const last = list[list.length - 1];
-            if (last && (now - snapshotTs(last)) < SNAPSHOT_MIN_GAP_MS) {
-                last.value = value;
-                last.ts = now;
+            const withinHourlyGap = last && (now - snapshotTs(last)) < SNAPSHOT_MIN_GAP_MS;
+
+            // Hard daily cap: even if the 1-hour gap has elapsed, never add a NEW point
+            // if 24 points were already added within the last 24 hours (e.g. refreshes
+            // landing exactly on hourly boundaries could otherwise sneak in a 25th).
+            const dayCutoff = now - 24 * 60 * 60 * 1000;
+            const pointsInLastDay = list.filter(p => snapshotTs(p) >= dayCutoff).length;
+            const dailyCapReached = !withinHourlyGap && pointsInLastDay >= SNAPSHOT_MAX_PER_DAY;
+
+            if (withinHourlyGap || dailyCapReached) {
+                if (last) {
+                    last.value = value;
+                    last.ts = now;
+                }
             } else {
                 list.push({ ts: now, value });
             }
