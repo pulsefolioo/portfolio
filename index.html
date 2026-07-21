@@ -67,6 +67,20 @@
             --main-pad: clamp(0px, 2vw, 20px);
             --font-base: clamp(14px, 1.1vw, 16px);
         }
+        :root.light {
+            --bg: #ffffff;
+            --surface: #f8f8fa;
+            --surface-2: #f0f0f3;
+            --border: #e5e5ea;
+            --text-primary: #1a1a1f;
+            --text-secondary: #6b6b74;
+            --text-muted: #9a9aa3;
+            --magenta: #e61e76;
+            --purple: #6b2ea8;
+            --cyan: #0099cc;
+            --green: #1aad5f;
+            --red: #d42c45;
+        }
         * {
             box-sizing: border-box;
             margin: 0;
@@ -128,6 +142,180 @@
         }
         header nav i:hover {
             color: var(--text-primary);
+        }
+
+        /* ---------- settings button & menu ---------- */
+        .settings-btn {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            line-height: 1;
+        }
+        .settings-btn:hover {
+            border-color: var(--purple);
+            color: var(--text-primary);
+        }
+
+        .settings-menu {
+            display: none;
+            position: fixed;
+            top: 60px;
+            right: 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            min-width: 280px;
+            max-width: 90vw;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideDown 0.2s ease-out;
+        }
+
+        .settings-menu.show {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .settings-menu-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .close-settings-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+
+        .close-settings-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .settings-section {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .settings-section:last-child {
+            border-bottom: none;
+        }
+
+        .settings-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .settings-options {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .settings-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .settings-option:hover {
+            border-color: var(--purple);
+            background: var(--surface);
+        }
+
+        .settings-option.active {
+            background: var(--surface);
+            border-color: var(--purple);
+            color: var(--purple);
+        }
+
+        .option-radio {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        .settings-option.active .option-radio {
+            border-color: var(--purple);
+            background: var(--purple);
+        }
+
+        .settings-option.active .option-radio::after {
+            content: '';
+            width: 4px;
+            height: 4px;
+            background: var(--bg);
+            border-radius: 50%;
+        }
+
+        .settings-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 999;
+        }
+
+        .settings-overlay.show {
+            display: block;
         }
 
         /* ---------- portfolio bar ---------- */
@@ -1113,6 +1301,25 @@
             flex-wrap: wrap;
             gap: 4px 8px;
         }
+        .p-value.currency-toggle {
+            cursor: pointer;
+            user-select: none;
+            transition: opacity 0.15s, transform 0.15s;
+            width: fit-content;
+        }
+        .p-value.currency-toggle:hover {
+            opacity: 0.8;
+        }
+        .p-value.currency-toggle:active {
+            transform: scale(0.98);
+        }
+        .p-value.currency-toggle.switching {
+            animation: currencySwitch 0.25s ease;
+        }
+        @keyframes currencySwitch {
+            0% { opacity: 0.3; transform: translateY(2px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
         .p-value .cents {
             font-size: clamp(18px, 2vw, 28px);
             color: var(--text-secondary);
@@ -2049,9 +2256,65 @@
             Pulse<span class="grad-text">Folio</span>
         </div>
         <nav>
+            <button id="settingsBtn" class="settings-btn" aria-label="Settings" title="Settings" data-i18n-aria="settingsAria" data-i18n-title="settingsAria">
+                ⚙️
+            </button>
             <i class="ti ti-brand-x" aria-hidden="true"></i>
             <i class="ti ti-menu-2" aria-hidden="true"></i>
         </nav>
+
+        <!-- Settings Menu -->
+        <div id="settingsMenu" class="settings-menu">
+            <div class="settings-menu-header">
+                <span data-i18n="settingsMenuTitle">⚙️ Settings</span>
+                <button id="closeSettingsBtn" class="close-settings-btn">✕</button>
+            </div>
+
+            <!-- Currency Selection -->
+            <div class="settings-section">
+                <div class="settings-label" data-i18n="currencyLabel">💱 Currency</div>
+                <div class="settings-options">
+                    <button class="settings-option" data-currency="usd">
+                        <span class="option-radio" id="radio-usd"></span> USD
+                    </button>
+                    <button class="settings-option" data-currency="pln">
+                        <span class="option-radio" id="radio-pln"></span> PLN
+                    </button>
+                    <button class="settings-option" data-currency="btc">
+                        <span class="option-radio" id="radio-btc"></span> BTC
+                    </button>
+                </div>
+            </div>
+
+            <!-- Language Selection -->
+            <div class="settings-section">
+                <div class="settings-label" data-i18n="languageLabel">🌐 Language</div>
+                <div class="settings-options">
+                    <button class="settings-option" data-language="en">
+                        <span class="option-radio" id="radio-en"></span> English
+                    </button>
+                    <button class="settings-option" data-language="pl">
+                        <span class="option-radio" id="radio-pl"></span> Polski
+                    </button>
+                </div>
+            </div>
+
+            <!-- Theme Selection -->
+            <div class="settings-section">
+                <div class="settings-label" data-i18n="themeLabel">🎨 Theme</div>
+                <div class="settings-options">
+                    <button class="settings-option" data-theme="dark">
+                        <span class="option-radio" id="radio-dark"></span> <span data-i18n="themeDark">Dark</span>
+                    </button>
+                    <button class="settings-option" data-theme="light">
+                        <span class="option-radio" id="radio-light"></span> <span data-i18n="themeLight">Light</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Overlay -->
+        <div id="settingsOverlay" class="settings-overlay"></div>
     </header>
 
     <div class="portfolio-switch-bar" id="portfolioSwitchBar">
@@ -2060,9 +2323,9 @@
             <select id="portfolioSelect" class="portfolio-select" aria-label="Select portfolio"></select>
         </div>
         <div class="portfolio-switch-actions">
-            <button class="btn-icon-sm" id="renamePortfolioBtn" type="button" title="Rename portfolio" aria-label="Rename portfolio">✎</button>
-            <button class="btn-icon-sm" id="deletePortfolioBtn" type="button" title="Delete portfolio" aria-label="Delete portfolio">🗑</button>
-            <button class="btn-icon-sm" id="addPortfolioBtn" type="button" title="Create new portfolio" aria-label="Create new portfolio">+</button>
+            <button class="btn-icon-sm" id="renamePortfolioBtn" type="button" title="Rename portfolio" aria-label="Rename portfolio" data-i18n-title="renamePortfolio" data-i18n-aria="renamePortfolio">✎</button>
+            <button class="btn-icon-sm" id="deletePortfolioBtn" type="button" title="Delete portfolio" aria-label="Delete portfolio" data-i18n-title="deletePortfolio" data-i18n-aria="deletePortfolio">🗑</button>
+            <button class="btn-icon-sm" id="addPortfolioBtn" type="button" title="Create new portfolio" aria-label="Create new portfolio" data-i18n-title="createPortfolio" data-i18n-aria="createPortfolio">+</button>
         </div>
     </div>
 
@@ -2070,12 +2333,12 @@
 
         <div class="search-card" id="searchCard">
             <div class="search-card-head">
-                <div class="search-label">Wallet addresses — PulseChain / Ethereum</div>
-                <button class="btn-collapse" id="collapseSearchBtn" type="button" title="Collapse — back to saved portfolio" aria-label="Collapse"><svg class="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="M6 6l12 12"></path></svg></button>
+                <div class="search-label" data-i18n="walletAddressesLabel">Wallet addresses — PulseChain / Ethereum</div>
+                <button class="btn-collapse" id="collapseSearchBtn" type="button" title="Collapse — back to saved portfolio" aria-label="Collapse" data-i18n-title="collapseTitle"><svg class="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="M6 6l12 12"></path></svg></button>
             </div>
 
             <div class="network-selector">
-                <span style="color: var(--text-secondary); font-size: clamp(12px, 0.9vw, 14px);">Network:</span>
+                <span style="color: var(--text-secondary); font-size: clamp(12px, 0.9vw, 14px);" data-i18n="networkLabel">Network:</span>
                 <select id="networkSelect">
                     <option value="pulsechain">PulseChain</option>
                     <option value="ethereum">Ethereum</option>
@@ -2086,7 +2349,7 @@
             </div>
 
             <div class="other-networks-selector" id="otherNetworksSelector">
-                <div class="other-networks-selector-label">
+                <div class="other-networks-selector-label" data-i18n-html="otherNetworksIncludeLabel">
                     Also include, when viewing <strong>PulseChain + Ethereum</strong> combined:
                 </div>
                 <div class="other-networks-checks">
@@ -2103,54 +2366,54 @@
                         <span>BNB Chain</span>
                     </label>
                 </div>
-                <div class="other-networks-selector-hint">Leave unchecked for the fastest load — each extra network adds a separate fetch.</div>
+                <div class="other-networks-selector-hint" data-i18n="otherNetworksHint">Leave unchecked for the fastest load — each extra network adds a separate fetch.</div>
             </div>
 
             <div class="addr-rows" id="addrRows">
                 <div class="addr-row">
                     <input class="addr-input" type="text" placeholder="0x…" autocomplete="off" />
-                    <button class="addr-remove" type="button" title="Remove address" aria-label="Remove address" disabled>×</button>
+                    <button class="addr-remove" type="button" title="Remove address" aria-label="Remove address" disabled data-i18n-title="removeAddressTitle" data-i18n-aria="removeAddressTitle">×</button>
                 </div>
             </div>
             <div class="addr-actions">
-                <button class="btn-add-addr" id="addAddrBtn" type="button"><i class="ti ti-plus" aria-hidden="true"></i> Add address</button>
-                <button class="btn-grad" id="loadBtn">Check</button>
+                <button class="btn-add-addr" id="addAddrBtn" type="button"><i class="ti ti-plus" aria-hidden="true"></i> <span data-i18n="addAddressBtn">Add address</span></button>
+                <button class="btn-grad" id="loadBtn" data-i18n="checkBtn">Check</button>
             </div>
             <div class="hint-row">
-                <div class="hint-chip" data-demo="1">Use demo address</div>
+                <div class="hint-chip" data-demo="1" data-i18n="useDemoAddress">Use demo address</div>
             </div>
             <div class="search-card-footer">
-                <button class="btn-bar" id="newPortfolioBtn" type="button">⟳ Clear addresses</button>
+                <button class="btn-bar" id="newPortfolioBtn" type="button" data-i18n="clearAddressesBtn">⟳ Clear addresses</button>
             </div>
         </div>
 
         <div class="token-card" id="tokenCard">
             <div class="search-card-head">
-                <div class="search-label">Missing a token? Add it</div>
-                <button class="btn-collapse show" id="closeTokenCardBtn" type="button" title="Close" aria-label="Close"><svg class="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="M6 6l12 12"></path></svg></button>
+                <div class="search-label" data-i18n="missingTokenLabel">Missing a token? Add it</div>
+                <button class="btn-collapse show" id="closeTokenCardBtn" type="button" title="Close" aria-label="Close" data-i18n-title="closeTitle" data-i18n-aria="closeTitle"><svg class="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="M6 6l12 12"></path></svg></button>
             </div>
             <div class="token-add-row">
-                <input id="customTokenInput" type="text" placeholder="Token contract address 0x…" autocomplete="off" />
-                <button class="btn-grad" id="addTokenBtn" type="button">Add</button>
+                <input id="customTokenInput" type="text" placeholder="Token contract address 0x…" autocomplete="off" data-i18n-placeholder="tokenContractPlaceholder" />
+                <button class="btn-grad" id="addTokenBtn" type="button" data-i18n="addBtn">Add</button>
             </div>
             <div class="token-msg" id="tokenMsg"></div>
             <div class="token-chip-row" id="customTokenChips"></div>
-            <div class="token-empty-hint" id="tokenEmptyHint">Tokens you add here are saved in this browser only and are included whenever balances are checked.</div>
+            <div class="token-empty-hint" id="tokenEmptyHint" data-i18n="tokenEmptyHint">Tokens you add here are saved in this browser only and are included whenever balances are checked.</div>
 
             <!-- Manual token addition from any network via CoinGecko -->
-            <div class="manual-token-divider"><span>or manually add from any network</span></div>
+            <div class="manual-token-divider"><span data-i18n="manualTokenDivider">or manually add from any network</span></div>
 
             <div class="manual-token-row">
-                <input id="manualTokenSymbol" type="text" placeholder="Token symbol (e.g. BTC, DOGE, SOL)" autocomplete="off" />
-                <button class="btn-grad" id="manualTokenCheckBtn" type="button">Check</button>
+                <input id="manualTokenSymbol" type="text" placeholder="Token symbol (e.g. BTC, DOGE, SOL)" autocomplete="off" data-i18n-placeholder="manualTokenSymbolPlaceholder" />
+                <button class="btn-grad" id="manualTokenCheckBtn" type="button" data-i18n="checkBtn">Check</button>
             </div>
-            <div class="token-empty-hint">Use this for tokens you hold on an exchange (Binance, Coinbase…) or on a blockchain this app doesn't scan directly — enter the amount you hold and its live price gets tracked here alongside your wallet balances.</div>
+            <div class="token-empty-hint" data-i18n="manualTokenHint2">Use this for tokens you hold on an exchange (Binance, Coinbase…) or on a blockchain this app doesn't scan directly — enter the amount you hold and its live price gets tracked here alongside your wallet balances.</div>
 
             <div class="manual-merge-row">
-                <span class="manual-merge-label">If a manual token matches one already in your portfolio</span>
+                <span class="manual-merge-label" data-i18n="manualMergeLabel">If a manual token matches one already in your portfolio</span>
                 <div class="manual-merge-toggle">
-                    <button class="mm-btn" data-mmmode="separate" type="button" title="Show manually added tokens as their own separate row">Keep separate</button>
-                    <button class="mm-btn" data-mmmode="merge" type="button" title="Add the manual amount on top of the matching on-chain token">Sum with matching token</button>
+                    <button class="mm-btn" data-mmmode="separate" type="button" title="Show manually added tokens as their own separate row" data-i18n-title="keepSeparateTitle" data-i18n="keepSeparateBtn">Keep separate</button>
+                    <button class="mm-btn" data-mmmode="merge" type="button" title="Add the manual amount on top of the matching on-chain token" data-i18n-title="sumMatchingTitle" data-i18n="sumMatchingBtn">Sum with matching token</button>
                 </div>
             </div>
 
@@ -2167,9 +2430,9 @@
             </div>
 
             <div class="manual-token-row" id="manualTokenAmountRow" style="display:none; margin-top:10px;">
-                <input id="manualTokenAmount" type="number" placeholder="Amount held (0 to just watch)" step="any" min="0" autocomplete="off" />
-                <button class="btn-grad" id="manualTokenAddBtn" type="button">Add to portfolio</button>
-                <button class="btn-bar" id="manualTokenCancelBtn" type="button">Cancel</button>
+                <input id="manualTokenAmount" type="number" placeholder="Amount held (0 to just watch)" step="any" min="0" autocomplete="off" data-i18n-placeholder="amountHeldPlaceholder" />
+                <button class="btn-grad" id="manualTokenAddBtn" type="button" data-i18n="addToPortfolioBtn">Add to portfolio</button>
+                <button class="btn-bar" id="manualTokenCancelBtn" type="button" data-i18n="cancelBtn">Cancel</button>
             </div>
 
             <div class="manual-token-msg" id="manualTokenMsg"></div>
@@ -2182,10 +2445,10 @@
         <div class="portfolio-summary" id="summary">
             <div class="p-label-row">
                 <div class="p-label-group">
-                    <div class="p-label" id="summaryLabel">Portfolio value</div>
+                    <div class="p-label" id="summaryLabel" data-i18n="portfolioValueLabel">Portfolio value</div>
                     <span class="inline-spinner" id="loadingSpinner"></span>
                 </div>
-                <button class="network-pill" id="networkPillBtn" type="button" title="Switch network">
+                <button class="network-pill" id="networkPillBtn" type="button" title="Switch network" data-i18n-title="switchNetworkTitle">
                     <span class="network-pill-dot" id="networkPillDot"></span>
                     <span id="networkPillText">PulseChain</span>
                     <i class="ti ti-selector" aria-hidden="true"></i>
@@ -2194,22 +2457,22 @@
 
             <div class="other-networks-row">
                 <div class="chart-refresh-group">
-                    <button class="chart-toggle" id="toggleChartBtn" type="button" title="Show portfolio value chart">
+                    <button class="chart-toggle" id="toggleChartBtn" type="button" title="Show portfolio value chart" data-i18n-title="chartTitle">
                         <i class="ti ti-chart-line" aria-hidden="true"></i>
-                        <span>Chart 📈</span>
+                        <span data-i18n="chartBtn">Chart 📈</span>
                     </button>
-                    <button class="refresh-toggle" id="refreshPortfolioBtn" type="button" title="Refresh portfolio balances and prices">
+                    <button class="refresh-toggle" id="refreshPortfolioBtn" type="button" title="Refresh portfolio balances and prices" data-i18n-title="refreshTitle">
                         <i class="ti ti-refresh" aria-hidden="true"></i>
-                        <span>Refresh</span>
+                        <span data-i18n="refreshBtn">Refresh</span>
                     </button>
                 </div>
-                <button class="other-networks-toggle" id="otherNetworksBtn" type="button" title="Also load Base, Arbitrum and BNB Chain (slower)">
+                <button class="other-networks-toggle" id="otherNetworksBtn" type="button" title="Also load Base, Arbitrum and BNB Chain (slower)" data-i18n-title="otherNetworksTitle">
                     <i class="ti ti-plus" aria-hidden="true"></i>
-                    <span>Other networks</span>
+                    <span data-i18n="otherNetworksBtn">Other networks</span>
                 </button>
             </div>
-            <div class="stale-badge" id="staleBadge"><i class="ti ti-refresh" aria-hidden="true"></i> <span id="staleBadgeText">Cached data — refreshing…</span></div>
-            <div class="p-value" id="totalValue">$0</div>
+            <div class="stale-badge" id="staleBadge"><i class="ti ti-refresh" aria-hidden="true"></i> <span id="staleBadgeText" data-i18n="staleBadgeText">Cached data — refreshing…</span></div>
+            <div class="p-value currency-toggle" id="totalValue" title="Click to change currency" role="button" tabindex="0" data-i18n-title="currencyToggleTitle">$0</div>
             <div class="p-change pos" id="totalChange">+0%</div>
 
             <div class="snapshot-chart" id="snapshotChart">
@@ -2226,16 +2489,16 @@
         <div class="ath-dream-row" id="athDreamRow">
             <div class="ath-btn-row">
                 <button class="btn-ath" id="athDreamBtn" type="button">
-                    <i class="ti ti-rocket" aria-hidden="true"></i> ATH Dream
+                    <i class="ti ti-rocket" aria-hidden="true"></i> <span data-i18n="athDreamBtn">ATH Dream</span>
                 </button>
                 <button class="btn-ath btn-multiplier" id="multiplierBtn" type="button">
-                    <i class="ti ti-x" aria-hidden="true"></i> Multiplier
+                    <i class="ti ti-x" aria-hidden="true"></i> <span data-i18n="multiplierBtn">Multiplier</span>
                 </button>
             </div>
             <div class="multiplier-input-row" id="multiplierInputRow">
-                <span class="multiplier-label">Multiplier:</span>
+                <span class="multiplier-label" data-i18n="multiplierLabel">Multiplier:</span>
                 <input type="number" id="multiplierInput" class="multiplier-input" value="10" min="0" step="any" inputmode="decimal" />
-                <button class="btn-grad" id="multiplierApplyBtn" type="button">Apply</button>
+                <button class="btn-grad" id="multiplierApplyBtn" type="button" data-i18n="applyBtn">Apply</button>
             </div>
         </div>
 
@@ -2243,32 +2506,32 @@
         </div>
 
         <div class="farm-mode-row" id="farmModeRow">
-            <span class="farm-mode-label">Farm &amp; staked tokens</span>
+            <span class="farm-mode-label" data-i18n="farmModeLabel">Farm &amp; staked tokens</span>
             <div class="farm-mode-toggle">
-                <button class="fm-btn" data-mode="separate" type="button">Separate</button>
-                <button class="fm-btn" data-mode="merge" type="button">Merge with portfolio</button>
+                <button class="fm-btn" data-mode="separate" type="button" data-i18n="separateBtn">Separate</button>
+                <button class="fm-btn" data-mode="merge" type="button" data-i18n="mergeWithPortfolioBtn">Merge with portfolio</button>
             </div>
         </div>
 
         <div class="list" id="tokenList"></div>
         <div class="list" id="farmList"></div>
 
-        <div class="empty-state" id="emptyState">
+        <div class="empty-state" id="emptyState" data-i18n="emptyStateText">
             Paste a wallet address to see a summary — token balances and farm/staking positions.
         </div>
 
         <div class="portfolio-bar" id="portfolioBar">
             <div class="portfolio-bar-inner">
-                <div class="portfolio-bar-label" id="portfolioBarLabel">Saved portfolio</div>
+                <div class="portfolio-bar-label" id="portfolioBarLabel" data-i18n="savedPortfolioLabel">Saved portfolio</div>
                 <div class="portfolio-bar-actions">
-                    <button class="btn-bar" id="editPortfolioBtn" type="button"><i class="ti ti-pencil" aria-hidden="true"></i> Edit addresses</button>
-                    <button class="btn-bar" id="toggleTokenCardBtn" type="button"><i class="ti ti-coin" aria-hidden="true"></i> Missing a token? Add it</button>
+                    <button class="btn-bar" id="editPortfolioBtn" type="button"><i class="ti ti-pencil" aria-hidden="true"></i> <span data-i18n="editAddressesBtn">Edit addresses</span></button>
+                    <button class="btn-bar" id="toggleTokenCardBtn" type="button"><i class="ti ti-coin" aria-hidden="true"></i> <span data-i18n="missingTokenLabel">Missing a token? Add it</span></button>
                 </div>
             </div>
         </div>
 
         <div class="privacy-note">
-            <i class="ti ti-lock" aria-hidden="true"></i>Wallet addresses and custom tokens are stored only locally in your browser (localStorage) — they are never sent to or saved on any server.
+            <i class="ti ti-lock" aria-hidden="true"></i><span data-i18n="privacyNoteText">Wallet addresses and custom tokens are stored only locally in your browser (localStorage) — they are never sent to or saved on any server.</span>
         </div>
 
     </main>
@@ -2655,15 +2918,39 @@
         // =================================================================
         //  HELPERS
         // =================================================================
-        const fmtUSD = n => Number(n || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD',
-            maximumFractionDigits: n >= 100 ? 0 : 2 });
+        let currentCurrency = 'usd';
+        let exchangeRates = { usd: 1, pln: 4.0, btc: 0.000024 };
+        const currencySymbols = { usd: '$', pln: 'zł', btc: '₿' };
+        const currencyCodes = { usd: 'USD', pln: 'PLN', btc: 'BTC' };
+        const currencyCycleOrder = ['usd', 'pln', 'btc'];
+        
+        function convertPrice(valueInUsd, toCurrency) {
+            if (toCurrency === 'usd') return valueInUsd;
+            return valueInUsd * exchangeRates[toCurrency];
+        }
+        
+        const fmtUSD = n => {
+            const valueInUsd = Number(n || 0);
+            const converted = convertPrice(valueInUsd, currentCurrency);
+            const decimals = currentCurrency === 'btc' ? 8 : (converted >= 100 ? 0 : 2);
+            const formatted = converted.toLocaleString('en-US', { 
+                minimumFractionDigits: decimals, 
+                maximumFractionDigits: decimals 
+            });
+            return `${currencySymbols[currentCurrency]}${formatted}`;
+        };
+        
         function fmtCompactUSD(n) {
-            const sign = n < 0 ? '-' : '';
-            const abs = Math.abs(Number(n) || 0);
-            if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(abs >= 1e10 ? 0 : 1)}B`;
-            if (abs >= 1e6) return `${sign}$${(abs / 1e6).toFixed(abs >= 1e7 ? 0 : 1)}M`;
-            if (abs >= 1e3) return `${sign}$${(abs / 1e3).toFixed(abs >= 1e4 ? 0 : 1)}K`;
-            return `${sign}$${abs.toFixed(abs >= 100 ? 0 : 2)}`;
+            const valueInUsd = Number(n || 0);
+            const converted = convertPrice(valueInUsd, currentCurrency);
+            const sign = converted < 0 ? '-' : '';
+            const abs = Math.abs(converted);
+            const symbol = currencySymbols[currentCurrency];
+            if (abs >= 1e9) return `${sign}${symbol}${(abs / 1e9).toFixed(abs >= 1e10 ? 0 : 1)}B`;
+            if (abs >= 1e6) return `${sign}${symbol}${(abs / 1e6).toFixed(abs >= 1e7 ? 0 : 1)}M`;
+            if (abs >= 1e3) return `${sign}${symbol}${(abs / 1e3).toFixed(abs >= 1e4 ? 0 : 1)}K`;
+            const decimals = currentCurrency === 'btc' ? 8 : (abs >= 100 ? 0 : 2);
+            return `${sign}${symbol}${abs.toFixed(decimals)}`;
         }
         const fmtPct = n => `${n >= 0 ? '+' : ''}${Number(n).toFixed(1)}%`;
         const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -3539,7 +3826,7 @@
                 lastCheckedToken = null;
             } finally {
                 btn.disabled = false;
-                btn.textContent = 'Check';
+                btn.textContent = t('checkBtn');
             }
         }
 
@@ -3581,7 +3868,7 @@
             document.getElementById('manualTokenAmount').value = '';
             document.getElementById('manualTokenResult').classList.remove('show');
             document.getElementById('manualTokenAmountRow').style.display = 'none';
-            document.getElementById('manualTokenAddBtn').textContent = 'Add to portfolio';
+            document.getElementById('manualTokenAddBtn').textContent = t('addToPortfolioBtn');
             lastCheckedToken = null;
 
             // Refresh view if portfolio is showing
@@ -3597,7 +3884,7 @@
             document.getElementById('manualTokenMsg').textContent = '';
             document.getElementById('manualTokenSymbol').value = '';
             document.getElementById('manualTokenAmount').value = '';
-            document.getElementById('manualTokenAddBtn').textContent = 'Add to portfolio';
+            document.getElementById('manualTokenAddBtn').textContent = t('addToPortfolioBtn');
             lastCheckedToken = null;
         }
 
@@ -3658,7 +3945,7 @@
 
             const amountInput = document.getElementById('manualTokenAmount');
             amountInput.value = mt.amount;
-            document.getElementById('manualTokenAddBtn').textContent = 'Save changes';
+            document.getElementById('manualTokenAddBtn').textContent = t('saveChangesBtn');
 
             lastCheckedToken = {
                 id: mt.coingeckoId,
@@ -4693,7 +4980,7 @@
             const list = document.getElementById('tokenList');
 
             if (!tokens.length) {
-                list.innerHTML = '<div class="empty-state" style="margin-top:24px">No tokens with a recognized USD value for this address.</div>';
+                list.innerHTML = `<div class="empty-state" style="margin-top:24px">${t('noTokensFound')}</div>`;
                 return;
             }
 
@@ -4705,16 +4992,16 @@
             let headerHtml = '<thead><tr>';
             for (const col of orderedCols) {
                 let label = col.charAt(0).toUpperCase() + col.slice(1);
-                if (col === 'token') label = 'Token';
-                if (col === 'price') label = 'Price';
-                if (col === 'amount') label = 'Amount';
-                if (col === 'value') label = 'Value';
+                if (col === 'token') label = t('colToken');
+                if (col === 'price') label = t('colPrice');
+                if (col === 'amount') label = t('colAmount');
+                if (col === 'value') label = t('colValue');
                 const isActive = col === activeKey;
                 const arrow = isActive ? (sortConfig.direction === 'asc' ? ' ↑' : ' ↓') : '';
                 const cls = col === 'token' ? 'unsortable' : (isActive ? 'sortable active' : 'sortable');
                 if (col === 'token') {
-                    const mergeBtn = `<button class="merge-toggle-btn ${wrapMergeEnabled ? 'active' : ''}" id="wrapMergeToggleBtn" type="button" title="${wrapMergeEnabled ? 'Wrapped tokens (e.g. WETH) are merged into their native token — click to split them apart' : 'Wrapped tokens are shown separately — click to merge them into their native token (e.g. WETH into ETH)'}">⇄</button>`;
-                    const hideManualBtn = `<button class="merge-toggle-btn ${hideManualTokens ? 'active' : ''}" id="hideManualTokensBtn" type="button" title="${hideManualTokens ? 'Manually added tokens are hidden from this list — click to show them' : 'Hide manually added tokens from this list'}">🙈</button>`;
+                    const mergeBtn = `<button class="merge-toggle-btn ${wrapMergeEnabled ? 'active' : ''}" id="wrapMergeToggleBtn" type="button" title="${wrapMergeEnabled ? t('wrapMergeTitleOn') : t('wrapMergeTitleOff')}">⇄</button>`;
+                    const hideManualBtn = `<button class="merge-toggle-btn ${hideManualTokens ? 'active' : ''}" id="hideManualTokensBtn" type="button" title="${hideManualTokens ? t('hideManualTitleOn') : t('hideManualTitleOff')}">🙈</button>`;
                     headerHtml += `<th class="${cls}"><span class="token-th-inner">${label}${mergeBtn}${hideManualBtn}</span></th>`;
                 } else {
                     headerHtml += `<th class="${cls}" data-sort="${col}">${label}${arrow}</th>`;
@@ -4827,7 +5114,7 @@
             const list = document.getElementById('farmList');
 
             if (!farms.length) {
-                list.innerHTML = '<div class="empty-state" style="margin-top:24px">No active positions in farms or staking.</div>';
+                list.innerHTML = `<div class="empty-state" style="margin-top:24px">${t('noFarmPositions')}</div>`;
                 return;
             }
 
@@ -4886,19 +5173,19 @@
             tokens = sortTokens(tokens);
 
             document.getElementById('summaryLabel').textContent = athMode ?
-                (lastAddressCount > 1 ? `ATH Dream value (${lastAddressCount} addresses)` : 'ATH Dream value') :
+                (lastAddressCount > 1 ? t('athDreamValueLabelMulti', { n: lastAddressCount }) : t('athDreamValueLabel')) :
                 multiplierMode ?
-                (lastAddressCount > 1 ? `Multiplier ×${multiplierValue} value (${lastAddressCount} addresses)` :
-                    `Multiplier ×${multiplierValue} value`) :
-                (lastAddressCount > 1 ? `Portfolio value (${lastAddressCount} addresses)` : 'Portfolio value');
+                (lastAddressCount > 1 ? t('multiplierValueLabelMulti', { v: multiplierValue, n: lastAddressCount }) :
+                    t('multiplierValueLabel', { v: multiplierValue })) :
+                (lastAddressCount > 1 ? t('portfolioValueLabelMulti', { n: lastAddressCount }) : t('portfolioValueLabel'));
             document.getElementById('totalValue').textContent = fmtUSD(data.totalUsd);
 
             const changeEl = document.getElementById('totalChange');
             if (athMode) {
-                changeEl.textContent = 'Value at ATH 🚀';
+                changeEl.textContent = t('athModeText');
                 changeEl.className = 'p-change ath';
             } else if (multiplierMode) {
-                changeEl.textContent = `Multiplied ×${multiplierValue} ✖️`;
+                changeEl.textContent = t('multipliedText', { v: multiplierValue });
                 changeEl.className = 'p-change multiplier';
             } else if (data.weightedChange === null) {
                 changeEl.textContent = '—';
@@ -5295,7 +5582,7 @@
                 setPortfolioBarVisible(true, addresses);
                 const notice = document.getElementById('notice');
                 if (data.failedNetworks && data.failedNetworks.length) {
-                    notice.textContent = `Couldn't fetch balances on ${data.failedNetworks.join(', ')} — showing the other network only.`;
+                    notice.textContent = t('noticeFailedNetworks', { networks: data.failedNetworks.join(', ') });
                     notice.classList.add('show');
                 } else {
                     notice.textContent = '';
@@ -5325,7 +5612,7 @@
             row.className = 'addr-row';
             row.innerHTML = `
             <input class="addr-input" type="text" placeholder="0x…" autocomplete="off" />
-            <button class="addr-remove" type="button" title="Remove address" aria-label="Remove address">×</button>
+            <button class="addr-remove" type="button" title="${t('removeAddressTitle')}" aria-label="${t('removeAddressTitle')}" data-i18n-title="removeAddressTitle" data-i18n-aria="removeAddressTitle">×</button>
           `;
             row.querySelector('.addr-input').value = value;
 
@@ -5381,8 +5668,8 @@
             if (savedAddresses.length) {
                 portfolioBar.style.display = 'block';
                 const label = savedAddresses.length > 1 ?
-                    `Saved portfolio — ${savedAddresses.length} addresses` :
-                    `Saved address — ${shortAddr(savedAddresses[0] || '')}`;
+                    t('savedPortfolioMulti', { n: savedAddresses.length }) :
+                    t('savedAddressSingle', { addr: shortAddr(savedAddresses[0] || '') });
                 document.getElementById('portfolioBarLabel').textContent = label;
             } else {
                 portfolioBar.style.display = 'none';
@@ -5465,7 +5752,7 @@
                 document.getElementById('tokenList').classList.remove('show');
                 document.getElementById('farmList').classList.remove('show');
                 document.getElementById('emptyState').style.display = 'block';
-                document.getElementById('emptyState').textContent = 'Paste a wallet address to see a summary — token balances and farm/staking positions.';
+                document.getElementById('emptyState').textContent = t('emptyStateText');
                 document.querySelector('.addr-input').focus();
             }
         }
@@ -5600,7 +5887,7 @@
             document.getElementById('tokenList').classList.remove('show');
             document.getElementById('farmList').classList.remove('show');
             document.getElementById('emptyState').style.display = 'block';
-            document.getElementById('emptyState').textContent = 'Paste a wallet address to see a summary — token balances and farm/staking positions.';
+            document.getElementById('emptyState').textContent = t('emptyStateText');
             document.querySelector('.addr-input').focus();
         });
 
@@ -5754,7 +6041,7 @@
             }
 
             btn.disabled = true;
-            btn.textContent = 'Adding…';
+            btn.textContent = t('addingBtn');
 
             try {
                 const meta = await fetchTokenMetadata(normalized);
@@ -5775,7 +6062,7 @@
                     'error');
             } finally {
                 btn.disabled = false;
-                btn.textContent = 'Add';
+                btn.textContent = t('addBtn');
             }
         }
 
@@ -5901,7 +6188,7 @@
             document.getElementById('tokenList').classList.remove('show');
             document.getElementById('farmList').classList.remove('show');
             document.getElementById('emptyState').style.display = 'block';
-            document.getElementById('emptyState').textContent = 'Paste a wallet address to see a summary — token balances and farm/staking positions.';
+            document.getElementById('emptyState').textContent = t('emptyStateText');
             document.getElementById('tokenCard').classList.remove('show');
 
             selectedNetwork = loadNetworkFromStorage();
@@ -5957,7 +6244,7 @@
         }
 
         function createNewPortfolio() {
-            const name = (prompt('Name for the new portfolio:', `Portfolio ${portfoliosList.length + 1}`) || '').trim();
+            const name = (prompt(t('newPortfolioPromptText'), t('newPortfolioPromptDefault', { n: portfoliosList.length + 1 })) || '').trim();
             if (!name) return;
             const id = generatePortfolioId();
             portfoliosList.push({ id, name });
@@ -5967,7 +6254,7 @@
 
         function renameActivePortfolio() {
             const current = getActivePortfolio();
-            const name = (prompt('Rename portfolio:', current.name) || '').trim();
+            const name = (prompt(t('renamePortfolioPromptText'), current.name) || '').trim();
             if (!name || name === current.name) return;
             current.name = name;
             savePortfoliosList(portfoliosList);
@@ -5977,7 +6264,7 @@
         function deleteActivePortfolio() {
             if (portfoliosList.length <= 1) return;
             const current = getActivePortfolio();
-            const confirmed = confirm(`Delete "${current.name}"? Its saved addresses and tokens will be removed from this browser.`);
+            const confirmed = confirm(t('deletePortfolioConfirmText', { name: current.name }));
             if (!confirmed) return;
 
             clearAddressesFromStorage();
@@ -6010,11 +6297,477 @@
         document.getElementById('deletePortfolioBtn').addEventListener('click', deleteActivePortfolio);
 
         // =================================================================
+        //  CURRENCY CONVERSION SYSTEM
+        // =================================================================
+        const CURRENCY_STORAGE_KEY = 'pulseFolio_currency';
+        const EXCHANGE_RATES_STORAGE_KEY = 'pulseFolio_exchangeRates';
+        const EXCHANGE_RATES_TIMESTAMP_KEY = 'pulseFolio_ratesTimestamp';
+
+        let currentTheme = 'dark';
+        let currentLanguage = 'en';
+
+        // =========================================================================
+        //  TRANSLATIONS (i18n)
+        // =========================================================================
+        const translations = {
+            en: {
+                settingsAria: 'Settings',
+                settingsMenuTitle: '⚙️ Settings',
+                currencyLabel: '💱 Currency',
+                languageLabel: '🌐 Language',
+                themeLabel: '🎨 Theme',
+                themeDark: 'Dark',
+                themeLight: 'Light',
+                renamePortfolio: 'Rename portfolio',
+                deletePortfolio: 'Delete portfolio',
+                createPortfolio: 'Create new portfolio',
+                walletAddressesLabel: 'Wallet addresses — PulseChain / Ethereum',
+                collapseTitle: 'Collapse — back to saved portfolio',
+                networkLabel: 'Network:',
+                otherNetworksIncludeLabel: 'Also include, when viewing <strong>PulseChain + Ethereum</strong> combined:',
+                otherNetworksHint: 'Leave unchecked for the fastest load — each extra network adds a separate fetch.',
+                removeAddressTitle: 'Remove address',
+                addAddressBtn: 'Add address',
+                checkBtn: 'Check',
+                useDemoAddress: 'Use demo address',
+                clearAddressesBtn: '⟳ Clear addresses',
+                missingTokenLabel: 'Missing a token? Add it',
+                closeTitle: 'Close',
+                tokenContractPlaceholder: 'Token contract address 0x…',
+                addBtn: 'Add',
+                tokenEmptyHint: 'Tokens you add here are saved in this browser only and are included whenever balances are checked.',
+                manualTokenDivider: 'or manually add from any network',
+                manualTokenSymbolPlaceholder: 'Token symbol (e.g. BTC, DOGE, SOL)',
+                manualTokenHint2: "Use this for tokens you hold on an exchange (Binance, Coinbase…) or on a blockchain this app doesn't scan directly — enter the amount you hold and its live price gets tracked here alongside your wallet balances.",
+                manualMergeLabel: 'If a manual token matches one already in your portfolio',
+                keepSeparateBtn: 'Keep separate',
+                keepSeparateTitle: 'Show manually added tokens as their own separate row',
+                sumMatchingBtn: 'Sum with matching token',
+                sumMatchingTitle: 'Add the manual amount on top of the matching on-chain token',
+                amountHeldPlaceholder: 'Amount held (0 to just watch)',
+                addToPortfolioBtn: 'Add to portfolio',
+                cancelBtn: 'Cancel',
+                portfolioValueLabel: 'Portfolio value',
+                switchNetworkTitle: 'Switch network',
+                chartBtn: 'Chart 📈',
+                chartTitle: 'Show portfolio value chart',
+                refreshBtn: 'Refresh',
+                refreshTitle: 'Refresh portfolio balances and prices',
+                otherNetworksBtn: 'Other networks',
+                otherNetworksTitle: 'Also load Base, Arbitrum and BNB Chain (slower)',
+                staleBadgeText: 'Cached data — refreshing…',
+                currencyToggleTitle: 'Click to change currency',
+                athDreamBtn: 'ATH Dream',
+                multiplierBtn: 'Multiplier',
+                multiplierLabel: 'Multiplier:',
+                applyBtn: 'Apply',
+                farmModeLabel: 'Farm & staked tokens',
+                separateBtn: 'Separate',
+                mergeWithPortfolioBtn: 'Merge with portfolio',
+                emptyStateText: 'Paste a wallet address to see a summary — token balances and farm/staking positions.',
+                savedPortfolioLabel: 'Saved portfolio',
+                editAddressesBtn: 'Edit addresses',
+                privacyNoteText: 'Wallet addresses and custom tokens are stored only locally in your browser (localStorage) — they are never sent to or saved on any server.',
+                // dynamic
+                colToken: 'Token',
+                colPrice: 'Price',
+                colAmount: 'Amount',
+                colValue: 'Value',
+                noTokensFound: 'No tokens with a recognized USD value for this address.',
+                noFarmPositions: 'No active positions in farms or staking.',
+                athModeText: 'Value at ATH 🚀',
+                multipliedText: 'Multiplied ×{v} ✖️',
+                portfolioValueLabelMulti: 'Portfolio value ({n} addresses)',
+                athDreamValueLabel: 'ATH Dream value',
+                athDreamValueLabelMulti: 'ATH Dream value ({n} addresses)',
+                multiplierValueLabel: 'Multiplier ×{v} value',
+                multiplierValueLabelMulti: 'Multiplier ×{v} value ({n} addresses)',
+                noticeFailedNetworks: "Couldn't fetch balances on {networks} — showing the other network only.",
+                addingBtn: 'Adding…',
+                saveChangesBtn: 'Save changes',
+                savedPortfolioMulti: 'Saved portfolio — {n} addresses',
+                savedAddressSingle: 'Saved address — {addr}',
+                newPortfolioPromptDefault: 'Portfolio {n}',
+                newPortfolioPromptText: 'Name for the new portfolio:',
+                renamePortfolioPromptText: 'Rename portfolio:',
+                deletePortfolioConfirmText: 'Delete "{name}"? Its saved addresses and tokens will be removed from this browser.',
+                wrapMergeTitleOn: 'Wrapped tokens (e.g. WETH) are merged into their native token — click to split them apart',
+                wrapMergeTitleOff: 'Wrapped tokens are shown separately — click to merge them into their native token (e.g. WETH into ETH)',
+                hideManualTitleOn: 'Manually added tokens are hidden from this list — click to show them',
+                hideManualTitleOff: 'Hide manually added tokens from this list',
+            },
+            pl: {
+                settingsAria: 'Ustawienia',
+                settingsMenuTitle: '⚙️ Ustawienia',
+                currencyLabel: '💱 Waluta',
+                languageLabel: '🌐 Język',
+                themeLabel: '🎨 Motyw',
+                themeDark: 'Ciemny',
+                themeLight: 'Jasny',
+                renamePortfolio: 'Zmień nazwę portfela',
+                deletePortfolio: 'Usuń portfel',
+                createPortfolio: 'Utwórz nowy portfel',
+                walletAddressesLabel: 'Adresy portfela — PulseChain / Ethereum',
+                collapseTitle: 'Zwiń — wróć do zapisanego portfela',
+                networkLabel: 'Sieć:',
+                otherNetworksIncludeLabel: 'Dodatkowo uwzględnij, przy przeglądaniu <strong>PulseChain + Ethereum</strong> łącznie:',
+                otherNetworksHint: 'Pozostaw odznaczone dla najszybszego wczytywania — każda dodatkowa sieć to osobne zapytanie.',
+                removeAddressTitle: 'Usuń adres',
+                addAddressBtn: 'Dodaj adres',
+                checkBtn: 'Sprawdź',
+                useDemoAddress: 'Użyj adresu demo',
+                clearAddressesBtn: '⟳ Wyczyść adresy',
+                missingTokenLabel: 'Brakuje tokena? Dodaj go',
+                closeTitle: 'Zamknij',
+                tokenContractPlaceholder: 'Adres kontraktu tokena 0x…',
+                addBtn: 'Dodaj',
+                tokenEmptyHint: 'Tokeny dodane tutaj są zapisywane wyłącznie w tej przeglądarce i uwzględniane przy każdym sprawdzaniu sald.',
+                manualTokenDivider: 'lub dodaj ręcznie z dowolnej sieci',
+                manualTokenSymbolPlaceholder: 'Symbol tokena (np. BTC, DOGE, SOL)',
+                manualTokenHint2: 'Użyj tego dla tokenów trzymanych na giełdzie (Binance, Coinbase…) lub na blockchainie, którego ta aplikacja nie skanuje bezpośrednio — podaj posiadaną ilość, a jego aktualna cena będzie śledzona tutaj razem z saldami portfela.',
+                manualMergeLabel: 'Jeśli ręcznie dodany token pasuje do tokena już będącego w portfelu',
+                keepSeparateBtn: 'Trzymaj osobno',
+                keepSeparateTitle: 'Pokazuj ręcznie dodane tokeny jako osobny wiersz',
+                sumMatchingBtn: 'Zsumuj z pasującym tokenem',
+                sumMatchingTitle: 'Dodaj ręczną ilość do pasującego tokena on-chain',
+                amountHeldPlaceholder: 'Posiadana ilość (0 aby tylko obserwować)',
+                addToPortfolioBtn: 'Dodaj do portfela',
+                cancelBtn: 'Anuluj',
+                portfolioValueLabel: 'Wartość portfela',
+                switchNetworkTitle: 'Przełącz sieć',
+                chartBtn: 'Wykres 📈',
+                chartTitle: 'Pokaż wykres wartości portfela',
+                refreshBtn: 'Odśwież',
+                refreshTitle: 'Odśwież salda i ceny portfela',
+                otherNetworksBtn: 'Inne sieci',
+                otherNetworksTitle: 'Wczytaj też Base, Arbitrum i BNB Chain (wolniej)',
+                staleBadgeText: 'Dane z pamięci podręcznej — odświeżanie…',
+                currencyToggleTitle: 'Kliknij, aby zmienić walutę',
+                athDreamBtn: 'ATH Dream',
+                multiplierBtn: 'Mnożnik',
+                multiplierLabel: 'Mnożnik:',
+                applyBtn: 'Zastosuj',
+                farmModeLabel: 'Tokeny farm i staking',
+                separateBtn: 'Osobno',
+                mergeWithPortfolioBtn: 'Połącz z portfelem',
+                emptyStateText: 'Wklej adres portfela, aby zobaczyć podsumowanie — salda tokenów oraz pozycje farm/staking.',
+                savedPortfolioLabel: 'Zapisany portfel',
+                editAddressesBtn: 'Edytuj adresy',
+                privacyNoteText: 'Adresy portfela i własne tokeny są przechowywane wyłącznie lokalnie w tej przeglądarce (localStorage) — nigdy nie są wysyłane ani zapisywane na żadnym serwerze.',
+                // dynamic
+                colToken: 'Token',
+                colPrice: 'Cena',
+                colAmount: 'Ilość',
+                colValue: 'Wartość',
+                noTokensFound: 'Brak tokenów o rozpoznanej wartości USD dla tego adresu.',
+                noFarmPositions: 'Brak aktywnych pozycji farm lub staking.',
+                athModeText: 'Wartość przy ATH 🚀',
+                multipliedText: 'Pomnożone ×{v} ✖️',
+                portfolioValueLabelMulti: 'Wartość portfela ({n} adresów)',
+                athDreamValueLabel: 'Wartość ATH Dream',
+                athDreamValueLabelMulti: 'Wartość ATH Dream ({n} adresów)',
+                multiplierValueLabel: 'Wartość z mnożnikiem ×{v}',
+                multiplierValueLabelMulti: 'Wartość z mnożnikiem ×{v} ({n} adresów)',
+                noticeFailedNetworks: 'Nie udało się pobrać sald dla {networks} — pokazano tylko drugą sieć.',
+                addingBtn: 'Dodawanie…',
+                saveChangesBtn: 'Zapisz zmiany',
+                savedPortfolioMulti: 'Zapisany portfel — {n} adresów',
+                savedAddressSingle: 'Zapisany adres — {addr}',
+                newPortfolioPromptDefault: 'Portfel {n}',
+                newPortfolioPromptText: 'Nazwa nowego portfela:',
+                renamePortfolioPromptText: 'Zmień nazwę portfela:',
+                deletePortfolioConfirmText: 'Usunąć „{name}”? Zapisane adresy i tokeny zostaną usunięte z tej przeglądarki.',
+                wrapMergeTitleOn: 'Tokeny opakowane (np. WETH) są scalane z tokenem natywnym — kliknij, aby je rozdzielić',
+                wrapMergeTitleOff: 'Tokeny opakowane są pokazywane osobno — kliknij, aby scalić je z tokenem natywnym (np. WETH w ETH)',
+                hideManualTitleOn: 'Ręcznie dodane tokeny są ukryte na tej liście — kliknij, aby je pokazać',
+                hideManualTitleOff: 'Ukryj ręcznie dodane tokeny z tej listy',
+            },
+        };
+
+        function t(key, vars) {
+            const dict = translations[currentLanguage] || translations.en;
+            let str = dict[key] !== undefined ? dict[key] : (translations.en[key] !== undefined ? translations.en[key] : key);
+            if (vars) {
+                Object.keys(vars).forEach(k => {
+                    str = str.replace(new RegExp('\\{' + k + '\\}', 'g'), vars[k]);
+                });
+            }
+            return str;
+        }
+
+        function applyTranslations() {
+            document.documentElement.lang = currentLanguage;
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                el.textContent = t(el.dataset.i18n);
+            });
+            document.querySelectorAll('[data-i18n-html]').forEach(el => {
+                el.innerHTML = t(el.dataset.i18nHtml);
+            });
+            document.querySelectorAll('[data-i18n-title]').forEach(el => {
+                el.setAttribute('title', t(el.dataset.i18nTitle));
+            });
+            document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+                el.setAttribute('aria-label', t(el.dataset.i18nAria));
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                el.setAttribute('placeholder', t(el.dataset.i18nPlaceholder));
+            });
+
+            // Re-render dynamic parts that depend on language but aren't driven
+            // purely by data-i18n attributes (table headers, summary labels, etc.)
+            if (typeof portfolioData !== 'undefined' && portfolioData && portfolioData.totalUsd) {
+                refreshView();
+            }
+            if (typeof loadAddressesFromStorage === 'function') {
+                const portfolioBarEl = document.getElementById('portfolioBar');
+                const labelEl = document.getElementById('portfolioBarLabel');
+                if (portfolioBarEl && labelEl && portfolioBarEl.style.display !== 'none') {
+                    const savedAddresses = loadAddressesFromStorage() || [];
+                    if (savedAddresses.length) {
+                        labelEl.textContent = savedAddresses.length > 1 ?
+                            t('savedPortfolioMulti', { n: savedAddresses.length }) :
+                            t('savedAddressSingle', { addr: shortAddr(savedAddresses[0] || '') });
+                    }
+                }
+            }
+        }
+
+        function setLanguage(code) {
+            if (!translations[code]) return;
+            currentLanguage = code;
+            saveLanguagePreference();
+            updateSettingsUI();
+            applyTranslations();
+        }
+        
+        // =========================================================================
+        //  SETTINGS MENU HANDLERS
+        // =========================================================================
+        function initSettings() {
+            const settingsBtn = document.getElementById('settingsBtn');
+            const settingsMenu = document.getElementById('settingsMenu');
+            const settingsOverlay = document.getElementById('settingsOverlay');
+            const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+            
+            // Open/Close menu
+            settingsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                settingsMenu.classList.toggle('show');
+                settingsOverlay.classList.toggle('show');
+            });
+            
+            closeSettingsBtn.addEventListener('click', closeSettings);
+            settingsOverlay.addEventListener('click', closeSettings);
+            
+            function closeSettings() {
+                settingsMenu.classList.remove('show');
+                settingsOverlay.classList.remove('show');
+            }
+            
+            // Prevent menu close when clicking inside it
+            settingsMenu.addEventListener('click', (e) => e.stopPropagation());
+            
+            // Currency handlers
+            document.querySelectorAll('[data-currency]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    setCurrency(btn.dataset.currency);
+                });
+            });
+
+            // Zmiana waluty po kliknięciu w totalValue (cykl: USD -> PLN -> BTC -> USD)
+            const totalValueEl = document.getElementById('totalValue');
+            if (totalValueEl) {
+                const cycleCurrency = () => {
+                    const idx = currencyCycleOrder.indexOf(currentCurrency);
+                    const next = currencyCycleOrder[(idx + 1) % currencyCycleOrder.length];
+                    setCurrency(next);
+                    totalValueEl.classList.remove('switching');
+                    // wymuś reflow, żeby animacja odpaliła się ponownie przy kolejnym kliknięciu
+                    void totalValueEl.offsetWidth;
+                    totalValueEl.classList.add('switching');
+                };
+                totalValueEl.addEventListener('click', cycleCurrency);
+                totalValueEl.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        cycleCurrency();
+                    }
+                });
+            }
+            
+            // Theme handlers
+            document.querySelectorAll('[data-theme]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentTheme = btn.dataset.theme;
+                    saveThemePreference();
+                    applyTheme();
+                    updateSettingsUI();
+                });
+            });
+            
+            // Language handlers
+            document.querySelectorAll('[data-language]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    setLanguage(btn.dataset.language);
+                });
+            });
+            
+            // Load saved preferences
+            loadCurrencyPreference();
+            loadThemePreference();
+            loadLanguagePreference();
+            applyTheme();
+            loadExchangeRates();
+            updateSettingsUI();
+            applyTranslations();
+        }
+        
+        function setCurrency(code) {
+            if (!currencySymbols[code]) return;
+            currentCurrency = code;
+            saveCurrencyPreference();
+            updateSettingsUI();
+            if (portfolioData && portfolioData.totalUsd) {
+                refreshView();
+            }
+        }
+
+        function updateSettingsUI() {
+            // Update currency buttons
+            document.querySelectorAll('[data-currency]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.currency === currentCurrency);
+            });
+            
+            // Update theme buttons
+            document.querySelectorAll('[data-theme]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.theme === currentTheme);
+            });
+            
+            // Update language buttons
+            document.querySelectorAll('[data-language]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.language === currentLanguage);
+            });
+        }
+        
+        function applyTheme() {
+            if (currentTheme === 'light') {
+                document.documentElement.classList.add('light');
+            } else {
+                document.documentElement.classList.remove('light');
+            }
+        }
+        
+        function saveCurrencyPreference() {
+            try {
+                localStorage.setItem(CURRENCY_STORAGE_KEY, currentCurrency);
+            } catch (err) { console.warn('localStorage write error:', err); }
+        }
+        
+        function loadCurrencyPreference() {
+            try {
+                const saved = localStorage.getItem(CURRENCY_STORAGE_KEY);
+                if (saved && ['usd', 'pln', 'btc'].includes(saved)) {
+                    currentCurrency = saved;
+                }
+            } catch (err) { console.warn('localStorage read error:', err); }
+        }
+        
+        function saveThemePreference() {
+            try {
+                localStorage.setItem('pulseFolio_theme', currentTheme);
+            } catch (err) { console.warn('localStorage write error:', err); }
+        }
+        
+        function loadThemePreference() {
+            try {
+                const saved = localStorage.getItem('pulseFolio_theme');
+                if (saved && ['dark', 'light'].includes(saved)) {
+                    currentTheme = saved;
+                }
+            } catch (err) { console.warn('localStorage read error:', err); }
+        }
+        
+        function saveLanguagePreference() {
+            try {
+                localStorage.setItem('pulseFolio_language', currentLanguage);
+            } catch (err) { console.warn('localStorage write error:', err); }
+        }
+        
+        function loadLanguagePreference() {
+            try {
+                const saved = localStorage.getItem('pulseFolio_language');
+                if (saved && ['en', 'pl'].includes(saved)) {
+                    currentLanguage = saved;
+                }
+            } catch (err) { console.warn('localStorage read error:', err); }
+        }
+        
+        async function fetchExchangeRates() {
+            try {
+                const response = await fetch(
+                    'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd,pln'
+                );
+                
+                if (!response.ok) throw new Error('API error');
+                
+                const data = await response.json();
+                const btcUsd = data.bitcoin.usd;
+                const btcPln = data.bitcoin.pln;
+                
+                exchangeRates.btc = 1 / btcUsd;
+                exchangeRates.pln = btcPln / btcUsd;
+                
+                try {
+                    localStorage.setItem(EXCHANGE_RATES_STORAGE_KEY, JSON.stringify(exchangeRates));
+                    localStorage.setItem(EXCHANGE_RATES_TIMESTAMP_KEY, Date.now().toString());
+                } catch (err) { console.warn('localStorage write error:', err); }
+                
+                if (portfolioData && portfolioData.totalUsd) {
+                    refreshView();
+                }
+                
+            } catch (error) {
+                console.error('Error fetching exchange rates:', error);
+                loadExchangeRates();
+            }
+        }
+
+        function loadExchangeRates() {
+            try {
+                const saved = localStorage.getItem(EXCHANGE_RATES_STORAGE_KEY);
+                const timestamp = localStorage.getItem(EXCHANGE_RATES_TIMESTAMP_KEY);
+                
+                if (saved && timestamp) {
+                    const age = Date.now() - parseInt(timestamp);
+                    if (age > 3600000) {
+                        fetchExchangeRates();
+                    } else {
+                        exchangeRates = JSON.parse(saved);
+                    }
+                } else {
+                    fetchExchangeRates();
+                }
+            } catch (err) {
+                console.warn('localStorage read error:', err);
+                fetchExchangeRates();
+            }
+        }
+
+        // =================================================================
         //  INIT
         // =================================================================
         loadSortConfig();
         renderPortfolioSelect();
         loadPortfolioIntoUI();
+        
+        // Inicjalizacja systemu ustawień
+        initSettings();
+        
+        // Odśwież kursy co 30 minut
+        setInterval(() => {
+            fetchExchangeRates();
+        }, 30 * 60 * 1000);
     </script>
 
 </body>
