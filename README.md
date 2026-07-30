@@ -1,72 +1,83 @@
 # PulseFolio
 
-A single-file, client-side crypto portfolio tracker for **PulseChain, Ethereum, Base, Arbitrum, and BNB Chain**. Paste one or more wallet addresses and see your token balances, farm/staking positions, and total USD value — no backend, no account, no wallet connection required.
+**PulseFolio** is a single-file, client-side, read-only portfolio tracker for **PulseChain**, **Ethereum**, and a handful of EVM sidechains — built as one self-contained `index.html`, with no backend, no wallet connection, and no data ever leaving the browser except direct calls to public RPCs and price APIs.
 
-🔗 **[Live demo](#)** — replace with your GitHub Pages / hosting link
+Just paste one or more wallet addresses and get a live, multi-chain view of your holdings, its value over time, and a few PulseChain/HEX-ecosystem-specific extras like ATH "dream" pricing.
 
-![PulseFolio](https://img.shields.io/badge/type-static%20HTML-8b3bff) ![No backend](https://img.shields.io/badge/backend-none-35d68b) ![License](https://img.shields.io/badge/license-MIT-00d4ff)
+![PulseFolio](https://img.shields.io/badge/type-single--file%20app-8b3bff) ![No backend](https://img.shields.io/badge/backend-none-35d68b) ![License](https://img.shields.io/badge/license-see%20below-555)
 
 ---
 
-## ✨ Features
+## Features
 
-- **Multi-network support** — PulseChain, Ethereum, Base, Arbitrum, and BNB Chain, plus a combined PulseChain + Ethereum (+ optional extras) view.
-- **Multiple portfolios** — create, rename, and switch between several saved portfolios, each with its own addresses, custom tokens, and network settings, all stored independently in your browser.
-- **Multiple wallet addresses per portfolio** — track several addresses together as one combined portfolio.
-- **Automatic token discovery** — known tokens per network plus the ability to add any ERC-20 by contract address.
-- **Manual token tracking** — add tokens you hold on an exchange (Binance, Coinbase, etc.) or on a chain this app doesn't scan directly, by symbol via CoinGecko, and track their live USD value alongside your on-chain balances.
-- **Watchlist** — track token prices without needing a wallet address at all.
-- **Farms & staking** — HEX staking and PulseX farm/MasterChef positions, with a toggle to merge them into the main token list or view separately.
-- **Live pricing** — powered by [DexScreener](https://dexscreener.com/) (on-chain pairs) and [CoinGecko](https://www.coingecko.com/) (manual tokens, watchlist).
-- **Portfolio value chart** — snapshots of your total portfolio value over time, rendered as an inline chart.
-- **"ATH Dream" & Multiplier modes** — see what your portfolio would be worth at each token's all-time high, or at an arbitrary price multiplier.
-- **Offline-friendly caching** — the last successful fetch is cached locally and shown instantly (marked as stale) while fresh data loads in the background.
-- **Privacy-first** — everything lives in your browser's `localStorage`. Addresses, custom tokens, and settings are never sent to or stored on any server.
+- **Multi-chain balances** — track token balances on:
+  - PulseChain (native)
+  - Ethereum
+  - Base, Arbitrum, BNB Chain (optional, added on top in *combined* mode)
+- **Multiple wallets at once** — enter any number of addresses and see them aggregated into a single portfolio.
+- **Multiple saved portfolios** — create, rename, switch between, and delete separate portfolios (e.g. "Main", "Trading", "Cold storage"), each with its own addresses, network selection, and custom/manual tokens, stored independently.
+- **Combined view** — merge PulseChain + Ethereum (+ optionally Base/Arbitrum/BNB) into one unified total.
+- **Manual tokens** — add any token by symbol via CoinGecko lookup and enter a holding amount by hand, for anything not detectable on-chain (e.g. CEX balances, illiquid tokens).
+- **Farm & staked tokens** — HEX stakes and PulseX LP farm holdings can be folded into or split out from the main token list.
+- **Portfolio value chart** — an inline SVG chart of total portfolio value over time (24h / 7d / 30d), built from local snapshots recorded on every refresh. History is scoped per network/wallet context, so switching wallets or networks never mixes unrelated history together, and stale/out-of-order responses (e.g. fast wallet switching) can't corrupt it or flash the wrong chart on screen.
+- **ATH Dream mode** — see what your PulseChain/HEX-ecosystem portfolio would be worth at each token's all-time-high price.
+- **Multiplier mode** — apply a custom price multiplier across the board for "what if" scenarios.
+- **Currency display** — toggle between USD, PLN, and BTC (click the total value to cycle).
+- **Light/dark theme.**
+- **English / Polish UI** (`en` / `pl`), fully translatable via a simple string table.
+- **Client-side caching** — token prices, DexScreener prices, CoinGecko icons, and portfolio snapshots are cached locally (`localStorage`) with sensible TTLs, so the app stays fast and usable offline-ish between refreshes.
+- **No wallet connection, no signing, no write access** — addresses are just looked up read-only via public RPC `eth_call`s. Nothing is ever transacted or approved.
 
-## 🖥️ Tech stack
+## How it works
 
-- Plain **HTML/CSS/JavaScript** — a single static file, no build step, no framework.
-- [ethers.js v5](https://docs.ethers.org/v5/) for all on-chain reads (balances, staking contracts, farm contracts) via public RPC endpoints.
-- [Tabler Icons](https://tabler.io/icons) for iconography, [Google Fonts](https://fonts.google.com/) (Space Grotesk / Inter) for typography.
-- [DexScreener API](https://docs.dexscreener.com/api/reference) for token prices and liquidity data.
-- [CoinGecko API](https://www.coingecko.com/en/api) for manual token/watchlist price lookups.
-- A strict `Content-Security-Policy` locking network access down to only the RPCs and APIs the app actually uses.
+PulseFolio is a **single static HTML file**. There is no server, no build step, and no database:
 
-## 🚀 Getting started
+- Balances are fetched directly from public JSON-RPC endpoints (PulseChain, Ethereum, Base, Arbitrum, BNB Chain) using [ethers.js](https://docs.ethers.org/v5/), loaded from a CDN.
+- Prices come from [DexScreener](https://docs.dexscreener.com/) and [CoinGecko](https://www.coingecko.com/en/api) public APIs.
+- Everything you enter (addresses, portfolios, settings, custom tokens, price/history caches) is stored in the browser's `localStorage`. Nothing is sent to any first-party server, because there isn't one.
+- A strict `Content-Security-Policy` locks the page down to only the RPC/API domains it actually needs.
 
-No build step, no dependencies to install.
+## Getting started
 
-1. Download `index.html` from this repo.
-2. Open it directly in a browser, **or** host it anywhere that serves static files (GitHub Pages, Netlify, Vercel, S3, etc.):
+No installation required.
 
-   ```bash
-   # Example: quick local preview
-   npx serve .
-   ```
+1. Download `index.html`.
+2. Open it in any modern browser (Chrome, Firefox, Edge, Safari).
+3. Paste one or more wallet addresses and click **Load**.
 
-3. Paste a wallet address (or use the demo address) and hit **Check**.
+That's it — you can also just double-click the file locally, or serve it from any static host (GitHub Pages, Netlify, S3, etc.) since it has no server-side dependencies.
 
-## 📖 Usage
+```bash
+# Optional: serve it locally instead of opening the file directly
+python3 -m http.server -d . 8080
+# then visit http://localhost:8080/index.html
+```
 
-- **Add addresses** — paste one or more `0x…` addresses to check them together as a single portfolio.
-- **Switch networks** — use the network selector, or combine PulseChain + Ethereum (and optionally Base/Arbitrum/BNB Chain) into one view.
-- **Multiple portfolios** — use the portfolio switcher (visible while editing addresses) to create a new portfolio, rename the current one, or delete it. Each portfolio remembers its own addresses, tokens, and network choice.
-- **Add missing tokens** — click *"Missing a token? Add it"* to track any ERC-20 by contract address, or manually add a token from any network/exchange by symbol.
-- **Watchlist** — track token prices without linking them to a wallet balance.
-- **Farms & staking** — see HEX stakes and PulseX farm positions under the *Farms & staking* tab.
+## Supported networks
 
-## 🔒 Privacy & data storage
+| Network | Role |
+|---|---|
+| **PulseChain** | Primary/default network |
+| **Ethereum** | Primary alternative network |
+| **Base** | Optional, combined mode only |
+| **Arbitrum** | Optional, combined mode only |
+| **BNB Chain** | Optional, combined mode only |
 
-PulseFolio makes no server-side calls of its own — every request goes straight from your browser to public RPC nodes, DexScreener, or CoinGecko. Wallet addresses, custom/manual tokens, watchlist items, portfolios, and settings are stored **only** in your browser's `localStorage` and are never transmitted anywhere else. Clearing your browser data will remove them.
+Switch networks from the network selector, or turn on **combined mode** to merge PulseChain + Ethereum (and any optional extra networks you pick) into a single total.
 
-## ⚠️ Disclaimer
+## Privacy & security
 
-PulseFolio is a read-only balance/price viewer. It never asks for a seed phrase or private key, and cannot move funds. Prices are sourced from third-party APIs (DexScreener, CoinGecko) and may be delayed, incomplete, or inaccurate — always verify important figures independently before making financial decisions. This is not financial advice.
+- **Read-only.** PulseFolio never asks you to connect a wallet, sign a message, or approve a transaction — it only reads public on-chain balances for the addresses you type in.
+- **No backend.** There is no server component to log your addresses or portfolio value; all state lives in your browser's `localStorage`.
+- **Locked-down CSP.** The page's Content-Security-Policy restricts script/style/connect sources to exactly what's needed (ethers.js CDN, Google Fonts/cdnjs for styling, the RPC endpoints, DexScreener, and CoinGecko) and blocks `object-src`, `base-uri`, `form-action`, and `frame-ancestors` outright.
+- Clearing your browser's site data for this page will erase all saved portfolios, history, and preferences — there is no cloud backup.
 
-## 🤝 Contributing
+## Disclaimer
 
-Issues and pull requests are welcome. Since this is a single static HTML file, most changes can be made and tested by simply editing `index.html` and opening it in a browser.
+Token contract addresses for secondary networks (Base, Arbitrum, etc.) are best-effort and should be independently verified on a block explorer before you rely on them. ATH/Multiplier "dream" pricing is a hypothetical display mode only — it does not reflect real, tradable value and is excluded from the saved value history/chart.
 
-## 📄 License
+This is not financial advice, and PulseFolio is not affiliated with PulseChain, HEX, or any token/project it happens to display.
 
-[MIT](LICENSE)
+## License
+
+See repository license file (or add one — none specified here).
