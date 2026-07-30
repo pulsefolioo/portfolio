@@ -5321,10 +5321,15 @@
         // Note: toggling which extra networks (Base/Arbitrum/BNB) are included does NOT
         // start a new history — otherwise the chart would reset/disable every time that
         // selection changes, since it needs at least 2 recorded points to render.
-        function getSnapshotContextKey(addresses) {
-            const scope = combinedMode ? 'combined' : selectedNetwork;
+        // `scope` identifies WHICH network/combined-mode bucket a set of addresses belongs
+        // to. It's optional and falls back to the current live selection — but callers that
+        // are recording or rendering data for a request that may have started under a
+        // *different* selection (async fetch that outlives a network/wallet switch) should
+        // always pass the scope they captured at request time, not rely on this fallback.
+        function getSnapshotContextKey(addresses, scope) {
+            const effectiveScope = scope || (combinedMode ? 'combined' : selectedNetwork);
             const addrKey = [...addresses].map(a => a.toLowerCase()).sort().join(',');
-            return `${scope}::${addrKey}`;
+            return `${effectiveScope}::${addrKey}`;
         }
 
         function loadAllSnapshots() {
@@ -5344,9 +5349,9 @@
             return Number.isFinite(parsed) ? parsed : Date.now();
         }
 
-        function getSnapshotsForContext(addresses) {
+        function getSnapshotsForContext(addresses, scope) {
             const all = loadAllSnapshots();
-            return all[getSnapshotContextKey(addresses)] || [];
+            return all[getSnapshotContextKey(addresses, scope)] || [];
         }
 
         // Records (or updates) the current value for this wallet/network context. Refreshes
@@ -5354,9 +5359,15 @@
         // adding a new one, so mashing the refresh button doesn't spam the history with
         // near-duplicate points — otherwise every check adds its own timestamped point, which
         // is what lets the chart show real movement over time instead of just once per day.
-        function recordSnapshot(addresses, value) {
+        //
+        // `scope` should be the network/combined-mode context captured at the moment this
+        // data was REQUESTED (see beginChartRequest/requestScope in handleLoad) — saving must
+        // never depend on whatever the user happens to have selected by the time the response
+        // arrives, or a slow response finishing after a network/wallet switch would silently
+        // pollute the wrong context's history.
+        function recordSnapshot(addresses, value, scope) {
             if (!addresses || !addresses.length || !Number.isFinite(value)) return;
-            const key = getSnapshotContextKey(addresses);
+            const key = getSnapshotContextKey(addresses, scope);
             const all = loadAllSnapshots();
             const list = all[key] || [];
             const now = Date.now();
@@ -5394,6 +5405,18 @@
         let chartVisible = false; // the chart is only rendered once the user clicks the "Chart" button
         let chartHasData = false;
         let lastChartAddresses = null; // so the range buttons can re-render without needing addresses passed in again
+        let lastChartScope = null; // the network/combined-mode scope the currently-displayed chart belongs to
+
+        // Bumped every time a fresh load is kicked off (see beginChartRequest()). Lets a
+        // response recognize, once it comes back, whether the user is still looking at the
+        // selection that request was made for — saving (history) never depends on this, only
+        // displaying does. This is what keeps "save" and "display" independent: a stale
+        // response can still be recorded into its own context's history even though it's no
+        // longer allowed to paint over the chart currently on screen.
+        let chartRequestGeneration = 0;
+        function beginChartRequest() {
+            return ++chartRequestGeneration;
+        }
 
         const CHART_RANGE_STORAGE_KEY = 'pulsefolio_chart_range';
         const CHART_RANGES = {
@@ -5442,15 +5465,17 @@
             return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
         }
 
-        function renderSnapshotChart(addresses) {
+        function renderSnapshotChart(addresses, scope) {
             const container = document.getElementById('snapshotChart');
             const svg = document.getElementById('snapshotSvg');
             const meta = document.getElementById('snapshotMeta');
             if (addresses) lastChartAddresses = addresses;
+            if (scope) lastChartScope = scope;
             const effectiveAddresses = addresses || lastChartAddresses;
+            const effectiveScope = scope || lastChartScope;
             if (!container || !svg || !effectiveAddresses) return;
 
-            const allPoints = getSnapshotsForContext(effectiveAddresses)
+            const allPoints = getSnapshotsForContext(effectiveAddresses, effectiveScope)
                 .map(p => ({ ts: snapshotTs(p), value: p.value }))
                 .sort((a, b) => a.ts - b.ts);
             if (allPoints.length < 2) {
@@ -5589,12 +5614,32 @@
             refreshView();
 
             if (Array.isArray(opts.addresses) && opts.addresses.length) {
-                // Only record a new data point for genuinely fresh data, not cached/stale renders —
-                // but always redraw the chart so history still shows while a stale view is up.
+                // The scope this data was actually fetched under — captured by the caller at
+                // request time (see beginChartRequest/requestScope in handleLoad). Falls back
+                // to the current live selection for call sites that render synchronously
+                // (e.g. the stale-cache preview), where "at request time" and "now" are the
+                // same instant anyway.
+                const scope = opts.scope || (combinedMode ? 'combined' : selectedNetwork);
+
+                // SAVING: only record a new data point for genuinely fresh data, not
+                // cached/stale renders — but this always writes into the context the data
+                // actually belongs to (opts.scope), regardless of whatever the user has
+                // selected right now. This is what keeps history accurate even if a slow
+                // response resolves after the user has already switched wallet/network.
                 if (!showingStale) {
-                    recordSnapshot(opts.addresses, getRealTotalUsd(data));
+                    recordSnapshot(opts.addresses, getRealTotalUsd(data), scope);
                 }
-                renderSnapshotChart(opts.addresses);
+
+                // DISPLAYING: only paint the chart if this response still matches the
+                // selection the user is currently looking at. opts.generation is stamped
+                // when the request started (beginChartRequest); if chartRequestGeneration has
+                // moved on since then, a newer load has started (user switched away) and this
+                // response — though still faithfully saved above — must not overwrite what's
+                // on screen.
+                const isStaleForDisplay = opts.generation != null && opts.generation !== chartRequestGeneration;
+                if (!isStaleForDisplay) {
+                    renderSnapshotChart(opts.addresses, scope);
+                }
             }
         }
 
@@ -5646,6 +5691,15 @@
                 addresses.push(normalized);
             }
 
+            // Capture the network/combined-mode context THIS load belongs to right now,
+            // before the async fetch below — not after it resolves. If the user switches
+            // network or wallet while this request is in flight, the response must still be
+            // saved under the context it was actually fetched for (requestScope), and the
+            // bumped generation lets showResults() recognize a late response as no longer
+            // matching what's currently on screen, so it won't overwrite the chart.
+            const requestScope = combinedMode ? 'combined' : selectedNetwork;
+            const requestGeneration = beginChartRequest();
+
             const btn = document.getElementById('loadBtn');
             const loading = document.getElementById('loadingSpinner');
             const refreshBtn = document.getElementById('refreshPortfolioBtn');
@@ -5663,7 +5717,7 @@
                     combinedMode ? loadCombinedPortfolio(addresses) : loadMultiPortfolio(addresses),
                     refreshManualTokenPrices(),
                 ]);
-                showResults(data, addresses.length, { addresses });
+                showResults(data, addresses.length, { addresses, scope: requestScope, generation: requestGeneration });
                 activateTokensTab();
                 document.getElementById('farmList').classList.remove('show');
                 saveAddressesToStorage(addresses);
@@ -5815,7 +5869,12 @@
 
                 const cached = loadPortfolioFromCache();
                 if (cacheMatchesCurrentContext(cached, saved)) {
-                    showResults(cached.data, cached.addressCount, { stale: true, addresses: saved });
+                    showResults(cached.data, cached.addressCount, {
+                        stale: true,
+                        addresses: saved,
+                        scope: combinedMode ? 'combined' : selectedNetwork,
+                        generation: beginChartRequest(),
+                    });
                     activateTokensTab();
                     document.getElementById('farmList').classList.remove('show');
                 }
@@ -6310,7 +6369,12 @@
 
                 const cached = loadPortfolioFromCache();
                 if (cacheMatchesCurrentContext(cached, savedAddresses)) {
-                    showResults(cached.data, cached.addressCount, { stale: true, addresses: savedAddresses });
+                    showResults(cached.data, cached.addressCount, {
+                        stale: true,
+                        addresses: savedAddresses,
+                        scope: combinedMode ? 'combined' : selectedNetwork,
+                        generation: beginChartRequest(),
+                    });
                     activateTokensTab();
                 }
 
