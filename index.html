@@ -2689,34 +2689,60 @@
         };
 
         // =================================================================
+        //  STORAGE HELPERS
+        //  Generic localStorage read/write wrappers so every save/load function
+        //  below doesn't need to repeat its own try/catch boilerplate. All
+        //  localStorage access can fail (private browsing, quota exceeded,
+        //  disabled storage, corrupted JSON) — these helpers fail safe and log
+        //  a warning instead of throwing.
+        // =================================================================
+        function lsGetRaw(key) {
+            try { return localStorage.getItem(key); }
+            catch (err) { console.warn(`localStorage read error (${key}):`, err); return null; }
+        }
+        function lsSetRaw(key, value) {
+            try { localStorage.setItem(key, value); return true; }
+            catch (err) { console.warn(`localStorage write error (${key}):`, err); return false; }
+        }
+        function lsRemove(key) {
+            try { localStorage.removeItem(key); return true; }
+            catch (err) { console.warn(`localStorage remove error (${key}):`, err); return false; }
+        }
+        // Reads and JSON.parses a key. Returns `fallback` if the key is missing,
+        // storage is unavailable, or the stored value isn't valid JSON.
+        function lsGetJSON(key, fallback = null) {
+            const raw = lsGetRaw(key);
+            if (raw === null) return fallback;
+            try { return JSON.parse(raw); }
+            catch (err) { console.warn(`localStorage JSON parse error (${key}):`, err); return fallback; }
+        }
+        function lsSetJSON(key, value) {
+            return lsSetRaw(key, JSON.stringify(value));
+        }
+
+        // =================================================================
         //  PORTFOLIOS (multiple saved wallets, switchable)
         // =================================================================
         const PORTFOLIOS_LIST_KEY = 'pulsefolio_portfolios_list';
         const ACTIVE_PORTFOLIO_KEY = 'pulsefolio_active_portfolio_id';
 
         function loadPortfoliosList() {
-            try {
-                const raw = localStorage.getItem(PORTFOLIOS_LIST_KEY);
-                if (!raw) return null;
-                const parsed = JSON.parse(raw);
-                return Array.isArray(parsed) && parsed.length ? parsed : null;
-            } catch (err) { return null; }
+            const parsed = lsGetJSON(PORTFOLIOS_LIST_KEY, null);
+            return Array.isArray(parsed) && parsed.length ? parsed : null;
         }
 
         function savePortfoliosList(list) {
-            try { localStorage.setItem(PORTFOLIOS_LIST_KEY, JSON.stringify(list)); } catch (err) { console.warn(err); }
+            lsSetJSON(PORTFOLIOS_LIST_KEY, list);
         }
 
         function loadActivePortfolioId(list) {
-            try {
-                const val = localStorage.getItem(ACTIVE_PORTFOLIO_KEY);
-                if (val && list.some(p => p.id === val)) return val;
-            } catch (err) {}
+            const val = lsGetRaw(ACTIVE_PORTFOLIO_KEY);
+            if (val && list.some(p => p.id === val)) return val;
             return list[0].id;
         }
 
         function saveActivePortfolioId(id) {
-            try { localStorage.setItem(ACTIVE_PORTFOLIO_KEY, id); } catch (err) { console.warn(err); }
+            lsSetRaw(ACTIVE_PORTFOLIO_KEY, id);
         }
 
         function generatePortfolioId() {
@@ -2779,14 +2805,34 @@
         // zamiast za każdym razem zaczynać od początku listy.
         const lastGoodRpc = {};
 
+        // Provider per URL jest tworzony raz i trzymany w cache — poprzednio
+        // KAŻDE wywołanie withFallback (a jest ich wiele na jedno ładowanie
+        // portfela: saldo natywne, tokeny, HEX staking, farmy PulseX...)
+        // tworzyło nowy obiekt JsonRpcProvider. Ethers robi wtedy nowe wewnętrzne
+        // side-effecty inicjalizacyjne, więc reużywanie instancji per URL jest
+        // tańsze i eliminuje niepotrzebną pracę GC.
+        const providerCache = new Map(); // key: `${chainId}:${url}` -> provider
+
+        // Zestaw URLi, których żywotność już potwierdziliśmy w tej sesji stroną
+        // (przez provider.getNetwork()). Bez tego każde pojedyncze wywołanie RPC
+        // — nawet gdy ten sam węzeł właśnie zadziałał chwilę wcześniej — robiło
+        // dodatkowy round-trip tylko po to, żeby sprawdzić czy węzeł żyje.
+        // Przy ładowaniu portfela z farmami/stakingiem to było kilka zbędnych
+        // requestów na każde odświeżenie.
+        const verifiedRpcUrls = new Set();
+
         function makeProvider(url, net) {
+            const cacheKey = `${net.chainId}:${url}`;
+            if (providerCache.has(cacheKey)) return providerCache.get(cacheKey);
             // Obiekt zamiast samego stringa pozwala ustawić `timeout` na poziomie
             // ethers.js (fetchJson) — bez tego martwy/wolny RPC potrafił wisieć
             // znacznie dłużej niż potrzeba, zanim padał na network error.
-            return new ethers.providers.JsonRpcProvider(
+            const provider = new ethers.providers.JsonRpcProvider(
                 { url, timeout: RPC_TIMEOUT_MS },
                 { chainId: net.chainId, name: net.name }
             );
+            providerCache.set(cacheKey, provider);
+            return provider;
         }
 
         function isRateLimited(err) {
@@ -2795,11 +2841,23 @@
         }
 
         async function tryRpc(url, net, fn) {
+            const cacheKey = `${net.chainId}:${url}`;
             const provider = makeProvider(url, net);
-            await provider.getNetwork(); // szybki test dostępności/chainId
-            const result = await fn(provider);
-            lastGoodRpc[net.chainId] = url; // zapamiętaj na następny raz
-            return result;
+            if (!verifiedRpcUrls.has(cacheKey)) {
+                await provider.getNetwork(); // szybki test dostępności/chainId — tylko raz na URL
+                verifiedRpcUrls.add(cacheKey);
+            }
+            try {
+                const result = await fn(provider);
+                lastGoodRpc[net.chainId] = url; // zapamiętaj na następny raz
+                return result;
+            } catch (err) {
+                // Błąd może oznaczać, że węzeł faktycznie padł w międzyczasie —
+                // każ następnemu wywołaniu zweryfikować go ponownie zamiast ufać
+                // stale'owemu statusowi "verified".
+                verifiedRpcUrls.delete(cacheKey);
+                throw err;
+            }
         }
 
         async function withFallback(fn, maxRetries = 3) {
@@ -2840,8 +2898,6 @@
         function getKnownTokens() {
             return getNetwork().knownTokens || [];
         }
-
-        let customTokens = loadCustomTokensFromStorage();
 
         function getAllTokens() {
             return [...getKnownTokens(), ...customTokens];
@@ -3005,11 +3061,7 @@
         // even across page reloads.
         const ICON_CACHE_STORAGE_KEY = 'pulsefolio_icon_cache_v1';
         const ICON_CACHE_MAX_ENTRIES = 250;
-        let iconDataCache = {};
-        try {
-            const rawIconCache = localStorage.getItem(ICON_CACHE_STORAGE_KEY);
-            if (rawIconCache) iconDataCache = JSON.parse(rawIconCache) || {};
-        } catch (err) { iconDataCache = {}; }
+        let iconDataCache = lsGetJSON(ICON_CACHE_STORAGE_KEY, {}) || {};
         const iconCachePending = new Set();
 
         function persistIconCache() {
@@ -3018,8 +3070,8 @@
                 // Simple FIFO eviction so the cache can't grow without bound.
                 for (const k of keys.slice(0, keys.length - ICON_CACHE_MAX_ENTRIES)) delete iconDataCache[k];
             }
-            try { localStorage.setItem(ICON_CACHE_STORAGE_KEY, JSON.stringify(iconDataCache)); }
-            catch (err) { /* storage full/blocked — icon just won't persist, no functional impact */ }
+            // Storage full/blocked — icon just won't persist, no functional impact.
+            lsSetJSON(ICON_CACHE_STORAGE_KEY, iconDataCache);
         }
 
         function cacheIconInBackground(url) {
@@ -3138,100 +3190,122 @@
         const HIDE_MANUAL_STORAGE_KEY = () => 'pulsefolio_hide_manual_tokens' + portfolioSuffix();
         const COINGECKO_ICONS_CACHE_KEY = 'pulsefolio_coingecko_icons_cache';
         const TOKEN_PRICE_CACHE_KEY = 'pulsefolio_token_price_cache';
-        // Jak często maksymalnie odpytujemy CoinGecko o cenę TEGO SAMEGO tokenu.
-        // 60 * 1000 = co najwyżej raz na minutę. Zmień na 5 * 60 * 1000 dla limitu co 5 minut.
-        const TOKEN_PRICE_CACHE_TTL_MS = 60 * 1000;
         const DEX_PRICE_CACHE_KEY = 'pulsefolio_dex_price_cache';
-        // To samo, ale dla cen z DexScreener (adresy kontraktów per sieć).
-        const DEX_PRICE_CACHE_TTL_MS = 60 * 1000;
+
+        // =================================================================
+        //  TTL CACHE
+        //  Wszystkie limity "jak długo ufamy danemu cache" w jednym miejscu,
+        //  zamiast rozrzucone po plikach jako osobne stałe (*_TTL_MS) obok
+        //  każdej funkcji fetch. Wpisy w cache mają wspólny kształt
+        //  { ...dane, timestamp: <ms> }, więc świeżość sprawdzamy jedną funkcją.
+        // =================================================================
+        const CACHE_TTL_MS = {
+            // Jak często maksymalnie odpytujemy CoinGecko o cenę TEGO SAMEGO tokenu.
+            // 60 * 1000 = co najwyżej raz na minutę. Zmień na 5 * 60 * 1000 dla limitu co 5 minut.
+            tokenPrice: 60 * 1000,
+            // To samo, ale dla cen z DexScreener (adresy kontraktów per sieć).
+            dexPrice: 60 * 1000,
+            // Ikony tokenów z CoinGecko praktycznie się nie zmieniają — trzymamy je długo.
+            coingeckoIcon: 30 * 24 * 60 * 60 * 1000, // 30 dni
+            // Kurs BTC/USD/PLN używany do przeliczania walut w UI.
+            exchangeRates: 60 * 60 * 1000, // 1 godzina
+        };
+
+        // Czy wpis cache (kształt { timestamp, ... }) jest wciąż świeży wg danego TTL.
+        function isFresh(entry, ttlMs, now = Date.now()) {
+            return !!entry && typeof entry.timestamp === 'number' && (now - entry.timestamp) < ttlMs;
+        }
+
+        // Doklej znacznik czasu do świeżo pobranych danych przed zapisaniem w cache.
+        function stampNow(data) {
+            return { ...data, timestamp: Date.now() };
+        }
+
+        // Usuń z mapy cache (np. { symbol: {..., timestamp} }) wszystkie wpisy
+        // starsze niż ttlMs. Używane tam, gdzie chcemy też fizycznie posprzątać
+        // localStorage przy starcie, a nie tylko ignorować przeterminowane wpisy.
+        function pruneExpired(cache, ttlMs, now = Date.now()) {
+            for (const key in cache) {
+                if (cache[key]?.timestamp && (now - cache[key].timestamp) > ttlMs) {
+                    delete cache[key];
+                }
+            }
+            return cache;
+        }
+
+        // NOTE: this was previously initialized right after getKnownTokens() (before
+        // TOKENS_STORAGE_KEY existed), which meant reading it depended on the key
+        // function throwing a "before initialization" error that only happened to be
+        // swallowed by an inner try/catch. Moved here, after its key is defined, so it
+        // works correctly regardless of what the underlying storage helper does.
+        let customTokens = loadCustomTokensFromStorage();
 
         function saveAddressesToStorage(addresses) {
-            try { localStorage.setItem(STORAGE_KEY(), JSON.stringify(addresses)); } catch (err) { console.warn(err); }
+            lsSetJSON(STORAGE_KEY(), addresses);
         }
 
         function loadAddressesFromStorage() {
-            try {
-                const raw = localStorage.getItem(STORAGE_KEY());
-                if (!raw) return null;
-                const parsed = JSON.parse(raw);
-                return Array.isArray(parsed) && parsed.length ? parsed : null;
-            } catch (err) { return null; }
+            const parsed = lsGetJSON(STORAGE_KEY(), null);
+            return Array.isArray(parsed) && parsed.length ? parsed : null;
         }
 
         function clearAddressesFromStorage() {
-            try { localStorage.removeItem(STORAGE_KEY()); } catch (err) {}
+            lsRemove(STORAGE_KEY());
         }
 
         function loadCustomTokensFromStorage() {
-            try {
-                const raw = localStorage.getItem(TOKENS_STORAGE_KEY());
-                if (!raw) return [];
-                const parsed = JSON.parse(raw);
-                return Array.isArray(parsed) ? parsed : [];
-            } catch (err) { return []; }
+            const parsed = lsGetJSON(TOKENS_STORAGE_KEY(), []);
+            return Array.isArray(parsed) ? parsed : [];
         }
 
         function saveCustomTokensToStorage(tokens) {
-            try { localStorage.setItem(TOKENS_STORAGE_KEY(), JSON.stringify(tokens)); } catch (err) { console.warn(err); }
+            lsSetJSON(TOKENS_STORAGE_KEY(), tokens);
         }
 
         function loadNetworkFromStorage() {
-            try {
-                const val = localStorage.getItem(NETWORK_STORAGE_KEY());
-                if (val && NETWORKS[val]) return val;
-                return 'pulsechain';
-            } catch { return 'pulsechain'; }
+            const val = lsGetRaw(NETWORK_STORAGE_KEY());
+            return (val && NETWORKS[val]) ? val : 'pulsechain';
         }
 
         function saveNetworkToStorage(net) {
-            try { localStorage.setItem(NETWORK_STORAGE_KEY(), net); } catch (err) { console.warn(err); }
+            lsSetRaw(NETWORK_STORAGE_KEY(), net);
         }
 
         function loadCombinedModeFromStorage() {
-            try { return localStorage.getItem(COMBINED_MODE_STORAGE_KEY()) === '1'; } catch { return false; }
+            return lsGetRaw(COMBINED_MODE_STORAGE_KEY()) === '1';
         }
 
         function saveCombinedModeToStorage(val) {
-            try { localStorage.setItem(COMBINED_MODE_STORAGE_KEY(), val ? '1' : '0'); } catch (err) { console.warn(err); }
+            lsSetRaw(COMBINED_MODE_STORAGE_KEY(), val ? '1' : '0');
         }
 
         function loadOtherNetworksFromStorage() {
-            try {
-                const raw = localStorage.getItem(OTHER_NETWORKS_STORAGE_KEY());
-                if (!raw) return new Set();
-                const parsed = JSON.parse(raw);
-                if (!Array.isArray(parsed)) return new Set();
-                return new Set(parsed.filter(k => OTHER_NETWORK_KEYS.includes(k)));
-            } catch { return new Set(); }
+            const parsed = lsGetJSON(OTHER_NETWORKS_STORAGE_KEY(), null);
+            if (!Array.isArray(parsed)) return new Set();
+            return new Set(parsed.filter(k => OTHER_NETWORK_KEYS.includes(k)));
         }
 
         function saveOtherNetworksToStorage(set) {
-            try { localStorage.setItem(OTHER_NETWORKS_STORAGE_KEY(), JSON.stringify(Array.from(set))); } catch (err) { console.warn(err); }
+            lsSetJSON(OTHER_NETWORKS_STORAGE_KEY(), Array.from(set));
         }
 
         function savePortfolioToCache(data, addressCount, addresses) {
-            try {
-                const snapshot = {
-                    data: { tokens: data.tokens, farms: data.farms, totalUsd: data.totalUsd, weightedChange: data.weightedChange },
-                    addressCount,
-                    addresses: addresses.map(a => a.toLowerCase()),
-                    network: selectedNetwork,
-                    combined: combinedMode,
-                    otherNetworks: combinedMode ? Array.from(otherNetworksSelected).sort() : [],
-                    savedAt: Date.now(),
-                };
-                localStorage.setItem(PORTFOLIO_CACHE_KEY(), JSON.stringify(snapshot));
-            } catch (err) { console.warn(err); }
+            const snapshot = {
+                data: { tokens: data.tokens, farms: data.farms, totalUsd: data.totalUsd, weightedChange: data.weightedChange },
+                addressCount,
+                addresses: addresses.map(a => a.toLowerCase()),
+                network: selectedNetwork,
+                combined: combinedMode,
+                otherNetworks: combinedMode ? Array.from(otherNetworksSelected).sort() : [],
+                savedAt: Date.now(),
+            };
+            lsSetJSON(PORTFOLIO_CACHE_KEY(), snapshot);
         }
 
         function loadPortfolioFromCache() {
-            try {
-                const raw = localStorage.getItem(PORTFOLIO_CACHE_KEY());
-                if (!raw) return null;
-                const parsed = JSON.parse(raw);
-                if (!parsed || !parsed.data || !Array.isArray(parsed.addresses)) return null;
-                return parsed;
-            } catch { return null; }
+            const parsed = lsGetJSON(PORTFOLIO_CACHE_KEY(), null);
+            if (!parsed || !parsed.data || !Array.isArray(parsed.addresses)) return null;
+            return parsed;
         }
 
         function cacheMatchesCurrentContext(cached, addresses) {
@@ -3252,25 +3326,13 @@
         //  COINGECKO ICONS CACHE (dla sieci innych niż PulseChain)
         // =================================================================
         function loadCoinGeckoIconsCache() {
-            try {
-                const raw = localStorage.getItem(COINGECKO_ICONS_CACHE_KEY);
-                if (!raw) return {};
-                const parsed = JSON.parse(raw);
-                if (typeof parsed !== 'object') return {};
-                // Usuń wpisy starsze niż 30 dni
-                const now = Date.now();
-                const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
-                for (const symbol in parsed) {
-                    if (parsed[symbol].timestamp && (now - parsed[symbol].timestamp) > thirtyDaysMs) {
-                        delete parsed[symbol];
-                    }
-                }
-                return parsed;
-            } catch { return {}; }
+            const parsed = lsGetJSON(COINGECKO_ICONS_CACHE_KEY, null);
+            if (!parsed || typeof parsed !== 'object') return {};
+            return pruneExpired(parsed, CACHE_TTL_MS.coingeckoIcon);
         }
 
         function saveCoinGeckoIconsCache(cache) {
-            try { localStorage.setItem(COINGECKO_ICONS_CACHE_KEY, JSON.stringify(cache)); } catch (err) { console.warn(err); }
+            lsSetJSON(COINGECKO_ICONS_CACHE_KEY, cache);
         }
 
         let coingeckoIconsCache = loadCoinGeckoIconsCache();
@@ -3279,31 +3341,23 @@
         //  COINGECKO PRICE CACHE (throttling — max 1 zapytanie / TTL na token)
         // =================================================================
         function loadTokenPriceCache() {
-            try {
-                const raw = localStorage.getItem(TOKEN_PRICE_CACHE_KEY);
-                if (!raw) return {};
-                const parsed = JSON.parse(raw);
-                return (parsed && typeof parsed === 'object') ? parsed : {};
-            } catch { return {}; }
+            const parsed = lsGetJSON(TOKEN_PRICE_CACHE_KEY, null);
+            return (parsed && typeof parsed === 'object') ? parsed : {};
         }
 
         function saveTokenPriceCache(cache) {
-            try { localStorage.setItem(TOKEN_PRICE_CACHE_KEY, JSON.stringify(cache)); } catch (err) { console.warn(err); }
+            lsSetJSON(TOKEN_PRICE_CACHE_KEY, cache);
         }
 
         let tokenPriceCache = loadTokenPriceCache();
 
         function loadDexPriceCache() {
-            try {
-                const raw = localStorage.getItem(DEX_PRICE_CACHE_KEY);
-                if (!raw) return {};
-                const parsed = JSON.parse(raw);
-                return (parsed && typeof parsed === 'object') ? parsed : {};
-            } catch { return {}; }
+            const parsed = lsGetJSON(DEX_PRICE_CACHE_KEY, null);
+            return (parsed && typeof parsed === 'object') ? parsed : {};
         }
 
         function saveDexPriceCache(cache) {
-            try { localStorage.setItem(DEX_PRICE_CACHE_KEY, JSON.stringify(cache)); } catch (err) { console.warn(err); }
+            lsSetJSON(DEX_PRICE_CACHE_KEY, cache);
         }
 
         let dexPriceCache = loadDexPriceCache();
@@ -3339,13 +3393,13 @@
                 const candidate = exact || coins[0];
 
                 if (!candidate) {
-                    coingeckoIconsCache[key] = { notFound: true, timestamp: Date.now() };
+                    coingeckoIconsCache[key] = stampNow({ notFound: true });
                     saveCoinGeckoIconsCache(coingeckoIconsCache);
                     return null;
                 }
 
                 const icon = candidate.thumb || candidate.small || null;
-                coingeckoIconsCache[key] = { icon, timestamp: Date.now() };
+                coingeckoIconsCache[key] = stampNow({ icon });
                 saveCoinGeckoIconsCache(coingeckoIconsCache);
                 return icon;
             } catch (err) {
@@ -3358,16 +3412,12 @@
         //  MANUAL TOKENS (CoinGecko)
         // =================================================================
         function loadManualTokensFromStorage() {
-            try {
-                const raw = localStorage.getItem(MANUAL_TOKENS_STORAGE_KEY());
-                if (!raw) return [];
-                const parsed = JSON.parse(raw);
-                return Array.isArray(parsed) ? parsed : [];
-            } catch (err) { return []; }
+            const parsed = lsGetJSON(MANUAL_TOKENS_STORAGE_KEY(), []);
+            return Array.isArray(parsed) ? parsed : [];
         }
 
         function saveManualTokensToStorage(tokens) {
-            try { localStorage.setItem(MANUAL_TOKENS_STORAGE_KEY(), JSON.stringify(tokens)); } catch (err) { console.warn(err); }
+            lsSetJSON(MANUAL_TOKENS_STORAGE_KEY(), tokens);
         }
 
         let manualTokens = loadManualTokensFromStorage();
@@ -3375,13 +3425,11 @@
         // 'separate' (default) = manually added tokens always get their own row with a "manual" badge.
         // 'merge' = if the symbol already exists on-chain, the manual amount is summed into that row instead.
         function loadManualMergeModeFromStorage() {
-            try {
-                const val = localStorage.getItem(MANUAL_MERGE_MODE_STORAGE_KEY());
-                return val === 'merge' ? 'merge' : 'separate';
-            } catch (err) { return 'separate'; }
+            const val = lsGetRaw(MANUAL_MERGE_MODE_STORAGE_KEY());
+            return val === 'merge' ? 'merge' : 'separate';
         }
         function saveManualMergeModeToStorage(val) {
-            try { localStorage.setItem(MANUAL_MERGE_MODE_STORAGE_KEY(), val); } catch (err) { console.warn(err); }
+            lsSetRaw(MANUAL_MERGE_MODE_STORAGE_KEY(), val);
         }
         let manualMergeMode = loadManualMergeModeFromStorage();
 
@@ -3520,24 +3568,21 @@
         // Whether wrapped tokens (WETH, etc.) get folded into their native counterpart (ETH).
         // Toggled from the small button next to the "Token" column header; on by default.
         function loadWrapMergeFromStorage() {
-            try {
-                const val = localStorage.getItem(WRAP_MERGE_STORAGE_KEY());
-                return val === null ? true : val === 'true';
-            } catch (err) { return true; }
+            const val = lsGetRaw(WRAP_MERGE_STORAGE_KEY());
+            return val === null ? true : val === 'true';
         }
         function saveWrapMergeToStorage(val) {
-            try { localStorage.setItem(WRAP_MERGE_STORAGE_KEY(), val ? 'true' : 'false'); } catch (err) { console.warn(err); }
+            lsSetRaw(WRAP_MERGE_STORAGE_KEY(), val ? 'true' : 'false');
         }
         let wrapMergeEnabled = loadWrapMergeFromStorage();
 
         // Whether manually added tokens are hidden from the token list. Toggled from the
         // small button next to the "Token" column header; off by default.
         function loadHideManualFromStorage() {
-            try { return localStorage.getItem(HIDE_MANUAL_STORAGE_KEY()) === 'true'; }
-            catch (err) { return false; }
+            return lsGetRaw(HIDE_MANUAL_STORAGE_KEY()) === 'true';
         }
         function saveHideManualToStorage(val) {
-            try { localStorage.setItem(HIDE_MANUAL_STORAGE_KEY(), val ? 'true' : 'false'); } catch (err) { console.warn(err); }
+            lsSetRaw(HIDE_MANUAL_STORAGE_KEY(), val ? 'true' : 'false');
         }
         let hideManualTokens = loadHideManualFromStorage();
 
@@ -4011,7 +4056,7 @@
         // Used by the manual-token price refresh.
         //
         // Throttling: każdy coinId ma znacznik czasu ostatniego pobrania. Jeśli cena jest
-        // "świeższa" niż TOKEN_PRICE_CACHE_TTL_MS, w ogóle nie pytamy CoinGecko o ten token —
+        // "świeższa" niż CACHE_TTL_MS.tokenPrice, w ogóle nie pytamy CoinGecko o ten token —
         // oddajemy wartość z cache. Do API trafiają tylko id, które faktycznie wygasły.
         // Dzięki temu wielokrotne kliknięcie "Check" w krótkim czasie nie generuje nowych
         // requestów i nie zbliża nas do limitu 429.
@@ -4023,7 +4068,7 @@
 
             for (const id of coinIds) {
                 const cached = tokenPriceCache[id];
-                if (cached && (now - cached.timestamp) < TOKEN_PRICE_CACHE_TTL_MS) {
+                if (isFresh(cached, CACHE_TTL_MS.tokenPrice, now)) {
                     map[id] = { price: cached.price, change24h: cached.change24h };
                 } else {
                     idsToFetch.push(id);
@@ -4059,7 +4104,7 @@
                         : { price: null, change24h: null };
                     map[id] = result;
                     if (result.price != null) {
-                        tokenPriceCache[id] = { price: result.price, change24h: result.change24h, timestamp: now };
+                        tokenPriceCache[id] = stampNow({ price: result.price, change24h: result.change24h });
                     }
                 }
                 saveTokenPriceCache(tokenPriceCache);
@@ -4149,28 +4194,35 @@
             });
         }
 
-        // Individual calls – uses the provided provider (which is guaranteed to work)
+        // Individual calls – used only when Multicall3 isn't available on the chain.
+        // Requests go out in small concurrent batches (instead of one at a time)
+        // to keep this rare fallback path fast, while the delay between batches
+        // still protects against RPC rate limits.
         async function fetchTokenBalancesIndividual(address, provider) {
             const tokenList = getAllTokens();
             const tokens = [];
 
-            for (const meta of tokenList) {
-                try {
-                    const contract = new ethers.Contract(meta.address, ERC20_ABI, provider);
-                    const balance = await contract.balanceOf(address);
-                    if (balance.isZero()) continue;
+            for (const batch of chunkArray(tokenList, 5)) {
+                const results = await Promise.all(batch.map(async meta => {
+                    try {
+                        const contract = new ethers.Contract(meta.address, ERC20_ABI, provider);
+                        const balance = await contract.balanceOf(address);
+                        if (balance.isZero()) return null;
 
-                    tokens.push({
-                        contractAddress: meta.address,
-                        decimals: meta.decimals,
-                        balance: balance.toString(),
-                        symbol: meta.symbol,
-                        name: meta.name,
-                        isCustom: !!meta.isCustom,
-                    });
-                } catch (err) {
-                    console.warn(`Failed to fetch balance for ${meta.symbol}:`, err.message);
-                }
+                        return {
+                            contractAddress: meta.address,
+                            decimals: meta.decimals,
+                            balance: balance.toString(),
+                            symbol: meta.symbol,
+                            name: meta.name,
+                            isCustom: !!meta.isCustom,
+                        };
+                    } catch (err) {
+                        console.warn(`Failed to fetch balance for ${meta.symbol}:`, err.message);
+                        return null;
+                    }
+                }));
+                tokens.push(...results.filter(Boolean));
                 await sleep(50);
             }
 
@@ -4181,7 +4233,7 @@
         //
         // Throttling: tak samo jak fetchTokenPrices dla CoinGecko — każdy adres (per sieć)
         // ma znacznik czasu ostatniego pobrania w dexPriceCache. Jeśli jest świeższy niż
-        // DEX_PRICE_CACHE_TTL_MS, w ogóle nie trafia do zapytania do DexScreener, tylko
+        // CACHE_TTL_MS.dexPrice, w ogóle nie trafia do zapytania do DexScreener, tylko
         // bierzemy wynik z cache. Do API idą tylko adresy, które faktycznie wygasły —
         // dzięki temu częste odświeżanie portfela nie mnoży requestów do DexScreener.
         async function fetchPrices(addresses) {
@@ -4196,7 +4248,7 @@
             for (const addr of unique) {
                 const cacheKey = `${chain}:${addr}`;
                 const cached = dexPriceCache[cacheKey];
-                if (cached && (now - cached.timestamp) < DEX_PRICE_CACHE_TTL_MS) {
+                if (isFresh(cached, CACHE_TTL_MS.dexPrice, now)) {
                     priceMap[addr] = { price: cached.price, change24h: cached.change24h, icon: cached.icon, symbol: cached.symbol };
                 } else {
                     toFetch.push(addr);
@@ -4271,7 +4323,7 @@
                 for (const addr of toFetch) {
                     const result = priceMap[addr];
                     if (result && result.price != null) {
-                        dexPriceCache[`${chain}:${addr}`] = { ...result, timestamp: now };
+                        dexPriceCache[`${chain}:${addr}`] = stampNow(result);
                     }
                 }
                 saveDexPriceCache(dexPriceCache);
@@ -4834,23 +4886,16 @@
         let sortConfig = { key: 'value', direction: 'desc' };
 
         function loadSortConfig() {
-            try {
-                const raw = localStorage.getItem(SORT_STORAGE_KEY);
-                if (raw) {
-                    const parsed = JSON.parse(raw);
-                    if (parsed.key && parsed.key !== 'token' && parsed.direction) {
-                        sortConfig = parsed;
-                        return;
-                    }
-                }
-            } catch (e) {}
+            const parsed = lsGetJSON(SORT_STORAGE_KEY, null);
+            if (parsed && parsed.key && parsed.key !== 'token' && parsed.direction) {
+                sortConfig = parsed;
+                return;
+            }
             sortConfig = { key: 'value', direction: 'desc' };
         }
 
         function saveSortConfig() {
-            try {
-                localStorage.setItem(SORT_STORAGE_KEY, JSON.stringify(sortConfig));
-            } catch (e) {}
+            lsSetJSON(SORT_STORAGE_KEY, sortConfig);
         }
 
         function sortTokens(tokens) {
@@ -4890,7 +4935,7 @@
         let athMode = false;
         let multiplierMode = false;
         let multiplierValue = 10;
-        let farmDisplayMode = localStorage.getItem(FARM_MODE_STORAGE_KEY) || 'merge';
+        let farmDisplayMode = lsGetRaw(FARM_MODE_STORAGE_KEY) || 'merge';
 
         function collectFarmTokenParts(farms) {
             const parts = [];
@@ -5283,15 +5328,12 @@
         }
 
         function loadAllSnapshots() {
-            try {
-                const raw = localStorage.getItem(SNAPSHOTS_STORAGE_KEY);
-                const parsed = raw ? JSON.parse(raw) : {};
-                return (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
-            } catch { return {}; }
+            const parsed = lsGetJSON(SNAPSHOTS_STORAGE_KEY, {});
+            return (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
         }
 
         function saveAllSnapshots(all) {
-            try { localStorage.setItem(SNAPSHOTS_STORAGE_KEY, JSON.stringify(all)); } catch (err) { console.warn(err); }
+            lsSetJSON(SNAPSHOTS_STORAGE_KEY, all);
         }
 
         // Normalizes a stored point to a numeric timestamp, whether it's a fresh point
@@ -5360,13 +5402,11 @@
             '1m': { ms: 30 * 24 * 60 * 60 * 1000, label: 'Last 30 days' },
         };
         function loadChartRangeFromStorage() {
-            try {
-                const val = localStorage.getItem(CHART_RANGE_STORAGE_KEY);
-                return CHART_RANGES[val] ? val : '24h';
-            } catch (err) { return '24h'; }
+            const val = lsGetRaw(CHART_RANGE_STORAGE_KEY);
+            return CHART_RANGES[val] ? val : '24h';
         }
         function saveChartRangeToStorage(val) {
-            try { localStorage.setItem(CHART_RANGE_STORAGE_KEY, val); } catch (err) { console.warn(err); }
+            lsSetRaw(CHART_RANGE_STORAGE_KEY, val);
         }
         let chartRange = loadChartRangeFromStorage();
         const CHART_RANGE_ORDER = ['24h', '1w', '1m'];
@@ -5578,6 +5618,14 @@
         // =================================================================
         //  UI HANDLERS
         // =================================================================
+        // Ustawia zakładkę "Tokens" jako aktywną i pokazuje listę tokenów.
+        // Ten sam trzylinijkowy fragment powtarzał się w kilku miejscach
+        // (po załadowaniu portfela, po przywróceniu z cache) — teraz jest w jednym miejscu.
+        function activateTokensTab() {
+            document.getElementById('tokenList').classList.add('show');
+            document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'tokens'));
+        }
+
         async function handleLoad() {
             const raw = getAddressInputs();
             if (!raw.length) {
@@ -5616,9 +5664,8 @@
                     refreshManualTokenPrices(),
                 ]);
                 showResults(data, addresses.length, { addresses });
-                document.getElementById('tokenList').classList.add('show');
+                activateTokensTab();
                 document.getElementById('farmList').classList.remove('show');
-                document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'tokens'));
                 saveAddressesToStorage(addresses);
                 setPortfolioBarVisible(true, addresses);
                 const notice = document.getElementById('notice');
@@ -5769,9 +5816,8 @@
                 const cached = loadPortfolioFromCache();
                 if (cacheMatchesCurrentContext(cached, saved)) {
                     showResults(cached.data, cached.addressCount, { stale: true, addresses: saved });
-                    document.getElementById('tokenList').classList.add('show');
+                    activateTokensTab();
                     document.getElementById('farmList').classList.remove('show');
-                    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'tokens'));
                 }
 
                 handleLoad();
@@ -5992,7 +6038,7 @@
                 if (btn.dataset.mode === farmDisplayMode) return;
                 farmDisplayMode = btn.dataset.mode;
                 document.querySelectorAll('.fm-btn').forEach(b => b.classList.toggle('active', b === btn));
-                localStorage.setItem(FARM_MODE_STORAGE_KEY, farmDisplayMode);
+                lsSetRaw(FARM_MODE_STORAGE_KEY, farmDisplayMode);
                 refreshView();
             });
         });
@@ -6265,8 +6311,7 @@
                 const cached = loadPortfolioFromCache();
                 if (cacheMatchesCurrentContext(cached, savedAddresses)) {
                     showResults(cached.data, cached.addressCount, { stale: true, addresses: savedAddresses });
-                    document.getElementById('tokenList').classList.add('show');
-                    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'tokens'));
+                    activateTokensTab();
                 }
 
                 handleLoad();
@@ -6309,17 +6354,17 @@
             if (!confirmed) return;
 
             clearAddressesFromStorage();
-            try {
-                localStorage.removeItem(TOKENS_STORAGE_KEY());
-                localStorage.removeItem(MANUAL_TOKENS_STORAGE_KEY());
-                localStorage.removeItem(MANUAL_MERGE_MODE_STORAGE_KEY());
-                localStorage.removeItem(WRAP_MERGE_STORAGE_KEY());
-                localStorage.removeItem(HIDE_MANUAL_STORAGE_KEY());
-                localStorage.removeItem(NETWORK_STORAGE_KEY());
-                localStorage.removeItem(COMBINED_MODE_STORAGE_KEY());
-                localStorage.removeItem(OTHER_NETWORKS_STORAGE_KEY());
-                localStorage.removeItem(PORTFOLIO_CACHE_KEY());
-            } catch (err) { console.warn(err); }
+            [
+                TOKENS_STORAGE_KEY(),
+                MANUAL_TOKENS_STORAGE_KEY(),
+                MANUAL_MERGE_MODE_STORAGE_KEY(),
+                WRAP_MERGE_STORAGE_KEY(),
+                HIDE_MANUAL_STORAGE_KEY(),
+                NETWORK_STORAGE_KEY(),
+                COMBINED_MODE_STORAGE_KEY(),
+                OTHER_NETWORKS_STORAGE_KEY(),
+                PORTFOLIO_CACHE_KEY(),
+            ].forEach(lsRemove);
 
             portfoliosList = portfoliosList.filter(p => p.id !== current.id);
             savePortfoliosList(portfoliosList);
@@ -6702,48 +6747,36 @@
         }
         
         function saveCurrencyPreference() {
-            try {
-                localStorage.setItem(CURRENCY_STORAGE_KEY, currentCurrency);
-            } catch (err) { console.warn('localStorage write error:', err); }
+            lsSetRaw(CURRENCY_STORAGE_KEY, currentCurrency);
         }
         
         function loadCurrencyPreference() {
-            try {
-                const saved = localStorage.getItem(CURRENCY_STORAGE_KEY);
-                if (saved && ['usd', 'pln', 'btc'].includes(saved)) {
-                    currentCurrency = saved;
-                }
-            } catch (err) { console.warn('localStorage read error:', err); }
+            const saved = lsGetRaw(CURRENCY_STORAGE_KEY);
+            if (saved && ['usd', 'pln', 'btc'].includes(saved)) {
+                currentCurrency = saved;
+            }
         }
         
         function saveThemePreference() {
-            try {
-                localStorage.setItem('pulseFolio_theme', currentTheme);
-            } catch (err) { console.warn('localStorage write error:', err); }
+            lsSetRaw('pulseFolio_theme', currentTheme);
         }
         
         function loadThemePreference() {
-            try {
-                const saved = localStorage.getItem('pulseFolio_theme');
-                if (saved && ['dark', 'light'].includes(saved)) {
-                    currentTheme = saved;
-                }
-            } catch (err) { console.warn('localStorage read error:', err); }
+            const saved = lsGetRaw('pulseFolio_theme');
+            if (saved && ['dark', 'light'].includes(saved)) {
+                currentTheme = saved;
+            }
         }
         
         function saveLanguagePreference() {
-            try {
-                localStorage.setItem('pulseFolio_language', currentLanguage);
-            } catch (err) { console.warn('localStorage write error:', err); }
+            lsSetRaw('pulseFolio_language', currentLanguage);
         }
         
         function loadLanguagePreference() {
-            try {
-                const saved = localStorage.getItem('pulseFolio_language');
-                if (saved && ['en', 'pl'].includes(saved)) {
-                    currentLanguage = saved;
-                }
-            } catch (err) { console.warn('localStorage read error:', err); }
+            const saved = lsGetRaw('pulseFolio_language');
+            if (saved && ['en', 'pl'].includes(saved)) {
+                currentLanguage = saved;
+            }
         }
         
         async function fetchExchangeRates() {
@@ -6761,10 +6794,8 @@
                 exchangeRates.btc = 1 / btcUsd;
                 exchangeRates.pln = btcPln / btcUsd;
                 
-                try {
-                    localStorage.setItem(EXCHANGE_RATES_STORAGE_KEY, JSON.stringify(exchangeRates));
-                    localStorage.setItem(EXCHANGE_RATES_TIMESTAMP_KEY, Date.now().toString());
-                } catch (err) { console.warn('localStorage write error:', err); }
+                lsSetJSON(EXCHANGE_RATES_STORAGE_KEY, exchangeRates);
+                lsSetRaw(EXCHANGE_RATES_TIMESTAMP_KEY, Date.now().toString());
                 
                 if (portfolioData && portfolioData.totalUsd) {
                     refreshView();
@@ -6777,22 +6808,14 @@
         }
 
         function loadExchangeRates() {
-            try {
-                const saved = localStorage.getItem(EXCHANGE_RATES_STORAGE_KEY);
-                const timestamp = localStorage.getItem(EXCHANGE_RATES_TIMESTAMP_KEY);
-                
-                if (saved && timestamp) {
-                    const age = Date.now() - parseInt(timestamp);
-                    if (age > 3600000) {
-                        fetchExchangeRates();
-                    } else {
-                        exchangeRates = JSON.parse(saved);
-                    }
-                } else {
-                    fetchExchangeRates();
-                }
-            } catch (err) {
-                console.warn('localStorage read error:', err);
+            const saved = lsGetRaw(EXCHANGE_RATES_STORAGE_KEY);
+            const timestamp = lsGetRaw(EXCHANGE_RATES_TIMESTAMP_KEY);
+
+            if (saved && timestamp && isFresh({ timestamp: parseInt(timestamp) }, CACHE_TTL_MS.exchangeRates)) {
+                const parsed = lsGetJSON(EXCHANGE_RATES_STORAGE_KEY, null);
+                if (parsed) exchangeRates = parsed;
+                else fetchExchangeRates();
+            } else {
                 fetchExchangeRates();
             }
         }
