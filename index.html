@@ -143,6 +143,9 @@
         header nav i:hover {
             color: var(--text-primary);
         }
+        .nav-portfolio-btn {
+            display: none;
+        }
 
         /* ---------- settings button & menu ---------- */
         .settings-btn {
@@ -354,11 +357,6 @@
             font-family: 'Inter', monospace;
             word-break: break-all;
         }
-        .portfolio-bar-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: clamp(6px, 1vw, 10px);
-        }
         .btn-bar {
             display: flex;
             align-items: center;
@@ -482,10 +480,6 @@
                 align-items: stretch;
                 padding-top: 12px;
                 padding-bottom: 12px;
-            }
-            .portfolio-bar-actions {
-                width: 100%;
-                justify-content: stretch;
             }
             .btn-bar {
                 flex: 1 1 auto;
@@ -769,6 +763,31 @@
             margin-top: 8px;
             font-size: clamp(10.5px, 0.8vw, 12px);
             color: var(--text-muted);
+        }
+
+        .settings-action-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .settings-action-row .settings-option {
+            flex: 1;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .settings-hint-text {
+            margin-top: 8px;
+            font-size: clamp(10.5px, 0.8vw, 12px);
+            color: var(--text-muted);
+        }
+
+        .settings-hint-text.error {
+            color: #ff5c5c;
+        }
+
+        .settings-hint-text.success {
+            color: var(--green, #2ecc71);
         }
 
         /* ---------- token card ---------- */
@@ -1549,6 +1568,11 @@
             border-radius: 20px;
             white-space: nowrap;
         }
+        .stake-badge {
+            color: var(--cyan);
+            background: rgba(0, 212, 255, 0.14);
+            border-color: rgba(0, 212, 255, 0.35);
+        }
         .no-price-badge {
             color: var(--text-muted);
             background: rgba(85, 85, 95, 0.14);
@@ -2168,9 +2192,6 @@
             .farm-type {
                 align-self: flex-start;
             }
-            .portfolio-bar-actions {
-                flex-direction: column;
-            }
             .btn-bar {
                 width: 100%;
                 justify-content: center;
@@ -2270,6 +2291,8 @@
             Pulse<span class="grad-text">Folio</span>
         </div>
         <nav>
+            <button class="settings-btn nav-portfolio-btn" id="editPortfolioBtn" type="button" title="Edit addresses" aria-label="Edit addresses" data-i18n-title="editAddressesBtn" data-i18n-aria="editAddressesBtn">✎</button>
+            <button class="settings-btn nav-portfolio-btn" id="toggleTokenCardBtn" type="button" title="Missing a token? Add it" aria-label="Missing a token? Add it" data-i18n-title="missingTokenLabel" data-i18n-aria="missingTokenLabel">🪙</button>
             <button id="settingsBtn" class="settings-btn" aria-label="Settings" title="Settings" data-i18n-aria="settingsAria" data-i18n-title="settingsAria">
                 ⚙️
             </button>
@@ -2324,6 +2347,21 @@
                         <span class="option-radio" id="radio-light"></span> <span data-i18n="themeLight">Light</span>
                     </button>
                 </div>
+            </div>
+
+            <!-- Data Export / Import -->
+            <div class="settings-section">
+                <div class="settings-label" data-i18n="dataLabel">💾 Data</div>
+                <div class="settings-action-row">
+                    <button class="settings-option" id="exportDataBtn">
+                        <span data-i18n="exportDataBtn">⬇️ Export to file</span>
+                    </button>
+                    <button class="settings-option" id="importDataBtn">
+                        <span data-i18n="importDataBtn">⬆️ Import from file</span>
+                    </button>
+                </div>
+                <input type="file" id="importFileInput" accept="application/json,.json" style="display:none">
+                <div class="settings-hint-text" id="dataIoHint"></div>
             </div>
         </div>
 
@@ -2542,10 +2580,6 @@
         <div class="portfolio-bar" id="portfolioBar">
             <div class="portfolio-bar-inner">
                 <div class="portfolio-bar-label" id="portfolioBarLabel" data-i18n="savedPortfolioLabel">Saved portfolio</div>
-                <div class="portfolio-bar-actions">
-                    <button class="btn-bar" id="editPortfolioBtn" type="button"><i class="ti ti-pencil" aria-hidden="true"></i> <span data-i18n="editAddressesBtn">Edit addresses</span></button>
-                    <button class="btn-bar" id="toggleTokenCardBtn" type="button"><i class="ti ti-coin" aria-hidden="true"></i> <span data-i18n="missingTokenLabel">Missing a token? Add it</span></button>
-                </div>
             </div>
         </div>
 
@@ -3670,6 +3704,11 @@
                     // "farm" badge if any of the contributing rows came from a farm, but the
                     // combined row itself isn't wallet-only anymore.
                     existing.fromFarm = existing.fromFarm || t.fromFarm || false;
+                    // Same "only if EVERY contributing part is a stake" rule as in
+                    // buildDisplayTokens — folding a stake row together with a plain
+                    // wallet balance (or an LP-farm row) means the merged position is no
+                    // longer purely a stake, so it falls back to the generic "farm" badge.
+                    existing.isStake = !!existing.isStake && !!t.isStake;
                     existing.isAth = existing.isAth || t.isAth || false;
                     // Prefer the canonical (non-equivalent) token's icon/name if we have one.
                     if (!isEquivalent) {
@@ -4352,10 +4391,13 @@
         }
 
         // =================================================================
-        //  HEX STAKING (only on PulseChain)
+        //  HEX STAKING (PulseChain & Ethereum — same contract address on both,
+        //  since PulseChain forked HEX's state at genesis. Not supported on
+        //  Base/Arbitrum/BNB Chain, which never had a HEX deployment.)
         // =================================================================
+        const HEX_STAKE_NETWORKS = ['pulsechain', 'ethereum'];
         async function getHexStakes(address, hexPrice, hexIcon, hexChange) {
-            if (selectedNetwork !== 'pulsechain') return [];
+            if (!HEX_STAKE_NETWORKS.includes(selectedNetwork)) return [];
 
             return withFallback(async (p) => {
                 const hex = new ethers.Contract(HEX_ADDR, HEX_ABI, p);
@@ -4368,13 +4410,16 @@
                 const currentDay = currentDayBn.toNumber();
 
                 const indices = Array.from({ length: stakeCount }, (_, i) => i);
-                const rawStakes = (
-                    await Promise.all(
-                        chunkArray(indices, 15).map(chunk =>
-                            Promise.all(chunk.map(i => hex.stakeLists(address, i)))
-                        )
-                    )
-                ).flat();
+                // Batches of 15, awaited one batch at a time (not all fired at once) so a
+                // wallet with a lot of stakes doesn't slam the RPC with dozens of concurrent
+                // eth_calls in one go — that's what was tripping rate limits on public nodes.
+                const chunks = chunkArray(indices, 15);
+                const rawStakes = [];
+                for (let c = 0; c < chunks.length; c++) {
+                    const results = await Promise.all(chunks[c].map(i => hex.stakeLists(address, i)));
+                    rawStakes.push(...results);
+                    if (c < chunks.length - 1) await sleep(75);
+                }
 
                 const style = tokenStyle('HEX');
                 const hexAddr = HEX_ADDR.toLowerCase();
@@ -4611,6 +4656,16 @@
 
             for (const t of tokenList) {
                 priceAddresses.push(t.contractAddress);
+            }
+
+            // HEX staking exists independently of any liquid HEX balance in the wallet —
+            // most long-term HEX stakers hold zero liquid HEX (it's all staked). Without
+            // this, HEX_ADDR would only end up in priceAddresses when the wallet also has
+            // an on-chain HEX token balance, so a fully-staked wallet's stakes would
+            // silently price at $0 later (see getHexStakes' hexPrice param).
+            if (HEX_STAKE_NETWORKS.includes(selectedNetwork) &&
+                !priceAddresses.some(a => a.toLowerCase() === HEX_ADDR.toLowerCase())) {
+                priceAddresses.push(HEX_ADDR);
             }
 
             setLoading('Fetching prices from DexScreener…');
@@ -4942,7 +4997,13 @@
             for (const f of farms) {
                 if (!Array.isArray(f.tokenParts)) continue;
                 for (const part of f.tokenParts) {
-                    if (part.amount > 0) parts.push(f.network ? { ...part, network: f.network } : part);
+                    if (part.amount > 0) {
+                        // Tag each part with whether it came from a HEX stake or an LP farm,
+                        // so "split" display mode can badge it accordingly instead of
+                        // lumping both under a generic "farm" label.
+                        const tagged = { ...part, isStake: f.type === 'Stake' };
+                        parts.push(f.network ? { ...tagged, network: f.network } : tagged);
+                    }
                 }
             }
             return parts;
@@ -5010,6 +5071,10 @@
                         existing.amount = formatTokenAmount(existing.rawAmount);
                         existing.usd = newUsd;
                         existing.isAth = existing.isAth || part.isAth || false;
+                        // Only badge it "stake" if EVERY contributing part is a stake — a
+                        // token that's partly staked and partly in an LP farm is still,
+                        // at heart, "farmed" in the broader sense, so default to that badge.
+                        existing.isStake = existing.isStake && !!part.isStake;
                     } else {
                         const style = tokenStyle(part.symbol);
                         farmMap.set(key, {
@@ -5023,6 +5088,7 @@
                             address: part.address,
                             network: part.network,
                             fromFarm: true,
+                            isStake: !!part.isStake,
                             isAth: part.isAth || false,
                             ...style,
                         });
@@ -5106,7 +5172,11 @@
 
                 const chainBadge = (combinedMode && t.network) ?
                     `<span class="chain-badge ${t.network}" style="font-size:0.7em; padding:1px 5px;">${t.network === 'combined' ? 'Combined' : NETWORKS[t.network].name}</span>` : '';
-                const farmBadge = t.fromFarm ? '<span class="farm-badge" style="font-size:0.7em; padding:1px 5px;">farm</span>' : '';
+                const farmBadge = t.fromFarm ?
+                    (t.isStake ?
+                        '<span class="farm-badge stake-badge" style="font-size:0.7em; padding:1px 5px;">stake</span>' :
+                        '<span class="farm-badge" style="font-size:0.7em; padding:1px 5px;">farm</span>') :
+                    '';
                 const noPriceBadge = (!athMode && t.noPrice) ? '<span class="no-price-badge" style="font-size:0.7em; padding:1px 5px;">no price</span>' :
                     '';
                 const athBadge = athMode && t.isAth ? '<span class="ath-badge" style="font-size:0.7em; padding:1px 5px;">ATH</span>' :
@@ -5804,17 +5874,22 @@
 
             // The saved-portfolio summary bar should stay visible whenever there's a
             // saved portfolio to show — including while the address editor is open —
-            // rather than only when not in edit mode.
+            // rather than only when not in edit mode. The relocated nav buttons (edit
+            // addresses / add missing token) follow the exact same condition, since
+            // there's nothing useful for them to act on before a portfolio exists.
             const savedAddresses = addresses.length ? addresses : (loadAddressesFromStorage() || []);
             const portfolioBar = document.getElementById('portfolioBar');
+            const navBtns = document.querySelectorAll('.nav-portfolio-btn');
             if (savedAddresses.length) {
                 portfolioBar.style.display = 'block';
+                navBtns.forEach(btn => btn.style.display = 'flex');
                 const label = savedAddresses.length > 1 ?
                     t('savedPortfolioMulti', { n: savedAddresses.length }) :
                     t('savedAddressSingle', { addr: shortAddr(savedAddresses[0] || '') });
                 document.getElementById('portfolioBarLabel').textContent = label;
             } else {
                 portfolioBar.style.display = 'none';
+                navBtns.forEach(btn => btn.style.display = 'none');
             }
 
             if (!visible) {
@@ -5992,9 +6067,18 @@
         });
 
         document.getElementById('editPortfolioBtn').addEventListener('click', () => {
-            setPortfolioBarVisible(false);
-            document.getElementById('tokenCard').classList.remove('show');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            const searchCard = document.getElementById('searchCard');
+            const isEditOpen = searchCard.style.display === 'block';
+            if (isEditOpen) {
+                // Second click — same as the ✕ collapse button: close the editor and go
+                // back to the saved-portfolio summary instead of leaving it open.
+                const saved = loadAddressesFromStorage();
+                if (saved && saved.length) setPortfolioBarVisible(true, saved);
+            } else {
+                setPortfolioBarVisible(false);
+                document.getElementById('tokenCard').classList.remove('show');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         });
 
         document.getElementById('toggleTokenCardBtn').addEventListener('click', () => {
@@ -6468,6 +6552,12 @@
                 themeLabel: '🎨 Theme',
                 themeDark: 'Dark',
                 themeLight: 'Light',
+                dataLabel: '💾 Data',
+                exportDataBtn: '⬇️ Export to file',
+                importDataBtn: '⬆️ Import from file',
+                importOverwriteOrNewText: 'You already have a portfolio named "{name}". Press OK to overwrite it with the imported data, or Cancel to keep both (imported as a separate new portfolio).',
+                importInvalidFile: 'That doesn\'t look like a valid PulseFolio backup file.',
+                importReadError: 'Could not read that file.',
                 renamePortfolio: 'Rename portfolio',
                 deletePortfolio: 'Delete portfolio',
                 createPortfolio: 'Create new portfolio',
@@ -6555,6 +6645,12 @@
                 themeLabel: '🎨 Motyw',
                 themeDark: 'Ciemny',
                 themeLight: 'Jasny',
+                dataLabel: '💾 Dane',
+                exportDataBtn: '⬇️ Eksportuj do pliku',
+                importDataBtn: '⬆️ Importuj z pliku',
+                importOverwriteOrNewText: 'Masz już portfel o nazwie „{name}”. Naciśnij OK, aby go nadpisać danymi z importu, albo Anuluj, aby zachować oba (zaimportowany jako osobny, nowy portfel).',
+                importInvalidFile: 'To nie wygląda na prawidłowy plik kopii zapasowej PulseFolio.',
+                importReadError: 'Nie udało się odczytać tego pliku.',
                 renamePortfolio: 'Zmień nazwę portfela',
                 deletePortfolio: 'Usuń portfel',
                 createPortfolio: 'Utwórz nowy portfel',
@@ -6696,6 +6792,202 @@
         // =========================================================================
         //  SETTINGS MENU HANDLERS
         // =========================================================================
+        // =========================================================================
+        //  DATA EXPORT / IMPORT (backup & restore all portfolios + settings as a JSON file)
+        // =========================================================================
+        const EXPORT_FORMAT_VERSION = 1;
+
+        function portfolioSuffixFor(id) {
+            return id && id !== 'default' ? `__${id}` : '';
+        }
+
+        function collectPortfolioStorage(id) {
+            const suffix = portfolioSuffixFor(id);
+            return {
+                addresses: lsGetJSON('pulsefolio_saved_addresses' + suffix, []),
+                customTokens: lsGetJSON('pulsefolio_custom_tokens' + suffix, []),
+                selectedNetwork: lsGetRaw('pulsefolio_selected_network' + suffix),
+                combinedMode: lsGetJSON('pulsefolio_combined_mode' + suffix, null),
+                otherNetworks: lsGetJSON('pulsefolio_other_networks' + suffix, null),
+                manualTokens: lsGetJSON('pulsefolio_manual_tokens' + suffix, []),
+                manualMergeMode: lsGetRaw('pulsefolio_manual_merge_mode' + suffix),
+                wrapMergeEnabled: lsGetJSON('pulsefolio_wrap_merge_enabled' + suffix, null),
+                hideManualTokens: lsGetJSON('pulsefolio_hide_manual_tokens' + suffix, null),
+            };
+        }
+
+        function buildExportPayload() {
+            return {
+                app: 'PulseFolio',
+                formatVersion: EXPORT_FORMAT_VERSION,
+                exportedAt: new Date().toISOString(),
+                activePortfolioId,
+                portfolios: portfoliosList.map(p => ({
+                    id: p.id,
+                    name: p.name,
+                    data: collectPortfolioStorage(p.id),
+                })),
+                // Global (not per-portfolio) settings. Caches (prices, icons, exchange
+                // rates) are intentionally left out — they're cheap to refetch and would
+                // just bloat the file / go stale.
+                settings: {
+                    farmDisplayMode: lsGetRaw(FARM_MODE_STORAGE_KEY),
+                    sortConfig: lsGetJSON(SORT_STORAGE_KEY, null),
+                    currency: lsGetRaw(CURRENCY_STORAGE_KEY),
+                    theme: lsGetRaw('pulseFolio_theme'),
+                    language: lsGetRaw('pulseFolio_language'),
+                    chartRange: lsGetRaw(CHART_RANGE_STORAGE_KEY),
+                },
+                // Portfolio value history behind the snapshot chart.
+                snapshots: lsGetJSON(SNAPSHOTS_STORAGE_KEY, {}),
+            };
+        }
+
+        function exportDataToFile() {
+            const payload = buildExportPayload();
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const stamp = new Date().toISOString().slice(0, 10);
+            a.href = url;
+            a.download = `pulsefolio-backup-${stamp}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function showDataIoHint(message, kind) {
+            const el = document.getElementById('dataIoHint');
+            if (!el) return;
+            el.textContent = message;
+            el.classList.remove('error', 'success');
+            if (kind) el.classList.add(kind);
+        }
+
+        // Writes one portfolio's data fields into localStorage under the given id's suffix.
+        function writePortfolioData(id, d) {
+            const suffix = portfolioSuffixFor(id);
+            if (Array.isArray(d.addresses)) lsSetJSON('pulsefolio_saved_addresses' + suffix, d.addresses);
+            if (Array.isArray(d.customTokens)) lsSetJSON('pulsefolio_custom_tokens' + suffix, d.customTokens);
+            if (d.selectedNetwork) lsSetRaw('pulsefolio_selected_network' + suffix, d.selectedNetwork);
+            if (d.combinedMode !== null && d.combinedMode !== undefined) lsSetJSON('pulsefolio_combined_mode' + suffix, d.combinedMode);
+            if (Array.isArray(d.otherNetworks)) lsSetJSON('pulsefolio_other_networks' + suffix, d.otherNetworks);
+            if (Array.isArray(d.manualTokens)) lsSetJSON('pulsefolio_manual_tokens' + suffix, d.manualTokens);
+            if (d.manualMergeMode) lsSetRaw('pulsefolio_manual_merge_mode' + suffix, d.manualMergeMode);
+            if (d.wrapMergeEnabled !== null && d.wrapMergeEnabled !== undefined) lsSetJSON('pulsefolio_wrap_merge_enabled' + suffix, d.wrapMergeEnabled);
+            if (d.hideManualTokens !== null && d.hideManualTokens !== undefined) lsSetJSON('pulsefolio_hide_manual_tokens' + suffix, d.hideManualTokens);
+        }
+
+        // Writes an imported payload into localStorage. Throws on anything that doesn't
+        // look like a valid backup — the caller is responsible for catching and
+        // reporting that. Deliberately does NOT try to hot-apply the new state into the
+        // page's already-running JS (portfolio list, addresses, theme, snapshots, etc.
+        // are all read into module-level variables once at load time) — the caller
+        // reloads the page afterwards instead, which is far simpler and safer than
+        // hand-patching every piece of in-memory state to match.
+        //
+        // This is a MERGE, not a wholesale replace: portfolio ids are generated randomly
+        // per browser, so they won't line up across devices/exports and can't be trusted
+        // for identity. Instead, an imported portfolio only overwrites a LOCAL portfolio's
+        // data when their NAMES match exactly. A name that has no local match is added as
+        // a brand-new portfolio instead. Any local portfolio whose name isn't present in
+        // the import file is left completely untouched — nothing is ever deleted or wiped.
+        // Appends " (2)", " (3)", … until the name is free — used when the user chooses
+        // to keep both portfolios despite an import having the same name as a local one.
+        function uniquePortfolioName(base, byNameMap) {
+            if (!byNameMap.has(base)) return base;
+            let i = 2;
+            while (byNameMap.has(`${base} (${i})`)) i++;
+            return `${base} (${i})`;
+        }
+
+        function applyImportedPayload(payload) {
+            if (!payload || typeof payload !== 'object' || !Array.isArray(payload.portfolios) || !payload.portfolios.length) {
+                throw new Error('invalid-format');
+            }
+
+            const byName = new Map(portfoliosList.map(p => [p.name, p]));
+
+            // Resolve which imported portfolio (by name) was active in the source file, so
+            // we can switch to its local counterpart afterwards — matched the same way as
+            // everything else, since the imported id may not exist locally at all.
+            const importedActiveEntry = payload.portfolios.find(p => p && p.id === payload.activePortfolioId);
+            const importedActiveName = importedActiveEntry ? importedActiveEntry.name : null;
+            let newActiveId = null;
+
+            let importedCount = 0;
+            for (const p of payload.portfolios) {
+                if (!p || !p.name || !p.data || typeof p.data !== 'object') continue;
+                importedCount++;
+
+                const existing = byName.get(p.name);
+                // A name conflict is a real decision the user should make, not something
+                // to silently guess at — ask, once per conflicting name, whether to
+                // overwrite the existing portfolio or keep both as separate portfolios.
+                const overwrite = existing ? confirm(t('importOverwriteOrNewText', { name: p.name })) : false;
+
+                if (existing && overwrite) {
+                    // Overwrite ONLY that portfolio's data, keeping its existing local id
+                    // so nothing else about it (e.g. its position) changes.
+                    writePortfolioData(existing.id, p.data);
+                    lsRemove('pulsefolio_portfolio_cache' + portfolioSuffixFor(existing.id)); // stale after the swap
+                    if (importedActiveName && p.name === importedActiveName) newActiveId = existing.id;
+                } else {
+                    // No conflict, or the user chose to keep both — add as a new, separate
+                    // portfolio rather than overwriting (or dropping) anything.
+                    const finalName = existing ? uniquePortfolioName(p.name, byName) : p.name;
+                    const newId = generatePortfolioId();
+                    writePortfolioData(newId, p.data);
+                    const newEntry = { id: newId, name: finalName };
+                    portfoliosList.push(newEntry);
+                    byName.set(finalName, newEntry);
+                    if (importedActiveName && p.name === importedActiveName) newActiveId = newId;
+                }
+            }
+
+            if (!importedCount) throw new Error('invalid-format');
+            savePortfoliosList(portfoliosList);
+            if (newActiveId) saveActivePortfolioId(newActiveId);
+
+            const s = payload.settings;
+            if (s && typeof s === 'object') {
+                if (s.farmDisplayMode) lsSetRaw(FARM_MODE_STORAGE_KEY, s.farmDisplayMode);
+                if (s.sortConfig) lsSetJSON(SORT_STORAGE_KEY, s.sortConfig);
+                if (s.currency) lsSetRaw(CURRENCY_STORAGE_KEY, s.currency);
+                if (s.theme) lsSetRaw('pulseFolio_theme', s.theme);
+                if (s.language) lsSetRaw('pulseFolio_language', s.language);
+                if (s.chartRange) lsSetRaw(CHART_RANGE_STORAGE_KEY, s.chartRange);
+            }
+
+            // Snapshots (chart history) are merged key-by-key rather than replacing the
+            // whole store, so history for portfolios not part of this import isn't lost.
+            // Imported points win only for contexts also present in the import.
+            if (payload.snapshots && typeof payload.snapshots === 'object' && !Array.isArray(payload.snapshots)) {
+                const existingSnapshots = lsGetJSON(SNAPSHOTS_STORAGE_KEY, {}) || {};
+                lsSetJSON(SNAPSHOTS_STORAGE_KEY, { ...existingSnapshots, ...payload.snapshots });
+            }
+        }
+
+        function importDataFromFile(file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    const payload = JSON.parse(String(reader.result));
+                    applyImportedPayload(payload);
+                    // Simplest reliable way to make every already-initialized piece of
+                    // app state (portfolio list, addresses, theme, language, chart
+                    // history, …) pick up what was just written to localStorage.
+                    location.reload();
+                } catch (err) {
+                    console.error('Import failed:', err);
+                    showDataIoHint(t('importInvalidFile'), 'error');
+                }
+            };
+            reader.onerror = () => showDataIoHint(t('importReadError'), 'error');
+            reader.readAsText(file);
+        }
+
         function initSettings() {
             const settingsBtn = document.getElementById('settingsBtn');
             const settingsMenu = document.getElementById('settingsMenu');
@@ -6764,6 +7056,20 @@
                     setLanguage(btn.dataset.language);
                 });
             });
+
+            // Export / Import handlers
+            const exportBtn = document.getElementById('exportDataBtn');
+            const importBtn = document.getElementById('importDataBtn');
+            const importInput = document.getElementById('importFileInput');
+            if (exportBtn) exportBtn.addEventListener('click', exportDataToFile);
+            if (importBtn && importInput) {
+                importBtn.addEventListener('click', () => importInput.click());
+                importInput.addEventListener('change', () => {
+                    const file = importInput.files && importInput.files[0];
+                    if (file) importDataFromFile(file);
+                    importInput.value = ''; // allow re-selecting the same file next time
+                });
+            }
             
             // Load saved preferences
             loadCurrencyPreference();
