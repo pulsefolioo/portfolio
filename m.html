@@ -2953,6 +2953,30 @@
         }
 
         // =================================================================
+        //  COINGECKO FETCH — one shared cooldown after a 429 (rate limit)
+        // =================================================================
+        const CG_COOLDOWN_KEY = 'pulsefolio_cg_cooldown_until';
+        const CG_DEFAULT_COOLDOWN_MS = 60 * 1000;
+        function cgCooldownLeftMs() {
+            const until = Number(lsGetRaw(CG_COOLDOWN_KEY)) || 0;
+            return Math.max(0, until - Date.now());
+        }
+        // Drop-in replacement for fetch() for api.coingecko.com. During a cooldown it makes no
+        // network request and returns a synthetic 429, which every caller already handles
+        // (they fall back to cached data or show the "rate limit" message). The cooldown is
+        // stored in localStorage, so reloading the page doesn't immediately hit the API again.
+        async function cgFetch(url, options) {
+            if (cgCooldownLeftMs() > 0) return new Response(null, { status: 429, statusText: 'Cooldown' });
+            const resp = await fetch(url, options);
+            if (resp.status === 429) {
+                const retry = Number(resp.headers.get('retry-after')); // often not readable cross-origin
+                const waitMs = retry > 0 && retry <= 600 ? retry * 1000 : CG_DEFAULT_COOLDOWN_MS;
+                lsSetRaw(CG_COOLDOWN_KEY, String(Date.now() + waitMs));
+            }
+            return resp;
+        }
+
+        // =================================================================
         //  PORTFOLIOS (multiple saved wallets, switchable)
         // =================================================================
         const PORTFOLIOS_LIST_KEY = 'pulsefolio_portfolios_list';
@@ -3610,7 +3634,7 @@
 
             try {
                 const url = `https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(key)}`;
-                const resp = await fetch(url);
+                const resp = await cgFetch(url);
                 if (!resp.ok) {
                     if (resp.status === 429) {
                         console.warn('CoinGecko rate limit dla ikony');
@@ -3677,7 +3701,7 @@
             if (!query) throw new Error('Enter a token symbol.');
 
             const url = `https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(query)}`;
-            const resp = await fetch(url);
+            const resp = await cgFetch(url);
             if (!resp.ok) {
                 if (resp.status === 429) throw new Error('CoinGecko rate limit. Please wait a moment and try again.');
                 throw new Error(`CoinGecko API error (${resp.status})`);
@@ -3717,7 +3741,7 @@
         async function fetchTokenPrice(coinId) {
             const url =
                 `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(coinId)}&vs_currencies=usd&include_24hr_change=true`;
-            const resp = await fetch(url);
+            const resp = await cgFetch(url);
             if (!resp.ok) {
                 if (resp.status === 429) throw new Error('CoinGecko rate limit. Please wait a moment and try again.');
                 throw new Error(`CoinGecko price error (${resp.status})`);
@@ -4316,7 +4340,7 @@
 
             try {
                 const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(idsToFetch.join(','))}&vs_currencies=usd&include_24hr_change=true`;
-                const resp = await fetch(url);
+                const resp = await cgFetch(url);
 
                 if (!resp.ok) {
                     if (resp.status === 429) {
@@ -5986,7 +6010,7 @@
             '1m':  { kind: 'h30',  windowMs: 30 * DAY,  stepMs: DAY,        ttlMs: DAY,       label: 'Last 30 days, daily' },
             '1y':  { kind: 'd365', windowMs: 365 * DAY, stepMs: 14 * DAY,   ttlMs: DAY,       label: 'Last 12 months, every 2 weeks' },
         };
-        const HIST_MAX_TOKENS = 12; // biggest positions only — keeps us under the rate limit
+        const HIST_MAX_TOKENS = 10; // only the 10 biggest positions get a history request
         const CG_PLATFORM = { pulsechain: 'pulsechain', ethereum: 'ethereum', base: 'base',
             arbitrum: 'arbitrum-one', bsc: 'binance-smart-chain' };
         const CG_SYMBOL_IDS = { ETH: 'ethereum', WETH: 'ethereum', WBTC: 'wrapped-bitcoin', USDC: 'usd-coin',
@@ -6009,26 +6033,42 @@
             return null;
         }
 
+        const HIST_NOT_FOUND_TTL_MS = 3 * DAY; // tokens CoinGecko doesn't know: don't ask again for 3 days
+
+        function writeHistCache(entries) {
+            const all = lsGetJSON(HIST_CACHE_KEY, {}) || {};
+            const now = Date.now();
+            for (const k of Object.keys(all)) if (!isFresh(all[k], 7 * DAY, now)) delete all[k];
+            Object.assign(all, entries);
+            lsSetJSON(HIST_CACHE_KEY, all);
+        }
+
         // Returns [[ms, price], ...] ascending, or null. Cached in localStorage (timestamps stored in seconds).
+        // The network is used only when the saved copy is older than ttlMs. A 404 (token not on CoinGecko)
+        // is remembered too, so it isn't asked again every refresh, and a 429 starts a shared
+        // cooldown (see cgFetch) during which no CoinGecko request is made at all.
         async function fetchPriceHistory(src, kind, ttlMs) {
             const cfg = HIST_KINDS[kind];
             const ckey = `${src.key}|${kind}`;
             const hit = (lsGetJSON(HIST_CACHE_KEY, {}) || {})[ckey];
+            if (hit && hit.notFound && isFresh(hit, HIST_NOT_FOUND_TTL_MS)) return null;
             const stored = hit && Array.isArray(hit.prices) ? hit.prices.map(p => [p[0] * 1000, p[1]]) : null;
             if (stored && isFresh(hit, ttlMs)) return stored;
             try {
-                const resp = await fetch(`https://api.coingecko.com/api/v3${src.path}?${cfg.query}`);
-                if (!resp.ok) return stored; // 429 / 404 → stale cache if we have one
+                const resp = await cgFetch(`https://api.coingecko.com/api/v3${src.path}?${cfg.query}`);
+                if (resp.status === 404) {
+                    const entries = {};
+                    for (const k of Object.keys(HIST_KINDS)) entries[`${src.key}|${k}`] = stampNow({ notFound: true });
+                    writeHistCache(entries);
+                    return null;
+                }
+                if (!resp.ok) return stored; // 429 / other error → stale copy if we have one
                 const json = await resp.json();
                 const prices = (json.prices || [])
                     .filter(p => Array.isArray(p) && p[1] > 0)
                     .map(p => [Math.round(p[0] / 1000), +Number(p[1]).toPrecision(6)]);
                 if (prices.length < 2) return stored;
-                const fresh = lsGetJSON(HIST_CACHE_KEY, {}) || {};
-                const now = Date.now();
-                for (const k of Object.keys(fresh)) if (!isFresh(fresh[k], 3 * DAY, now)) delete fresh[k];
-                fresh[ckey] = stampNow({ prices });
-                lsSetJSON(HIST_CACHE_KEY, fresh);
+                writeHistCache({ [ckey]: stampNow({ prices }) });
                 return prices.map(p => [p[0] * 1000, p[1]]);
             } catch (err) {
                 console.warn('History fetch failed:', err);
@@ -6171,7 +6211,10 @@
                 }
                 svg.innerHTML = '';
                 historyDrawnKey = null;
-                meta.textContent = 'Could not load price history (CoinGecko rate limit or token not listed) — try again in a minute.';
+                const wait = cgCooldownLeftMs();
+                meta.textContent = wait > 0
+                    ? `CoinGecko rate limit — try again in about ${Math.ceil(wait / 1000)} s.`
+                    : 'Could not load price history (CoinGecko error or tokens not listed).';
                 return;
             }
 
@@ -7680,7 +7723,7 @@
         
         async function fetchExchangeRates() {
             try {
-                const response = await fetch(
+                const response = await cgFetch(
                     'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd,pln'
                 );
                 
