@@ -1402,7 +1402,7 @@
         }
         .snapshot-chart svg {
             width: 100%;
-            height: 92px;
+            height: 184px;
             display: block;
             overflow: visible;
         }
@@ -1442,6 +1442,192 @@
             opacity: 0.4;
             cursor: default;
             pointer-events: none;
+        }
+
+        /* ---------- 1D / 1W / 1M change stats row ---------- */
+        .chart-change-stats {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .ccs-item {
+            flex: 1;
+            min-width: 88px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 7px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .ccs-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            color: var(--text-muted);
+        }
+        .ccs-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(12px, 1.3vw, 13.5px);
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .ccs-value.pos {
+            color: var(--green);
+        }
+        .ccs-value.neg {
+            color: var(--red);
+        }
+        .ccs-value.muted {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* ---------- allocation donut chart ---------- */
+        .alloc-chart {
+            display: none;
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+        .alloc-chart.show {
+            display: block;
+        }
+        .alloc-chart-row {
+            display: flex;
+            align-items: center;
+            gap: clamp(16px, 4vw, 32px);
+            flex-wrap: wrap;
+        }
+        .alloc-donut-wrap {
+            position: relative;
+            width: clamp(140px, 32vw, 190px);
+            height: clamp(140px, 32vw, 190px);
+            flex-shrink: 0;
+            margin: 0 auto;
+        }
+        .alloc-donut-svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            overflow: visible;
+        }
+        .alloc-donut-svg path {
+            cursor: pointer;
+            transition: opacity 0.15s ease, filter 0.15s ease;
+        }
+        .alloc-donut-svg path:hover {
+            opacity: 0.85;
+        }
+        .alloc-donut-svg path.dimmed {
+            opacity: 0.28;
+        }
+        .alloc-donut-svg path.selected {
+            opacity: 1;
+            filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.35));
+        }
+        .alloc-donut-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            width: 62%;
+            pointer-events: none;
+        }
+        .alloc-donut-center .adc-token {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            font-size: clamp(11px, 1.3vw, 14px);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .alloc-donut-center .adc-token img,
+        .alloc-donut-center .adc-token .adc-letter {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            object-fit: cover;
+        }
+        .alloc-donut-center .adc-letter {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: #fff;
+        }
+        .alloc-donut-center .adc-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(13px, 1.6vw, 16px);
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 4px;
+            line-height: 1.25;
+        }
+        .alloc-donut-center .adc-pct {
+            font-size: clamp(11px, 1.3vw, 13px);
+            color: var(--text-secondary);
+            margin-top: 1px;
+        }
+        .alloc-legend {
+            flex: 1;
+            min-width: 180px;
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+        }
+        .alloc-legend-row {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-size: clamp(12px, 1.1vw, 14px);
+            cursor: default;
+            padding: 3px 6px;
+            margin: -3px -6px;
+            border-radius: 8px;
+            transition: background 0.15s ease;
+        }
+        .alloc-legend-row[data-index] {
+            cursor: pointer;
+        }
+        .alloc-legend-row[data-index]:hover,
+        .alloc-legend-row.active {
+            background: var(--surface-2);
+        }
+        .alloc-legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .alloc-legend-label {
+            color: var(--text-secondary);
+            flex: 1;
+        }
+        .alloc-legend-pct {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .alloc-legend-more {
+            background: none;
+            border: none;
+            color: var(--purple);
+            font-weight: 600;
+            font-size: clamp(12px, 1.1vw, 14px);
+            cursor: pointer;
+            text-align: right;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+        .alloc-legend-more:hover {
+            text-decoration: underline;
         }
 
         /* ---------- tabs ---------- */
@@ -2537,9 +2723,21 @@
                     <button class="range-btn" data-range="24h" type="button">24h</button>
                     <button class="range-btn" data-range="1w" type="button">1W</button>
                     <button class="range-btn" data-range="1m" type="button">1M</button>
+                    <button class="range-btn" data-range="1y" type="button" title="Last 12 months, every 2 weeks (current holdings × historical prices)">1Y</button>
                 </div>
-                <svg id="snapshotSvg" viewBox="0 0 300 92" preserveAspectRatio="none"></svg>
+                <svg id="snapshotSvg" viewBox="0 0 300 184" preserveAspectRatio="none"></svg>
                 <div class="snapshot-meta" id="snapshotMeta"></div>
+                <div class="chart-change-stats" id="chartChangeStats"></div>
+            </div>
+
+            <div class="alloc-chart" id="allocChart">
+                <div class="alloc-chart-row">
+                    <div class="alloc-donut-wrap">
+                        <svg class="alloc-donut-svg" id="allocDonutSvg" viewBox="0 0 200 200"></svg>
+                        <div class="alloc-donut-center" id="allocDonutCenter"></div>
+                    </div>
+                    <div class="alloc-legend" id="allocLegend"></div>
+                </div>
             </div>
         </div>
 
@@ -2752,6 +2950,30 @@
         }
         function lsSetJSON(key, value) {
             return lsSetRaw(key, JSON.stringify(value));
+        }
+
+        // =================================================================
+        //  COINGECKO FETCH — one shared cooldown after a 429 (rate limit)
+        // =================================================================
+        const CG_COOLDOWN_KEY = 'pulsefolio_cg_cooldown_until';
+        const CG_DEFAULT_COOLDOWN_MS = 60 * 1000;
+        function cgCooldownLeftMs() {
+            const until = Number(lsGetRaw(CG_COOLDOWN_KEY)) || 0;
+            return Math.max(0, until - Date.now());
+        }
+        // Drop-in replacement for fetch() for api.coingecko.com. During a cooldown it makes no
+        // network request and returns a synthetic 429, which every caller already handles
+        // (they fall back to cached data or show the "rate limit" message). The cooldown is
+        // stored in localStorage, so reloading the page doesn't immediately hit the API again.
+        async function cgFetch(url, options) {
+            if (cgCooldownLeftMs() > 0) return new Response(null, { status: 429, statusText: 'Cooldown' });
+            const resp = await fetch(url, options);
+            if (resp.status === 429) {
+                const retry = Number(resp.headers.get('retry-after')); // often not readable cross-origin
+                const waitMs = retry > 0 && retry <= 600 ? retry * 1000 : CG_DEFAULT_COOLDOWN_MS;
+                lsSetRaw(CG_COOLDOWN_KEY, String(Date.now() + waitMs));
+            }
+            return resp;
         }
 
         // =================================================================
@@ -3412,7 +3634,7 @@
 
             try {
                 const url = `https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(key)}`;
-                const resp = await fetch(url);
+                const resp = await cgFetch(url);
                 if (!resp.ok) {
                     if (resp.status === 429) {
                         console.warn('CoinGecko rate limit dla ikony');
@@ -3479,7 +3701,7 @@
             if (!query) throw new Error('Enter a token symbol.');
 
             const url = `https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(query)}`;
-            const resp = await fetch(url);
+            const resp = await cgFetch(url);
             if (!resp.ok) {
                 if (resp.status === 429) throw new Error('CoinGecko rate limit. Please wait a moment and try again.');
                 throw new Error(`CoinGecko API error (${resp.status})`);
@@ -3519,7 +3741,7 @@
         async function fetchTokenPrice(coinId) {
             const url =
                 `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(coinId)}&vs_currencies=usd&include_24hr_change=true`;
-            const resp = await fetch(url);
+            const resp = await cgFetch(url);
             if (!resp.ok) {
                 if (resp.status === 429) throw new Error('CoinGecko rate limit. Please wait a moment and try again.');
                 throw new Error(`CoinGecko price error (${resp.status})`);
@@ -4118,7 +4340,7 @@
 
             try {
                 const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(idsToFetch.join(','))}&vs_currencies=usd&include_24hr_change=true`;
-                const resp = await fetch(url);
+                const resp = await cgFetch(url);
 
                 if (!resp.ok) {
                     if (resp.status === 429) {
@@ -5257,6 +5479,191 @@
             }
         }
 
+        // =================================================================
+        //  ALLOCATION DONUT CHART — share of portfolio value per token
+        // =================================================================
+        const ALLOC_MAX_SLICES = 8; // top N tokens get their own slice; the rest are folded into "Other"
+
+        function renderAllocationChart(tokens) {
+            const container = document.getElementById('allocChart');
+            const svg = document.getElementById('allocDonutSvg');
+            const center = document.getElementById('allocDonutCenter');
+            const legend = document.getElementById('allocLegend');
+            if (!container || !svg || !center || !legend) return;
+
+            const withValue = (tokens || []).filter(tk => (tk.usd || 0) > 0);
+            const total = withValue.reduce((sum, tk) => sum + tk.usd, 0);
+
+            if (!withValue.length || total <= 0) {
+                allocHasData = false;
+                svg.innerHTML = '';
+                center.innerHTML = '';
+                legend.innerHTML = '';
+                syncChartVisibility();
+                return;
+            }
+
+            const sorted = [...withValue].sort((a, b) => b.usd - a.usd);
+            const top = sorted.slice(0, ALLOC_MAX_SLICES);
+            const rest = sorted.slice(ALLOC_MAX_SLICES);
+            const restUsd = rest.reduce((sum, tk) => sum + tk.usd, 0);
+
+            const slices = top.map(tk => ({
+                symbol: tk.symbol,
+                icon: tk.icon,
+                letter: tk.letter,
+                color1: tk.color1,
+                color2: tk.color2,
+                usd: tk.usd,
+                pct: (tk.usd / total) * 100,
+                isOther: false,
+            }));
+            if (restUsd > 0) {
+                slices.push({
+                    symbol: t('allocOtherLabel'),
+                    icon: null,
+                    letter: '+',
+                    color1: '#5a5a66',
+                    color2: '#3c3c46',
+                    usd: restUsd,
+                    pct: (restUsd / total) * 100,
+                    isOther: true,
+                });
+            }
+
+            // ---- donut ring built from SVG arc paths (viewBox 0 0 200 200) ----
+            const cx = 100, cy = 100, r = 80, strokeW = 34;
+            const TAU = Math.PI * 2;
+            let cursor = -Math.PI / 2; // start at 12 o'clock, same as the reference chart
+            const GAP = 0.014; // small visual gap between slices (radians)
+
+            const arcPoint = (angle) => [cx + r * Math.cos(angle), cy + r * Math.sin(angle)];
+
+            let pathsHtml = '';
+            slices.forEach((s, i) => {
+                const gradId = `allocGrad${i}`;
+                const gradDef = `
+                    <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="${s.color1}" />
+                        <stop offset="100%" stop-color="${s.color2 || s.color1}" />
+                    </linearGradient>`;
+
+                if (slices.length === 1) {
+                    // A single 100% slice — draw as a full ring via two half-circle arcs
+                    // (a start==end arc command draws nothing).
+                    const [xa, ya] = arcPoint(cursor);
+                    const [xb, yb] = arcPoint(cursor + Math.PI);
+                    pathsHtml += `
+                        <defs>${gradDef}</defs>
+                        <path class="alloc-slice" data-index="${i}" d="M ${xa.toFixed(2)} ${ya.toFixed(2)} A ${r} ${r} 0 1 1 ${xb.toFixed(2)} ${yb.toFixed(2)} A ${r} ${r} 0 1 1 ${xa.toFixed(2)} ${ya.toFixed(2)}"
+                            fill="none" stroke="url(#${gradId})" stroke-width="${strokeW}">
+                            <title>${escapeHtml(s.symbol)} — ${s.pct.toFixed(1)}%</title>
+                        </path>`;
+                    return;
+                }
+
+                const sweep = Math.max((s.pct / 100) * TAU - GAP, 0.001);
+                const start = cursor;
+                const end = cursor + sweep;
+                const [x1, y1] = arcPoint(start);
+                const [x2, y2] = arcPoint(end);
+                const largeArc = sweep > Math.PI ? 1 : 0;
+                pathsHtml += `
+                    <defs>${gradDef}</defs>
+                    <path class="alloc-slice" data-index="${i}" d="M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${largeArc} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}"
+                        fill="none" stroke="url(#${gradId})" stroke-width="${strokeW}" stroke-linecap="round">
+                        <title>${escapeHtml(s.symbol)} — ${s.pct.toFixed(1)}%</title>
+                    </path>`;
+                cursor = end + GAP;
+            });
+            svg.innerHTML = pathsHtml;
+
+            // ---- center label — defaults to the largest holding, click a slice to inspect it ----
+            const biggest = slices[0];
+            center.innerHTML = buildAllocCenterHtml(biggest);
+
+            const pathEls = svg.querySelectorAll('.alloc-slice');
+            const legendRowEls = [];
+            const selectSlice = (idx) => {
+                pathEls.forEach(p => p.classList.toggle('selected', Number(p.dataset.index) === idx));
+                pathEls.forEach(p => p.classList.toggle('dimmed', idx !== null && Number(p.dataset.index) !== idx));
+                legendRowEls.forEach(row => row.classList.toggle('active', idx !== null && Number(row.dataset.index) === idx));
+                center.innerHTML = buildAllocCenterHtml(idx === null ? biggest : slices[idx]);
+            };
+            pathEls.forEach(el => {
+                el.addEventListener('click', () => {
+                    const idx = Number(el.dataset.index);
+                    const isSelected = el.classList.contains('selected');
+                    selectSlice(isSelected ? null : idx);
+                });
+            });
+
+            // ---- legend ----
+            const shownInLegend = slices.filter(s => !s.isOther);
+            let legendHtml = shownInLegend.map((s, i) => `
+                <div class="alloc-legend-row" data-index="${i}">
+                    <span class="alloc-legend-dot" style="background: linear-gradient(135deg, ${s.color1}, ${s.color2 || s.color1});"></span>
+                    <span class="alloc-legend-label">${escapeHtml(s.symbol)}</span>
+                    <span class="alloc-legend-pct">${s.pct.toFixed(1)}%</span>
+                </div>
+            `).join('');
+
+            if (rest.length) {
+                legendHtml += `
+                    <div class="alloc-legend-row">
+                        <span class="alloc-legend-dot" style="background: linear-gradient(135deg, #5a5a66, #3c3c46);"></span>
+                        <span class="alloc-legend-label">${escapeHtml(t('allocOtherLabel'))}</span>
+                        <button class="alloc-legend-more" type="button" id="allocShowAllBtn">${escapeHtml(t('allocShowAllBtn'))}</button>
+                    </div>
+                `;
+            }
+            legend.innerHTML = legendHtml;
+
+            legend.querySelectorAll('.alloc-legend-row[data-index]').forEach(row => {
+                legendRowEls.push(row);
+                row.style.cursor = 'pointer';
+                row.addEventListener('click', () => {
+                    const idx = Number(row.dataset.index);
+                    const isActive = row.classList.contains('active');
+                    selectSlice(isActive ? null : idx);
+                });
+            });
+
+            const showAllBtn = document.getElementById('allocShowAllBtn');
+            if (showAllBtn) {
+                showAllBtn.addEventListener('click', () => renderAllocationLegendExpanded(sorted, total));
+            }
+
+            allocHasData = true;
+            syncChartVisibility();
+        }
+
+        // Builds the HTML shown in the middle of the donut for a given slice — either the
+        // default (largest holding) or whichever slice/legend row the user last clicked.
+        function buildAllocCenterHtml(slice) {
+            const iconHtml = (!slice.isOther && slice.icon) ?
+                iconImg(slice.icon) :
+                `<span class="adc-letter" style="background: linear-gradient(135deg, ${slice.color1}, ${slice.color2 || slice.color1});">${escapeHtml(slice.letter)}</span>`;
+            return `
+                <div class="adc-token">${iconHtml}<span>${escapeHtml(slice.symbol)}</span></div>
+                <div class="adc-value">${fmtUSD(slice.usd)}</div>
+                <div class="adc-pct">${slice.pct.toFixed(1)}%</div>
+            `;
+        }
+
+        // Expands the legend to list every token individually (used after "Show all" is clicked).
+        function renderAllocationLegendExpanded(sorted, total) {
+            const legend = document.getElementById('allocLegend');
+            if (!legend) return;
+            legend.innerHTML = sorted.map(tk => `
+                <div class="alloc-legend-row">
+                    <span class="alloc-legend-dot" style="background: linear-gradient(135deg, ${tk.color1}, ${tk.color2 || tk.color1});"></span>
+                    <span class="alloc-legend-label">${escapeHtml(tk.symbol)}</span>
+                    <span class="alloc-legend-pct">${((tk.usd / total) * 100).toFixed(1)}%</span>
+                </div>
+            `).join('');
+        }
+
         function renderFarms(farms) {
             const list = document.getElementById('farmList');
 
@@ -5357,6 +5764,7 @@
 
             renderTokens(tokens);
             renderFarms(data.farms);
+            renderAllocationChart(tokens);
         }
 
         let showingStale = false;
@@ -5377,102 +5785,25 @@
         }
 
         // =================================================================
-        //  SNAPSHOTS — portfolio value over time
+        //  CHART CONTEXT
         // =================================================================
-        const SNAPSHOTS_STORAGE_KEY = 'pulsefolio_snapshots';
-        const MAX_SNAPSHOTS_PER_CONTEXT = 500;
-        const SNAPSHOT_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // keep ~30 days of history
-        const SNAPSHOT_MIN_GAP_MS = 60 * 60 * 1000; // collapse refreshes closer than 1 hour together
-        const SNAPSHOT_MAX_PER_DAY = 24; // hard cap: never add more than 24 NEW points in any rolling 24h window,
-                                          // even if refreshes happen to land exactly on the 1‑hour boundary
+        // One-time cleanup: the old locally recorded portfolio-value history is no longer
+        // used by any chart (all charts are built from CoinGecko history), so drop it.
+        lsRemove('pulsefolio_snapshots');
 
-        // Snapshots are scoped per "context" (network/combined-mode + exact address set),
-        // so switching wallets or networks doesn't mix unrelated history together.
-        // Note: toggling which extra networks (Base/Arbitrum/BNB) are included does NOT
-        // start a new history — otherwise the chart would reset/disable every time that
-        // selection changes, since it needs at least 2 recorded points to render.
-        // `scope` identifies WHICH network/combined-mode bucket a set of addresses belongs
-        // to. It's optional and falls back to the current live selection — but callers that
-        // are recording or rendering data for a request that may have started under a
-        // *different* selection (async fetch that outlives a network/wallet switch) should
-        // always pass the scope they captured at request time, not rely on this fallback.
-        function getSnapshotContextKey(addresses, scope) {
+        // Identifies which wallet/network a set of addresses belongs to, so saved chart
+        // points for different wallets or networks never get mixed together. `scope` is
+        // optional and falls back to the current live selection — callers handling data
+        // for a request that may have started under a *different* selection should pass
+        // the scope they captured at request time.
+        function getChartContextKey(addresses, scope) {
             const effectiveScope = scope || (combinedMode ? 'combined' : selectedNetwork);
             const addrKey = [...addresses].map(a => a.toLowerCase()).sort().join(',');
             return `${effectiveScope}::${addrKey}`;
         }
 
-        function loadAllSnapshots() {
-            const parsed = lsGetJSON(SNAPSHOTS_STORAGE_KEY, {});
-            return (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
-        }
-
-        function saveAllSnapshots(all) {
-            lsSetJSON(SNAPSHOTS_STORAGE_KEY, all);
-        }
-
-        // Normalizes a stored point to a numeric timestamp, whether it's a fresh point
-        // (has `ts`) or a legacy one from before intraday tracking (only has `date`).
-        function snapshotTs(p) {
-            if (Number.isFinite(p.ts)) return p.ts;
-            const parsed = Date.parse(p.date);
-            return Number.isFinite(parsed) ? parsed : Date.now();
-        }
-
-        function getSnapshotsForContext(addresses, scope) {
-            const all = loadAllSnapshots();
-            return all[getSnapshotContextKey(addresses, scope)] || [];
-        }
-
-        // Records (or updates) the current value for this wallet/network context. Refreshes
-        // within SNAPSHOT_MIN_GAP_MS (1 hour) of each other update the latest point instead of
-        // adding a new one, so mashing the refresh button doesn't spam the history with
-        // near-duplicate points — otherwise every check adds its own timestamped point, which
-        // is what lets the chart show real movement over time instead of just once per day.
-        //
-        // `scope` should be the network/combined-mode context captured at the moment this
-        // data was REQUESTED (see beginChartRequest/requestScope in handleLoad) — saving must
-        // never depend on whatever the user happens to have selected by the time the response
-        // arrives, or a slow response finishing after a network/wallet switch would silently
-        // pollute the wrong context's history.
-        function recordSnapshot(addresses, value, scope) {
-            if (!addresses || !addresses.length || !Number.isFinite(value)) return;
-            const key = getSnapshotContextKey(addresses, scope);
-            const all = loadAllSnapshots();
-            const list = all[key] || [];
-            const now = Date.now();
-
-            const last = list[list.length - 1];
-            const withinHourlyGap = last && (now - snapshotTs(last)) < SNAPSHOT_MIN_GAP_MS;
-
-            // Hard daily cap: even if the 1-hour gap has elapsed, never add a NEW point
-            // if 24 points were already added within the last 24 hours (e.g. refreshes
-            // landing exactly on hourly boundaries could otherwise sneak in a 25th).
-            const dayCutoff = now - 24 * 60 * 60 * 1000;
-            const pointsInLastDay = list.filter(p => snapshotTs(p) >= dayCutoff).length;
-            const dailyCapReached = !withinHourlyGap && pointsInLastDay >= SNAPSHOT_MAX_PER_DAY;
-
-            if (withinHourlyGap || dailyCapReached) {
-                if (last) {
-                    last.value = value;
-                    last.ts = now;
-                }
-            } else {
-                list.push({ ts: now, value });
-            }
-
-            const cutoff = now - SNAPSHOT_MAX_AGE_MS;
-            const pruned = list.filter(p => snapshotTs(p) >= cutoff);
-            all[key] = pruned.slice(-MAX_SNAPSHOTS_PER_CONTEXT);
-            saveAllSnapshots(all);
-        }
-
-        // Ignores ATH/multiplier "dream" pricing — snapshots should reflect real value only.
-        function getRealTotalUsd(data) {
-            return mergeManualTokensIntoPortfolio(data).totalUsd;
-        }
-
         let chartVisible = false; // the chart is only rendered once the user clicks the "Chart" button
+        let allocHasData = false; // whether the allocation donut has anything to show (tied to the same toggle)
         let chartHasData = false;
         let lastChartAddresses = null; // so the range buttons can re-render without needing addresses passed in again
         let lastChartScope = null; // the network/combined-mode scope the currently-displayed chart belongs to
@@ -5493,6 +5824,7 @@
             '24h': { ms: 24 * 60 * 60 * 1000, label: 'Last 24 hours' },
             '1w': { ms: 7 * 24 * 60 * 60 * 1000, label: 'Last 7 days' },
             '1m': { ms: 30 * 24 * 60 * 60 * 1000, label: 'Last 30 days' },
+            '1y': { ms: 365 * 24 * 60 * 60 * 1000, label: 'Last 12 months, every 2 weeks' },
         };
         function loadChartRangeFromStorage() {
             const val = lsGetRaw(CHART_RANGE_STORAGE_KEY);
@@ -5520,8 +5852,9 @@
 
         function syncChartVisibility() {
             const container = document.getElementById('snapshotChart');
-            if (!container) return;
-            container.classList.toggle('show', chartVisible && chartHasData);
+            if (container) container.classList.toggle('show', chartVisible && chartHasData);
+            const allocContainer = document.getElementById('allocChart');
+            if (allocContainer) allocContainer.classList.toggle('show', chartVisible && allocHasData);
             const btn = document.getElementById('toggleChartBtn');
             if (btn) btn.classList.toggle('active', chartVisible);
         }
@@ -5532,53 +5865,56 @@
                 // Within roughly a day — show a time of day, like the CoinGecko-style chart.
                 return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
             }
+            if (spanMs > 200 * 24 * 60 * 60 * 1000) {
+                return d.toLocaleDateString(undefined, { month: 'short', year: '2-digit' });
+            }
             return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
         }
 
-        function renderSnapshotChart(addresses, scope) {
-            const container = document.getElementById('snapshotChart');
-            const svg = document.getElementById('snapshotSvg');
-            const meta = document.getElementById('snapshotMeta');
-            if (addresses) lastChartAddresses = addresses;
-            if (scope) lastChartScope = scope;
-            const effectiveAddresses = addresses || lastChartAddresses;
-            const effectiveScope = scope || lastChartScope;
-            if (!container || !svg || !effectiveAddresses) return;
+        const CHANGE_STATS_LABELS = { '24h': '1D', '1w': '1W', '1m': '1M' };
 
-            const allPoints = getSnapshotsForContext(effectiveAddresses, effectiveScope)
-                .map(p => ({ ts: snapshotTs(p), value: p.value }))
-                .sort((a, b) => a.ts - b.ts);
-            if (allPoints.length < 2) {
-                chartHasData = false;
-                syncChartVisibility();
+        // For each of 24h/1w/1m, compares the latest value to the earliest value still
+        // inside that window and returns the $ and % change — independent of which range the
+        // line chart itself is currently showing.
+        function computeRangeChangeStats(allPoints) {
+            if (!allPoints || allPoints.length < 2) return null;
+            const now = Date.now();
+            const latest = allPoints[allPoints.length - 1].value;
+            const stats = {};
+            for (const key of CHART_RANGE_ORDER) {
+                const inRange = allPoints.filter(p => now - p.ts <= CHART_RANGES[key].ms);
+                if (inRange.length < 2) {
+                    stats[key] = null;
+                    continue;
+                }
+                const baseline = inRange[0].value;
+                const diff = latest - baseline;
+                const pct = baseline ? (diff / Math.abs(baseline)) * 100 : 0;
+                stats[key] = { diff, pct };
+            }
+            return stats;
+        }
+
+        function renderChangeStatsRow(stats) {
+            const el = document.getElementById('chartChangeStats');
+            if (!el) return;
+            if (!stats) {
+                el.innerHTML = '';
                 return;
             }
+            el.innerHTML = CHART_RANGE_ORDER.map(key => {
+                const s = stats[key];
+                if (!s) {
+                    return `<div class="ccs-item"><span class="ccs-label">${CHANGE_STATS_LABELS[key]}</span><span class="ccs-value muted">—</span></div>`;
+                }
+                const cls = s.diff >= 0 ? 'pos' : 'neg';
+                return `<div class="ccs-item"><span class="ccs-label">${CHANGE_STATS_LABELS[key]}</span><span class="ccs-value ${cls}">${fmtSignedUSD(s.diff)} (${fmtPct(s.pct)})</span></div>`;
+            }).join('');
+        }
 
-            // Work out which ranges actually have enough points (2+) to draw. If the user's
-            // selected range doesn't, silently step up to the next range that does — the
-            // button for the insufficient range gets disabled rather than falling back to a
-            // "not enough data" message under the range the person actually chose.
-            const now = Date.now();
-            rangeAvailability = {};
-            for (const key of CHART_RANGE_ORDER) {
-                rangeAvailability[key] = allPoints.filter(p => now - p.ts <= CHART_RANGES[key].ms).length >= 2;
-            }
-            let effectiveRange = chartRange;
-            if (!rangeAvailability[effectiveRange]) {
-                const startIdx = CHART_RANGE_ORDER.indexOf(effectiveRange);
-                const upgrade = CHART_RANGE_ORDER.slice(startIdx + 1).find(key => rangeAvailability[key]);
-                if (upgrade) effectiveRange = upgrade;
-            }
-
-            const rangeDef = CHART_RANGES[effectiveRange] || CHART_RANGES['24h'];
-            let points = allPoints.filter(p => now - p.ts <= rangeDef.ms);
-            let isFallback = false;
-            if (points.length < 2) {
-                points = allPoints;
-                isFallback = true;
-            }
-            syncChartRangeButtons(effectiveRange);
-
+        // Draws a value-over-time line chart into the given <svg>. Returns the % change
+        // between the first and last point.
+        function drawSeries(svg, points, useFullPriceLabels) {
             const values = points.map(p => p.value);
             const min = Math.min(...values);
             const max = Math.min(Math.max(...values), Number.MAX_VALUE);
@@ -5589,8 +5925,7 @@
             // headroom above/below the line, and room at the bottom for time labels.
             // The 24h range shows full, non-abbreviated prices (no "K"/"M" suffix), which
             // need a bit more width reserved than the compact labels used for 1W/1M.
-            const useFullPriceLabels = effectiveRange === '24h';
-            const w = 300, h = 92;
+                        const w = 300, h = 184;
             const labelW = useFullPriceLabels ? 62 : 46;
             const plotLeft = 2, plotRight = w - labelW;
             const plotTop = 8, plotBottom = h - 20;
@@ -5611,7 +5946,7 @@
 
             // Full horizontal grid — several evenly spaced value levels with labels, rather
             // than just marking the min/max.
-            const GRID_LINES = 5;
+            const GRID_LINES = 7;
             let gridSvg = '';
             for (let i = 0; i < GRID_LINES; i++) {
                 const frac = i / (GRID_LINES - 1);
@@ -5643,13 +5978,265 @@
                 <path d="${linePath}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>
                 ${axisSvg}
             `;
+            return { pctChange };
+        }
 
-            const rangeLabel = isFallback ?
-                `${new Date(points[0].ts).toLocaleDateString()} → ${new Date(points[points.length - 1].ts).toLocaleDateString()} (not enough history in this range yet — showing everything available)` :
-                rangeDef.label;
-            meta.textContent = `${rangeLabel} · ${pctChange >= 0 ? '+' : ''}${pctChange.toFixed(1)}% over ${points.length} checks`;
+        // Every chart is drawn from CoinGecko history: current holdings × historical prices
+        // (amounts held constant — not the wallet's real past balances).
+        //   24h → hourly points · 1W → every 12h · 1M → daily · 1Y → every 2 weeks
+        function renderSnapshotChart(addresses, scope) {
+            const container = document.getElementById('snapshotChart');
+            const svg = document.getElementById('snapshotSvg');
+            if (addresses) lastChartAddresses = addresses;
+            if (scope) lastChartScope = scope;
+            const effectiveAddresses = addresses || lastChartAddresses;
+            if (!container || !svg || !effectiveAddresses) return;
+            if (chartVisible) renderHistoryChart(chartRange);
+        }
+
+        // =================================================================
+        //  CHART DATA — CoinGecko price history × current holdings
+        // =================================================================
+        const HIST_CACHE_KEY = 'pulsefolio_hist_cache_v2';
+        const HOUR = 3600 * 1000, DAY = 24 * HOUR;
+        // CoinGecko picks the granularity itself: hourly for 2–90 days, daily above 90 days.
+        const HIST_KINDS = {
+            h30:  { query: 'vs_currency=usd&days=30' },
+            d365: { query: 'vs_currency=usd&days=365&interval=daily' },
+        };
+        const HIST_RANGES = {
+            '24h': { kind: 'h30',  windowMs: DAY,       stepMs: HOUR,       ttlMs: HOUR,      label: 'Last 24 hours, hourly' },
+            '1w':  { kind: 'h30',  windowMs: 7 * DAY,   stepMs: 12 * HOUR,  ttlMs: 12 * HOUR, label: 'Last 7 days, every 12h' },
+            '1m':  { kind: 'h30',  windowMs: 30 * DAY,  stepMs: DAY,        ttlMs: DAY,       label: 'Last 30 days, daily' },
+            '1y':  { kind: 'd365', windowMs: 365 * DAY, stepMs: 14 * DAY,   ttlMs: DAY,       label: 'Last 12 months, every 2 weeks' },
+        };
+        const HIST_MAX_TOKENS = 10; // only the 10 biggest positions get a history request
+        const CG_PLATFORM = { pulsechain: 'pulsechain', ethereum: 'ethereum', base: 'base',
+            arbitrum: 'arbitrum-one', bsc: 'binance-smart-chain' };
+        const CG_SYMBOL_IDS = { ETH: 'ethereum', WETH: 'ethereum', WBTC: 'wrapped-bitcoin', USDC: 'usd-coin',
+            USDT: 'tether', DAI: 'dai', PLS: 'pulsechain', WPLS: 'pulsechain', BNB: 'binancecoin' };
+        let historyGen = 0;
+        let historyDrawnKey = null; // which wallet-context + range the SVG currently holds
+
+        function historySourceFor(t) {
+            if (typeof t.address === 'string' && t.address.startsWith('manual_')) {
+                const id = t.address.slice(7);
+                return { key: 'id:' + id, path: `/coins/${encodeURIComponent(id)}/market_chart` };
+            }
+            const id = CG_SYMBOL_IDS[(t.symbol || '').toUpperCase()];
+            if (id) return { key: 'id:' + id, path: `/coins/${id}/market_chart` };
+            const platform = CG_PLATFORM[t.network || selectedNetwork];
+            if (platform && /^0x[0-9a-f]{40}$/i.test(t.address || '')) {
+                const addr = t.address.toLowerCase();
+                return { key: `${platform}:${addr}`, path: `/coins/${platform}/contract/${addr}/market_chart` };
+            }
+            return null;
+        }
+
+        const HIST_NOT_FOUND_TTL_MS = 3 * DAY; // tokens CoinGecko doesn't know: don't ask again for 3 days
+
+        function writeHistCache(entries) {
+            const all = lsGetJSON(HIST_CACHE_KEY, {}) || {};
+            const now = Date.now();
+            for (const k of Object.keys(all)) if (!isFresh(all[k], 7 * DAY, now)) delete all[k];
+            Object.assign(all, entries);
+            lsSetJSON(HIST_CACHE_KEY, all);
+        }
+
+        // Returns [[ms, price], ...] ascending, or null. Cached in localStorage (timestamps stored in seconds).
+        // The network is used only when the saved copy is older than ttlMs. A 404 (token not on CoinGecko)
+        // is remembered too, so it isn't asked again every refresh, and a 429 starts a shared
+        // cooldown (see cgFetch) during which no CoinGecko request is made at all.
+        async function fetchPriceHistory(src, kind, ttlMs) {
+            const cfg = HIST_KINDS[kind];
+            const ckey = `${src.key}|${kind}`;
+            const hit = (lsGetJSON(HIST_CACHE_KEY, {}) || {})[ckey];
+            if (hit && hit.notFound && isFresh(hit, HIST_NOT_FOUND_TTL_MS)) return null;
+            const stored = hit && Array.isArray(hit.prices) ? hit.prices.map(p => [p[0] * 1000, p[1]]) : null;
+            if (stored && isFresh(hit, ttlMs)) return stored;
+            try {
+                const resp = await cgFetch(`https://api.coingecko.com/api/v3${src.path}?${cfg.query}`);
+                if (resp.status === 404) {
+                    const entries = {};
+                    for (const k of Object.keys(HIST_KINDS)) entries[`${src.key}|${k}`] = stampNow({ notFound: true });
+                    writeHistCache(entries);
+                    return null;
+                }
+                if (!resp.ok) return stored; // 429 / other error → stale copy if we have one
+                const json = await resp.json();
+                const prices = (json.prices || [])
+                    .filter(p => Array.isArray(p) && p[1] > 0)
+                    .map(p => [Math.round(p[0] / 1000), +Number(p[1]).toPrecision(6)]);
+                if (prices.length < 2) return stored;
+                writeHistCache({ [ckey]: stampNow({ prices }) });
+                return prices.map(p => [p[0] * 1000, p[1]]);
+            } catch (err) {
+                console.warn('History fetch failed:', err);
+                return stored;
+            }
+        }
+
+        // Price at time ts: last known point at or before ts (+tol); null if the series starts later.
+        function priceAtTime(series, ts, tol) {
+            if (ts < series[0][0] - 1.5 * tol) return null;
+            let lo = 0, hi = series.length - 1;
+            while (lo < hi) {
+                const mid = (lo + hi + 1) >> 1;
+                if (series[mid][0] <= ts + tol) lo = mid; else hi = mid - 1;
+            }
+            return series[lo][1];
+        }
+
+        // ---- saved chart points (per wallet/network context + range) ----
+        // Lets a chart appear instantly on load, and survives a failed CoinGecko request.
+        const CHART_CACHE_KEY = 'pulsefolio_chart_cache_v1';
+        function chartCacheKey(rangeKey) {
+            return lastChartAddresses ? `${getChartContextKey(lastChartAddresses, lastChartScope)}|${rangeKey}` : null;
+        }
+        function loadCachedChart(rangeKey) {
+            const k = chartCacheKey(rangeKey);
+            if (!k) return null;
+            const hit = (lsGetJSON(CHART_CACHE_KEY, {}) || {})[k];
+            if (!hit || !Array.isArray(hit.points) || hit.points.length < 2) return null;
+            if (hit.step !== HIST_RANGES[rangeKey].stepMs) return null; // saved with a different point interval
+            return { ...hit, points: hit.points.map(p => ({ ts: p[0] * 1000, value: p[1] })) };
+        }
+        function saveCachedChart(rangeKey, points, info) {
+            const k = chartCacheKey(rangeKey);
+            if (!k) return;
+            const all = lsGetJSON(CHART_CACHE_KEY, {}) || {};
+            const now = Date.now();
+            for (const key of Object.keys(all)) if (!isFresh(all[key], 14 * DAY, now)) delete all[key];
+            all[k] = stampNow({ points: points.map(p => [Math.round(p.ts / 1000), +p.value.toPrecision(7)]), ...info });
+            lsSetJSON(CHART_CACHE_KEY, all);
+        }
+        function chartMetaText(def, pct, count, coverage, savedTs) {
+            const tail = savedTs
+                ? 'saved ' + new Date(savedTs).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+                : 'current holdings × CoinGecko prices';
+            return `${def.label} · ${pct >= 0 ? '+' : ''}${pct.toFixed(1)}% · ` +
+                `${count} token${count === 1 ? '' : 's'} (${coverage}% of value) · ${tail}`;
+        }
+
+        async function renderHistoryChart(rangeKey) {
+            const svg = document.getElementById('snapshotSvg');
+            const meta = document.getElementById('snapshotMeta');
+            const def = HIST_RANGES[rangeKey];
+            if (!svg || !meta || !def) return;
+            const gen = ++historyGen;
+            const stillCurrent = () => gen === historyGen && chartRange === rangeKey && chartVisible;
+            const drawKey = chartCacheKey(rangeKey) || rangeKey;
+
+            rangeAvailability = null; // every range comes from CoinGecko, so every range is always available
+            syncChartRangeButtons(rangeKey);
+
+            // Instant paint from the chart saved last time, while (possibly) fresher data loads.
+            if (historyDrawnKey !== drawKey) {
+                const saved = loadCachedChart(rangeKey);
+                if (saved) {
+                    const { pctChange } = drawSeries(svg, saved.points, rangeKey === '24h');
+                    historyDrawnKey = drawKey;
+                    meta.textContent = chartMetaText(def, pctChange, saved.count, saved.coverage, saved.timestamp);
+                    renderChangeStatsRow(saved.stats || null);
+                } else {
+                    svg.innerHTML = '';
+                    meta.textContent = 'Loading price history…';
+                }
+            }
             chartHasData = true;
             syncChartVisibility();
+
+            const allTokens = mergeManualTokensIntoPortfolio(portfolioData).tokens;
+            const totalUsd = allTokens.reduce((sum, t) => sum + (t.usd || 0), 0);
+            const jobs = allTokens
+                .filter(t => t.rawAmount > 0 && t.usd > 0)
+                .slice(0, HIST_MAX_TOKENS) // already sorted by USD value
+                .map(t => ({ t, src: historySourceFor(t) }))
+                .filter(j => j.src);
+
+            // Small concurrency (CoinGecko keyless limits are low); each source is fetched once,
+            // and only when its saved copy is older than this range's refresh interval.
+            const pending = new Map();
+            const results = new Map();
+            let next = 0;
+            async function worker() {
+                while (next < jobs.length) {
+                    const job = jobs[next++];
+                    if (!pending.has(job.src.key)) pending.set(job.src.key, fetchPriceHistory(job.src, def.kind, def.ttlMs));
+                    results.set(job.t, await pending.get(job.src.key));
+                    if (!stillCurrent()) return;
+                }
+            }
+            await Promise.all([worker(), worker(), worker()]);
+            if (!stillCurrent()) return;
+
+            // Keep tokens whose history looks like the same asset that is currently priced.
+            // The live price is appended as the newest point, so the right edge of the chart is
+            // current even when the saved history is up to a day old.
+            const now = Date.now();
+            const used = [];
+            for (const { t } of jobs) {
+                let series = results.get(t);
+                if (!series) continue;
+                const cur = t.usd / t.rawAmount;
+                const last = series[series.length - 1];
+                if (cur > 0 && (last[1] / cur > 3 || last[1] / cur < 1 / 3)) continue;
+                if (cur > 0 && last[0] < now - 5 * 60 * 1000) series = [...series, [now, cur]];
+                used.push({ t, series });
+            }
+
+            const valueAt = (ts, tol) => {
+                let value = 0, any = false;
+                for (const { t, series } of used) {
+                    const pr = priceAtTime(series, ts, tol);
+                    if (pr != null) { value += pr * t.rawAmount; any = true; }
+                }
+                return any ? value : null;
+            };
+
+            const tol = Math.min(def.stepMs / 2, 12 * HOUR);
+            const steps = Math.round(def.windowMs / def.stepMs);
+            const points = [];
+            for (let k = steps; k >= 0; k--) {
+                const ts = now - k * def.stepMs;
+                const value = valueAt(ts, tol);
+                if (value != null) points.push({ ts, value });
+            }
+
+            if (points.length < 2) {
+                // Refresh failed. Keep whatever is already on screen (e.g. the saved chart).
+                if (historyDrawnKey === drawKey) {
+                    if (!meta.textContent.endsWith('refresh failed')) meta.textContent += ' · refresh failed';
+                    return;
+                }
+                svg.innerHTML = '';
+                historyDrawnKey = null;
+                const wait = cgCooldownLeftMs();
+                meta.textContent = wait > 0
+                    ? `CoinGecko rate limit — try again in about ${Math.ceil(wait / 1000)} s.`
+                    : 'Could not load price history (CoinGecko error or tokens not listed).';
+                return;
+            }
+
+            // 1D / 1W / 1M change row — from the same 30-day hourly data (not shown for 1Y).
+            let stats = null;
+            if (def.kind === 'h30') {
+                const hourly = [];
+                for (let k = 30 * 24; k >= 0; k--) {
+                    const ts = now - k * HOUR;
+                    const value = valueAt(ts, HOUR / 2);
+                    if (value != null) hourly.push({ ts, value });
+                }
+                stats = computeRangeChangeStats(hourly);
+            }
+            renderChangeStatsRow(stats);
+
+            const { pctChange } = drawSeries(svg, points, rangeKey === '24h');
+            historyDrawnKey = drawKey;
+            const covered = used.reduce((sum, u) => sum + (u.t.usd || 0), 0);
+            const coverage = totalUsd > 0 ? Math.round((covered / totalUsd) * 100) : 0;
+            meta.textContent = chartMetaText(def, pctChange, used.length, coverage, null);
+            saveCachedChart(rangeKey, points, { count: used.length, coverage, stats, step: def.stepMs });
         }
 
         function syncAthDreamRowVisibility() {
@@ -5691,21 +6278,11 @@
                 // same instant anyway.
                 const scope = opts.scope || (combinedMode ? 'combined' : selectedNetwork);
 
-                // SAVING: only record a new data point for genuinely fresh data, not
-                // cached/stale renders — but this always writes into the context the data
-                // actually belongs to (opts.scope), regardless of whatever the user has
-                // selected right now. This is what keeps history accurate even if a slow
-                // response resolves after the user has already switched wallet/network.
-                if (!showingStale) {
-                    recordSnapshot(opts.addresses, getRealTotalUsd(data), scope);
-                }
-
                 // DISPLAYING: only paint the chart if this response still matches the
                 // selection the user is currently looking at. opts.generation is stamped
                 // when the request started (beginChartRequest); if chartRequestGeneration has
                 // moved on since then, a newer load has started (user switched away) and this
-                // response — though still faithfully saved above — must not overwrite what's
-                // on screen.
+                // response must not overwrite what's on screen.
                 const isStaleForDisplay = opts.generation != null && opts.generation !== chartRequestGeneration;
                 if (!isStaleForDisplay) {
                     renderSnapshotChart(opts.addresses, scope);
@@ -6015,6 +6592,7 @@
         document.getElementById('toggleChartBtn').addEventListener('click', function() {
             chartVisible = !chartVisible;
             syncChartVisibility();
+            if (chartVisible) renderSnapshotChart();
         });
 
         document.querySelectorAll('.range-btn').forEach(btn => {
@@ -6589,7 +7167,7 @@
                 cancelBtn: 'Cancel',
                 portfolioValueLabel: 'Portfolio value',
                 switchNetworkTitle: 'Switch network',
-                chartBtn: 'Chart 📈',
+                chartBtn: 'Analytics 📈',
                 chartTitle: 'Show portfolio value chart',
                 refreshBtn: 'Refresh',
                 refreshTitle: 'Refresh portfolio balances and prices',
@@ -6636,6 +7214,8 @@
                 hideManualTitleOn: 'Manually added tokens are hidden from this list — click to show them',
                 hideManualTitleOff: 'Hide manually added tokens from this list',
                 portfolioChangeLabel: 'Portfolio change 24h',
+                allocOtherLabel: 'Other',
+                allocShowAllBtn: 'Show all',
             },
             pl: {
                 settingsAria: 'Ustawienia',
@@ -6682,7 +7262,7 @@
                 cancelBtn: 'Anuluj',
                 portfolioValueLabel: 'Wartość portfela',
                 switchNetworkTitle: 'Przełącz sieć',
-                chartBtn: 'Wykres 📈',
+                chartBtn: 'Analityka 📈',
                 chartTitle: 'Pokaż wykres wartości portfela',
                 refreshBtn: 'Odśwież',
                 refreshTitle: 'Odśwież salda i ceny portfela',
@@ -6729,6 +7309,8 @@
                 hideManualTitleOn: 'Ręcznie dodane tokeny są ukryte na tej liście — kliknij, aby je pokazać',
                 hideManualTitleOff: 'Ukryj ręcznie dodane tokeny z tej listy',
                 portfolioChangeLabel: 'Zmiana portfela 24 h',
+                allocOtherLabel: 'Inne',
+                allocShowAllBtn: 'Pokaż wszystko',
             },
         };
 
@@ -6838,8 +7420,6 @@
                     language: lsGetRaw('pulseFolio_language'),
                     chartRange: lsGetRaw(CHART_RANGE_STORAGE_KEY),
                 },
-                // Portfolio value history behind the snapshot chart.
-                snapshots: lsGetJSON(SNAPSHOTS_STORAGE_KEY, {}),
             };
         }
 
@@ -6882,7 +7462,7 @@
         // Writes an imported payload into localStorage. Throws on anything that doesn't
         // look like a valid backup — the caller is responsible for catching and
         // reporting that. Deliberately does NOT try to hot-apply the new state into the
-        // page's already-running JS (portfolio list, addresses, theme, snapshots, etc.
+        // page's already-running JS (portfolio list, addresses, theme, etc.
         // are all read into module-level variables once at load time) — the caller
         // reloads the page afterwards instead, which is far simpler and safer than
         // hand-patching every piece of in-memory state to match.
@@ -6958,14 +7538,6 @@
                 if (s.theme) lsSetRaw('pulseFolio_theme', s.theme);
                 if (s.language) lsSetRaw('pulseFolio_language', s.language);
                 if (s.chartRange) lsSetRaw(CHART_RANGE_STORAGE_KEY, s.chartRange);
-            }
-
-            // Snapshots (chart history) are merged key-by-key rather than replacing the
-            // whole store, so history for portfolios not part of this import isn't lost.
-            // Imported points win only for contexts also present in the import.
-            if (payload.snapshots && typeof payload.snapshots === 'object' && !Array.isArray(payload.snapshots)) {
-                const existingSnapshots = lsGetJSON(SNAPSHOTS_STORAGE_KEY, {}) || {};
-                lsSetJSON(SNAPSHOTS_STORAGE_KEY, { ...existingSnapshots, ...payload.snapshots });
             }
         }
 
@@ -7151,7 +7723,7 @@
         
         async function fetchExchangeRates() {
             try {
-                const response = await fetch(
+                const response = await cgFetch(
                     'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd,pln'
                 );
                 
