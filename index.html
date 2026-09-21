@@ -5983,7 +5983,7 @@
 
         // Every chart is drawn from CoinGecko history: current holdings × historical prices
         // (amounts held constant — not the wallet's real past balances).
-        //   24h → hourly points · 1W → every 12h · 1M → daily · 1Y → every 2 weeks
+        //   24h → every 2h · 1W → every 12h · 1M → daily · 1Y → every 2 weeks
         function renderSnapshotChart(addresses, scope) {
             const container = document.getElementById('snapshotChart');
             const svg = document.getElementById('snapshotSvg');
@@ -6005,12 +6005,12 @@
             d365: { query: 'vs_currency=usd&days=365&interval=daily' },
         };
         const HIST_RANGES = {
-            '24h': { kind: 'h30',  windowMs: DAY,       stepMs: HOUR,       ttlMs: HOUR,      label: 'Last 24 hours, hourly' },
+            '24h': { kind: 'h30',  windowMs: DAY,       stepMs: 2 * HOUR,   ttlMs: 2 * HOUR,  label: 'Last 24 hours, every 2h' },
             '1w':  { kind: 'h30',  windowMs: 7 * DAY,   stepMs: 12 * HOUR,  ttlMs: 12 * HOUR, label: 'Last 7 days, every 12h' },
             '1m':  { kind: 'h30',  windowMs: 30 * DAY,  stepMs: DAY,        ttlMs: DAY,       label: 'Last 30 days, daily' },
             '1y':  { kind: 'd365', windowMs: 365 * DAY, stepMs: 14 * DAY,   ttlMs: DAY,       label: 'Last 12 months, every 2 weeks' },
         };
-        const HIST_MAX_TOKENS = 10; // only the 10 biggest positions get a history request
+        const HIST_MAX_TOKENS = 7; // only the 7 biggest positions get a history request
         const CG_PLATFORM = { pulsechain: 'pulsechain', ethereum: 'ethereum', base: 'base',
             arbitrum: 'arbitrum-one', bsc: 'binance-smart-chain' };
         const CG_SYMBOL_IDS = { ETH: 'ethereum', WETH: 'ethereum', WBTC: 'wrapped-bitcoin', USDC: 'usd-coin',
@@ -6047,7 +6047,7 @@
         // The network is used only when the saved copy is older than ttlMs. A 404 (token not on CoinGecko)
         // is remembered too, so it isn't asked again every refresh, and a 429 starts a shared
         // cooldown (see cgFetch) during which no CoinGecko request is made at all.
-        async function fetchPriceHistory(src, kind, ttlMs) {
+        async function fetchPriceHistory(src, kind, ttlMs, info) {
             const cfg = HIST_KINDS[kind];
             const ckey = `${src.key}|${kind}`;
             const hit = (lsGetJSON(HIST_CACHE_KEY, {}) || {})[ckey];
@@ -6055,7 +6055,9 @@
             const stored = hit && Array.isArray(hit.prices) ? hit.prices.map(p => [p[0] * 1000, p[1]]) : null;
             if (stored && isFresh(hit, ttlMs)) return stored;
             try {
+                const t0 = performance.now();
                 const resp = await cgFetch(`https://api.coingecko.com/api/v3${src.path}?${cfg.query}`);
+                if (info) info.networkMs = performance.now() - t0; // lets the caller pace itself
                 if (resp.status === 404) {
                     const entries = {};
                     for (const k of Object.keys(HIST_KINDS)) entries[`${src.key}|${k}`] = stampNow({ notFound: true });
@@ -6162,8 +6164,12 @@
             async function worker() {
                 while (next < jobs.length) {
                     const job = jobs[next++];
-                    if (!pending.has(job.src.key)) pending.set(job.src.key, fetchPriceHistory(job.src, def.kind, def.ttlMs));
+                    const info = {};
+                    if (!pending.has(job.src.key)) pending.set(job.src.key, fetchPriceHistory(job.src, def.kind, def.ttlMs, info));
                     results.set(job.t, await pending.get(job.src.key));
+                    // Half speed: after a real network request, wait as long as it took before the
+                    // next one (saved copies and cooldown skips are not slowed down).
+                    if (info.networkMs > 10) await new Promise(r => setTimeout(r, info.networkMs));
                     if (!stillCurrent()) return;
                 }
             }
