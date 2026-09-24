@@ -2018,7 +2018,7 @@
             transition: all 0.15s ease;
             white-space: nowrap;
         }
-        .mt-tx-btn.active[data-txtype="buy"], .mt-tx-btn.active[data-txtype="deposit"] {
+        .mt-tx-btn.active[data-txtype="buy"], .mt-tx-btn.active[data-txtype="deposit"], .mt-tx-btn.active[data-txtype="airdrop"] {
             background: rgba(34, 197, 94, 0.18);
             color: #22c55e;
         }
@@ -2162,7 +2162,7 @@
             width: 78px;
             flex-shrink: 0;
         }
-        .mt-history-type.buy, .mt-history-type.deposit { color: #22c55e; }
+        .mt-history-type.buy, .mt-history-type.deposit, .mt-history-type.airdrop { color: #22c55e; }
         .mt-history-type.sell, .mt-history-type.withdrawal { color: #ef4444; }
         .mt-history-amount { flex: 1; color: var(--text-primary); }
         .mt-history-date { color: var(--text-secondary); white-space: nowrap; }
@@ -2861,7 +2861,7 @@
                 <input id="manualTokenSymbol" type="text" placeholder="Token symbol (e.g. BTC, DOGE, SOL)" autocomplete="off" data-i18n-placeholder="manualTokenSymbolPlaceholder" />
                 <button class="btn-grad" id="manualTokenCheckBtn" type="button" data-i18n="checkBtn">Check</button>
             </div>
-            <div class="token-empty-hint" data-i18n="manualTokenHint2">Use this for tokens you hold on an exchange (Binance, Coinbase…) or on a blockchain this app doesn't scan directly — log a buy, sell, deposit or withdrawal and its live price gets tracked here alongside your wallet balances. Click a token chip below to see or edit its transaction history.</div>
+            <div class="token-empty-hint" data-i18n="manualTokenHint2">Use this for tokens you hold on an exchange (Binance, Coinbase…) or on a blockchain this app doesn't scan directly — log a buy, sell, deposit, withdrawal or airdrop and its live price gets tracked here alongside your wallet balances. Click a token chip below to see or edit its transaction history.</div>
 
             <div class="manual-merge-row">
                 <span class="manual-merge-label" data-i18n="manualMergeLabel">If a manual token matches one already in your portfolio</span>
@@ -2888,6 +2888,7 @@
                     <button class="mt-tx-btn" data-txtype="buy" type="button" data-i18n="txTypeBuy">Buy</button>
                     <button class="mt-tx-btn" data-txtype="sell" type="button" data-i18n="txTypeSell">Sell</button>
                     <button class="mt-tx-btn" data-txtype="deposit" type="button" data-i18n="txTypeDeposit">Deposit</button>
+                    <button class="mt-tx-btn" data-txtype="airdrop" type="button" data-i18n="txTypeAirdrop">Airdrop</button>
                     <button class="mt-tx-btn" data-txtype="withdrawal" type="button" data-i18n="txTypeWithdrawal">Withdrawal</button>
                     <button class="mt-tx-btn" data-txtype="swap" type="button" data-i18n="txTypeSwap">Swap</button>
                 </div>
@@ -4475,7 +4476,7 @@
 
         // Which token's transaction history panel is currently open (coingeckoId), or null.
         let openManualHistoryId = null;
-        const TX_TYPE_LABELS = { buy: 'Buy', sell: 'Sell', deposit: 'Deposit', withdrawal: 'Withdrawal' };
+        const TX_TYPE_LABELS = { buy: 'Buy', sell: 'Sell', deposit: 'Deposit', withdrawal: 'Withdrawal', airdrop: 'Airdrop' };
         function fmtTxDate(iso) {
             const d = new Date(iso + 'T00:00:00');
             if (isNaN(d)) return iso;
@@ -4502,7 +4503,9 @@
 
             const rows = txs.map(tx => {
                 const sign = (tx.type === 'sell' || tx.type === 'withdrawal') ? '−' : '+';
-                const priceStr = tx.priceUsd != null ? ` @ ${formatPrice(tx.priceUsd)}` : '';
+                const priceStr = tx.type === 'airdrop'
+                    ? (tx.priceUsd != null ? ` (${fmtUSD(tx.amount * tx.priceUsd)})` : '')
+                    : (tx.priceUsd != null ? ` @ ${formatPrice(tx.priceUsd)}` : '');
                 const typeLabel = tx.swapId ? `${tx.swapKind ? TX_TYPE_LABELS[tx.swapKind] : t('txTypeSwap')} ⇄ ${escapeHtml(tx.swapWith || '')}` : (TX_TYPE_LABELS[tx.type] || tx.type);
                 const plannedBadge = isPlannedTx(tx) ? ` <span class="mt-history-planned">${t('txPlannedBadge')}</span>` : '';
                 return `
@@ -7855,12 +7858,13 @@
                 tokenEmptyHint: 'Tokens you add here are saved in this browser only and are included whenever balances are checked.',
                 manualTokenDivider: 'or manually add from any network',
                 manualTokenSymbolPlaceholder: 'Token symbol (e.g. BTC, DOGE, SOL)',
-                manualTokenHint2: "Use this for tokens you hold on an exchange (Binance, Coinbase…) or on a blockchain this app doesn't scan directly — log a buy, sell, deposit or withdrawal and its live price gets tracked here alongside your wallet balances. Click a token chip below to see or edit its transaction history.",
+                manualTokenHint2: "Use this for tokens you hold on an exchange (Binance, Coinbase…) or on a blockchain this app doesn't scan directly — log a buy, sell, deposit, withdrawal or airdrop and its live price gets tracked here alongside your wallet balances. Click a token chip below to see or edit its transaction history.",
                 txTypeBuy: 'Buy',
                 txTypeSell: 'Sell',
                 txTypeDeposit: 'Deposit',
                 txTypeWithdrawal: 'Withdrawal',
                 txTypeSwap: 'Swap',
+                txTypeAirdrop: 'Airdrop',
                 usdcNeedPrice: 'Enter a price per unit — buys and sells are settled in USDC at that price.',
                 txSettledUsdc: '{type} of {amount} {symbol} logged — USDC {delta}.',
                 swapReverseBtn: 'Reverse',
@@ -7975,12 +7979,13 @@
                 tokenEmptyHint: 'Tokeny dodane tutaj są zapisywane wyłącznie w tej przeglądarce i uwzględniane przy każdym sprawdzaniu sald.',
                 manualTokenDivider: 'lub dodaj ręcznie z dowolnej sieci',
                 manualTokenSymbolPlaceholder: 'Symbol tokena (np. BTC, DOGE, SOL)',
-                manualTokenHint2: 'Użyj tego dla tokenów trzymanych na giełdzie (Binance, Coinbase…) lub na blockchainie, którego ta aplikacja nie skanuje bezpośrednio — zapisz kupno, sprzedaż, wpłatę lub wypłatę, a jego aktualna cena będzie śledzona tutaj razem z saldami portfela. Kliknij token poniżej, aby zobaczyć lub edytować historię transakcji.',
+                manualTokenHint2: 'Użyj tego dla tokenów trzymanych na giełdzie (Binance, Coinbase…) lub na blockchainie, którego ta aplikacja nie skanuje bezpośrednio — zapisz kupno, sprzedaż, wpłatę, wypłatę lub airdrop, a jego aktualna cena będzie śledzona tutaj razem z saldami portfela. Kliknij token poniżej, aby zobaczyć lub edytować historię transakcji.',
                 txTypeBuy: 'Kupno',
                 txTypeSell: 'Sprzedaż',
                 txTypeDeposit: 'Wpłata',
                 txTypeWithdrawal: 'Wypłata',
                 txTypeSwap: 'Wymiana',
+                txTypeAirdrop: 'Airdrop',
                 usdcNeedPrice: 'Podaj cenę za sztukę — kupno i sprzedaż rozliczane są w USDC po tej cenie.',
                 txSettledUsdc: '{type}: {amount} {symbol} zapisano — saldo USDC {delta}.',
                 swapReverseBtn: 'Odwróć',
