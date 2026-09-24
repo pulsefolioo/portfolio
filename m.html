@@ -1056,6 +1056,11 @@
             border-color: var(--cyan);
             background: var(--surface-3, var(--surface-2));
         }
+        .manual-token-list .token-chip.active {
+            border-color: var(--cyan);
+            background: var(--surface-3, var(--surface-2));
+            box-shadow: 0 0 0 1px var(--cyan);
+        }
         .manual-token-list .token-chip .mt-chip-icon {
             width: 18px;
             height: 18px;
@@ -1077,6 +1082,26 @@
             height: 100%;
             object-fit: cover;
             border-radius: 50%;
+        }
+        .manual-token-list .token-chip-addtx {
+            border: none;
+            background: var(--surface-3, var(--border));
+            color: var(--cyan);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .manual-token-list .token-chip-addtx:hover {
+            background: var(--cyan);
+            color: #fff;
         }
         .manual-token-list .token-chip-remove {
             display: flex;
@@ -1970,6 +1995,197 @@
             color: var(--text-primary);
         }
 
+        .mt-tx-toggle {
+            display: flex;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 3px;
+            gap: 2px;
+            flex: 1 0 100%;
+        }
+        .mt-tx-btn {
+            flex: 1;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: clamp(11px, 0.75vw, 13px);
+            font-weight: 600;
+            padding: clamp(6px, 0.7vw, 9px) clamp(6px, 1vw, 10px);
+            border-radius: 16px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+        .mt-tx-btn.active[data-txtype="buy"], .mt-tx-btn.active[data-txtype="deposit"] {
+            background: rgba(34, 197, 94, 0.18);
+            color: #22c55e;
+        }
+        .mt-tx-btn.active[data-txtype="sell"], .mt-tx-btn.active[data-txtype="withdrawal"] {
+            background: rgba(239, 68, 68, 0.18);
+            color: #ef4444;
+        }
+        .mt-tx-toggle { flex-wrap: wrap; }
+        .mt-tx-btn { flex: 1 1 auto; }
+        .mt-tx-btn.active[data-txtype="swap"] {
+            background: rgba(139, 59, 255, 0.2);
+            color: #a78bfa;
+        }
+        .swap-fields {
+            display: none;
+            flex: 1 0 100%;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .swap-fields.show { display: flex; }
+        .tx-value-field {
+            display: none;
+            flex: 1 0 100%;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .tx-value-field.show { display: flex; }
+        .tx-value-field input { flex: 1; min-width: 140px; }
+        .swap-fields input {
+            flex: 1;
+            min-width: 120px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: clamp(10px, 1.2vw, 14px) clamp(12px, 1.2vw, 16px);
+            color: var(--text-primary);
+            font-size: 16px;
+            font-family: 'Inter', monospace;
+            outline: none;
+        }
+        .swap-direction {
+            flex: 1 0 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            color: var(--text-primary);
+            font-size: clamp(13px, 0.9vw, 15px);
+            font-weight: 600;
+        }
+        .swap-reverse-btn {
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: #a78bfa;
+            font-size: clamp(11px, 0.75vw, 13px);
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            white-space: nowrap;
+        }
+        .swap-reverse-btn:hover { background: var(--surface-2); }
+        .swap-reverse-btn:disabled { opacity: 0.5; cursor: default; }
+        .swap-holdings {
+            flex: 1 0 100%;
+            display: none;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+        }
+        .swap-holdings.show { display: flex; }
+        .swap-holdings-label { color: var(--text-muted); font-size: 0.8em; margin-right: 2px; }
+        .swap-chip {
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-primary);
+            font-size: clamp(11px, 0.75vw, 13px);
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+        .swap-chip:hover, .swap-chip.active { background: rgba(139, 59, 255, 0.2); color: #a78bfa; }
+        .mt-history-row.planned { opacity: 0.6; }
+        .mt-history-planned {
+            font-size: 0.8em;
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            padding: 1px 6px;
+            color: #a78bfa;
+            white-space: nowrap;
+        }
+        .manual-token-history {
+            display: none;
+            margin-top: 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 14px;
+        }
+        .manual-token-history.show { display: block; }
+        .mt-history-title {
+            font-size: clamp(12px, 0.85vw, 14px);
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .mt-history-addtx {
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--cyan);
+            font-size: clamp(10px, 0.7vw, 12px);
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            white-space: nowrap;
+        }
+        .mt-history-addtx:hover {
+            border-color: var(--cyan);
+        }
+        .mt-history-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 0;
+            border-top: 1px solid var(--border);
+            font-size: clamp(11px, 0.8vw, 13px);
+        }
+        .mt-history-row:first-of-type { border-top: none; }
+        .mt-history-type {
+            font-weight: 700;
+            width: 78px;
+            flex-shrink: 0;
+        }
+        .mt-history-type.buy, .mt-history-type.deposit { color: #22c55e; }
+        .mt-history-type.sell, .mt-history-type.withdrawal { color: #ef4444; }
+        .mt-history-amount { flex: 1; color: var(--text-primary); }
+        .mt-history-date { color: var(--text-secondary); white-space: nowrap; }
+        .mt-history-note { color: var(--text-muted); font-style: italic; }
+        .mt-history-remove {
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            padding: 2px 4px;
+        }
+        .mt-history-remove:hover { color: #ef4444; }
+        .mt-history-total {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+            font-size: clamp(12px, 0.85vw, 14px);
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
         /* ---------- farm card ---------- */
         .farm-card {
             background: var(--surface);
@@ -2645,7 +2861,7 @@
                 <input id="manualTokenSymbol" type="text" placeholder="Token symbol (e.g. BTC, DOGE, SOL)" autocomplete="off" data-i18n-placeholder="manualTokenSymbolPlaceholder" />
                 <button class="btn-grad" id="manualTokenCheckBtn" type="button" data-i18n="checkBtn">Check</button>
             </div>
-            <div class="token-empty-hint" data-i18n="manualTokenHint2">Use this for tokens you hold on an exchange (Binance, Coinbase…) or on a blockchain this app doesn't scan directly — enter the amount you hold and its live price gets tracked here alongside your wallet balances.</div>
+            <div class="token-empty-hint" data-i18n="manualTokenHint2">Use this for tokens you hold on an exchange (Binance, Coinbase…) or on a blockchain this app doesn't scan directly — log a buy, sell, deposit or withdrawal and its live price gets tracked here alongside your wallet balances. Click a token chip below to see or edit its transaction history.</div>
 
             <div class="manual-merge-row">
                 <span class="manual-merge-label" data-i18n="manualMergeLabel">If a manual token matches one already in your portfolio</span>
@@ -2667,15 +2883,39 @@
                 </div>
             </div>
 
-            <div class="manual-token-row" id="manualTokenAmountRow" style="display:none; margin-top:10px;">
-                <input id="manualTokenAmount" type="number" placeholder="Amount held (0 to just watch)" step="any" min="0" autocomplete="off" data-i18n-placeholder="amountHeldPlaceholder" />
-                <button class="btn-grad" id="manualTokenAddBtn" type="button" data-i18n="addToPortfolioBtn">Add to portfolio</button>
+            <div class="manual-token-row" id="manualTokenAmountRow" style="display:none; margin-top:10px; flex-wrap:wrap;">
+                <div class="mt-tx-toggle" id="mtTxTypeToggle">
+                    <button class="mt-tx-btn" data-txtype="buy" type="button" data-i18n="txTypeBuy">Buy</button>
+                    <button class="mt-tx-btn" data-txtype="sell" type="button" data-i18n="txTypeSell">Sell</button>
+                    <button class="mt-tx-btn" data-txtype="deposit" type="button" data-i18n="txTypeDeposit">Deposit</button>
+                    <button class="mt-tx-btn" data-txtype="withdrawal" type="button" data-i18n="txTypeWithdrawal">Withdrawal</button>
+                    <button class="mt-tx-btn" data-txtype="swap" type="button" data-i18n="txTypeSwap">Swap</button>
+                </div>
+                <input id="manualTokenAmount" type="number" placeholder="Amount" step="any" min="0" autocomplete="off" data-i18n-placeholder="txAmountPlaceholder" />
+                <div class="tx-value-field" id="txValueField">
+                    <input id="manualTokenTxValue" type="number" placeholder="Transaction value USD" step="any" min="0" autocomplete="off" data-i18n-placeholder="txValuePlaceholder" />
+                </div>
+                <div class="swap-fields" id="swapFields">
+                    <div class="swap-direction">
+                        <span id="swapDirectionText">— → —</span>
+                        <button class="swap-reverse-btn" id="swapReverseBtn" type="button" title="Reverse swap direction" data-i18n-title="swapReverseTitle">⇅ <span data-i18n="swapReverseBtn">Reverse</span></button>
+                    </div>
+                    <input id="swapToSymbol" type="text" list="swapTokenList" placeholder="Token received (e.g. ETH)" autocomplete="off" data-i18n-placeholder="swapToSymbolPlaceholder" />
+                    <datalist id="swapTokenList"></datalist>
+                    <input id="swapToAmount" type="number" placeholder="Amount received" step="any" min="0" autocomplete="off" data-i18n-placeholder="swapToAmountPlaceholder" />
+                    <div class="swap-holdings" id="swapHoldings"></div>
+                </div>
+                <input id="manualTokenDate" type="date" autocomplete="off" />
+                <input id="manualTokenTxPrice" type="number" placeholder="Price/unit USD (optional)" step="any" min="0" autocomplete="off" data-i18n-placeholder="txPricePlaceholder" />
+                <input id="manualTokenNote" type="text" placeholder="Note (optional)" autocomplete="off" data-i18n-placeholder="txNotePlaceholder" maxlength="80" />
+                <button class="btn-grad" id="manualTokenAddBtn" type="button" data-i18n="addTransactionBtn">Add transaction</button>
                 <button class="btn-bar" id="manualTokenCancelBtn" type="button" data-i18n="cancelBtn">Cancel</button>
             </div>
 
             <div class="manual-token-msg" id="manualTokenMsg"></div>
 
             <div class="manual-token-list" id="manualTokenList"></div>
+            <div class="manual-token-history" id="manualTokenHistory"></div>
         </div>
 
         <div class="notice" id="notice"></div>
@@ -3441,6 +3681,8 @@
         const PORTFOLIO_CACHE_KEY = () => 'pulsefolio_portfolio_cache' + portfolioSuffix();
         const SORT_STORAGE_KEY = 'pulsefolio_sort_config';
         const MANUAL_TOKENS_STORAGE_KEY = () => 'pulsefolio_manual_tokens' + portfolioSuffix();
+        const MANUAL_TX_STORAGE_KEY = () => 'pulsefolio_manual_tx' + portfolioSuffix();
+        const MANUAL_TX_PRICES_STORAGE_KEY = () => 'pulsefolio_manual_tx_prices' + portfolioSuffix();
         const MANUAL_MERGE_MODE_STORAGE_KEY = () => 'pulsefolio_manual_merge_mode' + portfolioSuffix();
         const WRAP_MERGE_STORAGE_KEY = () => 'pulsefolio_wrap_merge_enabled' + portfolioSuffix();
         const HIDE_MANUAL_STORAGE_KEY = () => 'pulsefolio_hide_manual_tokens' + portfolioSuffix();
@@ -3665,18 +3907,107 @@
         }
 
         // =================================================================
-        //  MANUAL TOKENS (CoinGecko)
         // =================================================================
-        function loadManualTokensFromStorage() {
-            const parsed = lsGetJSON(MANUAL_TOKENS_STORAGE_KEY(), []);
+        //  MANUAL TOKENS — now backed by a transaction ledger (buy / sell / deposit / withdrawal)
+        //  instead of a single hand-entered amount. `manualTokens` (used everywhere else in the
+        //  app: merging into the portfolio, chips, wrap-merge, etc.) is rebuilt from
+        //  `manualTransactions` whenever the ledger or live prices change, so nothing downstream
+        //  needs to know transactions exist.
+        // =================================================================
+        function loadManualTransactionsFromStorage() {
+            const parsed = lsGetJSON(MANUAL_TX_STORAGE_KEY(), []);
             return Array.isArray(parsed) ? parsed : [];
         }
-
-        function saveManualTokensToStorage(tokens) {
-            lsSetJSON(MANUAL_TOKENS_STORAGE_KEY(), tokens);
+        function saveManualTransactionsToStorage(txs) {
+            lsSetJSON(MANUAL_TX_STORAGE_KEY(), txs);
+        }
+        function loadManualTokenPricesFromStorage() {
+            const parsed = lsGetJSON(MANUAL_TX_PRICES_STORAGE_KEY(), {});
+            return parsed && typeof parsed === 'object' ? parsed : {};
+        }
+        function saveManualTokenPricesToStorage(prices) {
+            lsSetJSON(MANUAL_TX_PRICES_STORAGE_KEY(), prices);
         }
 
-        let manualTokens = loadManualTokensFromStorage();
+        let manualTokens = []; // derived from manualTransactions — see rebuildManualTokens()
+        let manualTransactions = loadManualTransactionsFromStorage();
+        let manualTokenPrices = loadManualTokenPricesFromStorage(); // { coingeckoId: { price, change24h } }
+
+        // One-time migration: the old manual-token feature stored a single {amount} per
+        // token. Turn each of those into one 'deposit' transaction so nothing is lost, then
+        // retire the old key. Runs only if the new ledger doesn't exist yet for this portfolio.
+        (function migrateOldManualTokensToTransactions() {
+            if (lsGetRaw(MANUAL_TX_STORAGE_KEY()) !== null) return; // already migrated (or started fresh)
+            const old = lsGetJSON(MANUAL_TOKENS_STORAGE_KEY(), []);
+            if (!Array.isArray(old) || !old.length) return;
+            const today = new Date().toISOString().slice(0, 10);
+            for (const mt of old) {
+                manualTransactions.push({
+                    id: 'tx_' + Math.random().toString(36).slice(2) + Date.now().toString(36),
+                    coingeckoId: mt.coingeckoId,
+                    symbol: (mt.symbol || '').toUpperCase(),
+                    name: mt.name || mt.symbol,
+                    icon: mt.icon || null,
+                    type: 'deposit',
+                    amount: mt.amount || 0,
+                    date: today,
+                    priceUsd: mt.price ?? null,
+                    note: 'Migrated from earlier version',
+                    addedAt: mt.addedAt || Date.now(),
+                });
+                if (mt.coingeckoId && mt.price != null) {
+                    manualTokenPrices[mt.coingeckoId] = { price: mt.price, change24h: mt.change24h ?? null };
+                }
+            }
+            saveManualTransactionsToStorage(manualTransactions);
+            saveManualTokenPricesToStorage(manualTokenPrices);
+            lsRemove(MANUAL_TOKENS_STORAGE_KEY());
+        })();
+
+        // Rebuilds the `manualTokens` list (one row per token, with its net amount) from the
+        // transaction ledger. Buy/deposit add to the running amount, sell/withdrawal subtract.
+        // A transaction dated in the future is "planned": it stays in the ledger but does not
+        // change the amount until its date arrives (checked on every rebuild).
+        // Buys and sells are settled in USDC (treated as 1 USD): the USDC balance moves with each one.
+        const USDC_ID = 'usd-coin';
+        const USDC_TOKEN = { id: USDC_ID, symbol: 'USDC', name: 'USD Coin', get icon() { return resolveIcon('USDC', null); }, price: 1, change24h: 0 };
+        function todayIso() { return new Date().toISOString().slice(0, 10); }
+        function isPlannedTx(tx) { return (tx.date || '') > todayIso(); }
+
+        function rebuildManualTokens() {
+            const byId = new Map();
+            for (const tx of manualTransactions) {
+                const sign = isPlannedTx(tx) ? 0 : ((tx.type === 'sell' || tx.type === 'withdrawal') ? -1 : 1);
+                let entry = byId.get(tx.coingeckoId);
+                if (!entry) {
+                    entry = { coingeckoId: tx.coingeckoId, symbol: tx.symbol, name: tx.name, icon: tx.icon, amount: 0, earliestAt: tx.addedAt };
+                    byId.set(tx.coingeckoId, entry);
+                }
+                entry.amount += sign * (Number(tx.amount) || 0);
+                // Prefer the most recently logged metadata (name/icon can change over time).
+                if ((tx.addedAt || 0) >= (entry.metaAt || 0)) {
+                    entry.symbol = tx.symbol; entry.name = tx.name; entry.icon = tx.icon; entry.metaAt = tx.addedAt;
+                }
+                entry.earliestAt = Math.min(entry.earliestAt, tx.addedAt || entry.earliestAt);
+            }
+            manualTokens = [...byId.values()]
+                .filter(e => e.coingeckoId === USDC_ID ? (Math.abs(e.amount) > 1e-9 || e.amount === 0) : (e.amount > 1e-12 || e.amount === 0)) // drop fully-closed positions with float dust below 0
+                .map(e => {
+                    const priced = e.coingeckoId === USDC_ID ? { price: 1, change24h: 0 } : (manualTokenPrices[e.coingeckoId] || {});
+                    return {
+                        coingeckoId: e.coingeckoId,
+                        symbol: (e.symbol || '').toUpperCase(),
+                        name: e.name || e.symbol,
+                        amount: e.coingeckoId === USDC_ID ? e.amount : Math.max(0, e.amount),
+                        price: priced.price ?? null,
+                        change24h: priced.change24h ?? null,
+                        icon: resolveIcon(e.symbol, e.icon), // same icon overrides as the portfolio list (USDC, ETH, …)
+                        manuallyAdded: true,
+                        addedAt: e.earliestAt,
+                    };
+                });
+        }
+        rebuildManualTokens();
 
         // 'separate' (default) = manually added tokens always get their own row with a "manual" badge.
         // 'merge' = if the symbol already exists on-chain, the manual amount is summed into that row instead.
@@ -3699,6 +4030,7 @@
         async function searchTokenOnCoingecko(symbol) {
             const query = symbol.trim().toLowerCase();
             if (!query) throw new Error('Enter a token symbol.');
+            if (query === 'usdc') return { ...USDC_TOKEN, icon: resolveIcon('USDC', null), marketCapRank: null }; // USDC = USD, no lookup
 
             const url = `https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(query)}`;
             const resp = await cgFetch(url);
@@ -3739,6 +4071,7 @@
         }
 
         async function fetchTokenPrice(coinId) {
+            if (coinId === USDC_ID) return { price: 1, change24h: 0 }; // USDC = USD, no request needed
             const url =
                 `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(coinId)}&vs_currencies=usd&include_24hr_change=true`;
             const resp = await cgFetch(url);
@@ -3757,53 +4090,88 @@
             };
         }
 
-        // Add a manual token to the portfolio
-        function addManualToken(symbol, amount, tokenData) {
-            const existing = manualTokens.find(t => t.coingeckoId === tokenData.id);
-            if (existing) {
-                // Update amount
-                existing.amount = amount;
-                existing.price = tokenData.price;
-                existing.change24h = tokenData.change24h;
-                existing.icon = tokenData.icon || existing.icon;
-                existing.name = tokenData.name || existing.name;
-            } else {
-                manualTokens.push({
-                    coingeckoId: tokenData.id,
-                    symbol: tokenData.symbol.toUpperCase(),
-                    name: tokenData.name || tokenData.symbol.toUpperCase(),
-                    amount: amount,
-                    price: tokenData.price,
-                    change24h: tokenData.change24h,
-                    icon: tokenData.icon,
-                    manuallyAdded: true,
-                    addedAt: Date.now(),
-                });
+        // Logs one transaction (buy/sell/deposit/withdrawal) for a token and rebuilds the
+        // derived `manualTokens` list from the full ledger.
+        function addManualTransaction(tokenData, type, amount, date, priceUsd, note) {
+            manualTransactions.push({
+                id: 'tx_' + Math.random().toString(36).slice(2) + Date.now().toString(36),
+                coingeckoId: tokenData.id,
+                symbol: tokenData.symbol.toUpperCase(),
+                name: tokenData.name || tokenData.symbol.toUpperCase(),
+                icon: tokenData.icon || null,
+                type,
+                amount,
+                date: date || new Date().toISOString().slice(0, 10),
+                priceUsd: (priceUsd != null && Number.isFinite(priceUsd)) ? priceUsd : null,
+                note: (note || '').trim().slice(0, 80) || null,
+                addedAt: Date.now(),
+            });
+            if (tokenData.price != null) {
+                manualTokenPrices[tokenData.id] = { price: tokenData.price, change24h: tokenData.change24h ?? null };
             }
-            saveManualTokensToStorage(manualTokens);
+            saveManualTransactionsToStorage(manualTransactions);
+            saveManualTokenPricesToStorage(manualTokenPrices);
+            rebuildManualTokens();
             renderManualTokenChips();
-            // Rebuild portfolio view if it's showing
+            if (document.getElementById('summary').classList.contains('show')) {
+                refreshView();
+            }
+        }
+
+        // Logs a token → token swap as two linked ledger entries sharing a swapId:
+        // a 'sell' of `from` and a 'buy' of `to`. The buy price is the implied rate
+        // (value sold ÷ amount received) when the sold token's price is known.
+        function addManualSwap(from, to, sellAmt, buyAmt, date, sellPriceUsd, note, kind) {
+            const swapId = 'sw_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+            const when = date || todayIso();
+            const cleanNote = (note || '').trim().slice(0, 80) || null;
+            const buyPriceUsd = sellPriceUsd != null ? (sellAmt * sellPriceUsd) / buyAmt : (to.price ?? null);
+            const leg = (tok, type, amount, price, other, offset) => ({
+                id: 'tx_' + Math.random().toString(36).slice(2) + Date.now().toString(36),
+                coingeckoId: tok.id,
+                symbol: tok.symbol.toUpperCase(),
+                name: tok.name || tok.symbol.toUpperCase(),
+                icon: tok.icon || null,
+                type, amount, date: when,
+                priceUsd: (price != null && Number.isFinite(price)) ? price : null,
+                note: cleanNote,
+                addedAt: Date.now() + offset,
+                swapId,
+                swapKind: kind || null, // 'buy' / 'sell' when this is a USDC-settled trade, null for a plain swap
+                swapWith: other.symbol.toUpperCase(),
+            });
+            manualTransactions.push(
+                leg(from, 'sell', sellAmt, sellPriceUsd, to, 0),
+                leg(to, 'buy', buyAmt, buyPriceUsd, from, 1)
+            );
+            for (const tok of [from, to]) {
+                if (tok.price != null) manualTokenPrices[tok.id] = { price: tok.price, change24h: tok.change24h ?? null };
+            }
+            saveManualTransactionsToStorage(manualTransactions);
+            saveManualTokenPricesToStorage(manualTokenPrices);
+            rebuildManualTokens();
+            renderManualTokenChips();
             if (document.getElementById('summary').classList.contains('show')) {
                 refreshView();
             }
         }
 
         // Re-fetches live prices for every manually added token. Called alongside the main
-        // "Check" button so manual token prices no longer stay frozen at whatever they were
-        // when the token was first added — they now update every time the portfolio refreshes.
+        // "Check" button so manual token prices no longer stay frozen — they update every
+        // time the portfolio refreshes.
         async function refreshManualTokenPrices() {
             if (!manualTokens.length) return;
             try {
                 const ids = [...new Set(manualTokens.map(mt => mt.coingeckoId))];
                 const priceMap = await fetchTokenPrices(ids);
-                for (const mt of manualTokens) {
-                    const fresh = priceMap[mt.coingeckoId];
+                for (const id of Object.keys(priceMap)) {
+                    const fresh = priceMap[id];
                     if (fresh && fresh.price != null) {
-                        mt.price = fresh.price;
-                        mt.change24h = fresh.change24h;
+                        manualTokenPrices[id] = { price: fresh.price, change24h: fresh.change24h ?? null };
                     }
                 }
-                saveManualTokensToStorage(manualTokens);
+                saveManualTokenPricesToStorage(manualTokenPrices);
+                rebuildManualTokens();
                 renderManualTokenChips();
             } catch (err) {
                 console.warn('Failed to refresh manual token prices:', err);
@@ -3812,14 +4180,36 @@
             }
         }
 
-        function removeManualToken(coingeckoId) {
-            manualTokens = manualTokens.filter(t => t.coingeckoId !== coingeckoId);
-            saveManualTokensToStorage(manualTokens);
+        // Deletes a single transaction (from the history panel).
+        function removeManualTransaction(txId) {
+            // A swap is two linked entries — deleting one deletes both, so the ledger stays balanced.
+            const target = manualTransactions.find(tx => tx.id === txId);
+            manualTransactions = target && target.swapId
+                ? manualTransactions.filter(tx => tx.swapId !== target.swapId)
+                : manualTransactions.filter(tx => tx.id !== txId);
+            saveManualTransactionsToStorage(manualTransactions);
+            rebuildManualTokens();
             renderManualTokenChips();
+            renderManualTokenHistory(openManualHistoryId); // refresh the open panel, or close it if now empty
             if (document.getElementById('summary').classList.contains('show')) {
                 refreshView();
             }
         }
+
+        // Removes every transaction for a token (i.e. removes it from the portfolio entirely).
+        function removeManualToken(coingeckoId) {
+            const count = manualTransactions.filter(tx => tx.coingeckoId === coingeckoId).length;
+            if (count > 1 && !confirm(`This token has ${count} logged transactions. Remove all of them?`)) return;
+            manualTransactions = manualTransactions.filter(tx => tx.coingeckoId !== coingeckoId);
+            saveManualTransactionsToStorage(manualTransactions);
+            rebuildManualTokens();
+            renderManualTokenChips();
+            if (openManualHistoryId === coingeckoId) renderManualTokenHistory(null);
+            if (document.getElementById('summary').classList.contains('show')) {
+                refreshView();
+            }
+        }
+
 
         // Whether wrapped tokens (WETH, etc.) get folded into their native counterpart (ETH).
         // Toggled from the small button next to the "Token" column header; on by default.
@@ -4042,17 +4432,20 @@
             const container = document.getElementById('manualTokenList');
             if (!manualTokens.length) {
                 container.innerHTML = '';
+                renderManualTokenHistory(null);
                 return;
             }
 
             container.innerHTML = manualTokens.map(mt => {
                 const style = tokenStyle(mt.symbol);
                 const iconHtml = mt.icon ? iconImg(mt.icon) : '';
+                const txCount = manualTransactions.filter(tx => tx.coingeckoId === mt.coingeckoId).length;
                 return `
-              <div class="token-chip mt-chip-editable" data-id="${escapeHtml(mt.coingeckoId)}" title="Click to edit ${escapeHtml(mt.name)} (${escapeHtml(mt.symbol)}) · ${fmtUSD(mt.amount * mt.price)}">
+              <div class="token-chip mt-chip-editable${mt.coingeckoId === openManualHistoryId ? ' active' : ''}" data-id="${escapeHtml(mt.coingeckoId)}" title="Click to view ${escapeHtml(mt.name)} (${escapeHtml(mt.symbol)}) transaction history · ${fmtUSD(mt.amount * (mt.price || 0))}">
                 <span class="mt-chip-icon" style="background: ${mt.icon ? 'var(--surface-2)' : `linear-gradient(135deg, ${style.color1}, ${style.color2})`}; display: flex; align-items: center; justify-content: center;">${mt.icon ? '' : escapeHtml(style.letter)}${iconHtml}</span>
                 ${escapeHtml(mt.symbol.toUpperCase())}
-                <span style="color:var(--text-muted);font-weight:400;font-size:0.85em;">${mt.amount === 0 ? '⭐ watching' : formatTokenAmount(mt.amount)}</span>
+                <span style="color:var(--text-muted);font-weight:400;font-size:0.85em;">${mt.amount === 0 ? '⭐ 0' : formatTokenAmount(mt.amount)} · ${txCount} tx</span>
+                <button class="token-chip-addtx" type="button" data-id="${escapeHtml(mt.coingeckoId)}" title="Add another transaction for ${escapeHtml(mt.symbol)}" aria-label="Add another transaction for ${escapeHtml(mt.symbol)}">+</button>
                 <button class="token-chip-remove" type="button" data-id="${escapeHtml(mt.coingeckoId)}" title="Remove ${escapeHtml(mt.symbol)}" aria-label="Remove ${escapeHtml(mt.symbol)}">×</button>
               </div>
             `;
@@ -4061,7 +4454,7 @@
             container.querySelectorAll('.mt-chip-editable').forEach(chip => {
                 chip.addEventListener('click', (e) => {
                     if (e.target.closest('.token-chip-remove')) return;
-                    editManualToken(chip.dataset.id);
+                    renderManualTokenHistory(openManualHistoryId === chip.dataset.id ? null : chip.dataset.id);
                 });
             });
 
@@ -4071,14 +4464,263 @@
                     removeManualToken(btn.dataset.id);
                 });
             });
+
+            container.querySelectorAll('.token-chip-addtx').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openAddTransactionForToken(btn.dataset.id);
+                });
+            });
+        }
+
+        // Which token's transaction history panel is currently open (coingeckoId), or null.
+        let openManualHistoryId = null;
+        const TX_TYPE_LABELS = { buy: 'Buy', sell: 'Sell', deposit: 'Deposit', withdrawal: 'Withdrawal' };
+        function fmtTxDate(iso) {
+            const d = new Date(iso + 'T00:00:00');
+            if (isNaN(d)) return iso;
+            return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        // Shows the transaction ledger for one manually added token: every buy/sell/deposit/
+        // withdrawal, newest first, each removable, with the resulting net amount at the bottom.
+        // Pass null to close the panel.
+        function renderManualTokenHistory(coingeckoId) {
+            openManualHistoryId = coingeckoId;
+            const panel = document.getElementById('manualTokenHistory');
+            const mt = coingeckoId ? manualTokens.find(t => t.coingeckoId === coingeckoId) : null;
+            if (!mt) {
+                panel.classList.remove('show');
+                panel.innerHTML = '';
+                document.querySelectorAll('#manualTokenList .mt-chip-editable').forEach(c => c.classList.remove('active'));
+                return;
+            }
+
+            const txs = manualTransactions
+                .filter(tx => tx.coingeckoId === coingeckoId)
+                .sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.addedAt || 0) - (a.addedAt || 0));
+
+            const rows = txs.map(tx => {
+                const sign = (tx.type === 'sell' || tx.type === 'withdrawal') ? '−' : '+';
+                const priceStr = tx.priceUsd != null ? ` @ ${formatPrice(tx.priceUsd)}` : '';
+                const typeLabel = tx.swapId ? `${tx.swapKind ? TX_TYPE_LABELS[tx.swapKind] : t('txTypeSwap')} ⇄ ${escapeHtml(tx.swapWith || '')}` : (TX_TYPE_LABELS[tx.type] || tx.type);
+                const plannedBadge = isPlannedTx(tx) ? ` <span class="mt-history-planned">${t('txPlannedBadge')}</span>` : '';
+                return `
+                <div class="mt-history-row${isPlannedTx(tx) ? ' planned' : ''}">
+                    <span class="mt-history-type ${tx.type}">${typeLabel}</span>
+                    <span class="mt-history-amount">${sign}${formatTokenAmount(tx.amount)} ${escapeHtml(mt.symbol)}${priceStr}${plannedBadge}${tx.note ? ` — <span class="mt-history-note">${escapeHtml(tx.note)}</span>` : ''}</span>
+                    <span class="mt-history-date">${fmtTxDate(tx.date)}</span>
+                    <button class="mt-history-remove" type="button" data-txid="${escapeHtml(tx.id)}" title="Delete this transaction" aria-label="Delete this transaction">×</button>
+                </div>`;
+            }).join('') || '<div class="mt-history-row" style="border-top:none;color:var(--text-muted);">No transactions.</div>';
+
+            panel.innerHTML = `
+                <div class="mt-history-title">
+                    ${escapeHtml(mt.name)} (${escapeHtml(mt.symbol)}) — transaction history
+                    <button class="mt-history-addtx" type="button" data-id="${escapeHtml(mt.coingeckoId)}">+ Add transaction</button>
+                </div>
+                ${rows}
+                <div class="mt-history-total">Net amount: ${formatTokenAmount(mt.amount)} ${escapeHtml(mt.symbol)} ${mt.price ? `(${fmtUSD(mt.amount * mt.price)})` : ''}</div>
+            `;
+            panel.classList.add('show');
+            panel.querySelectorAll('.mt-history-remove').forEach(btn => {
+                btn.addEventListener('click', () => removeManualTransaction(btn.dataset.txid));
+            });
+            panel.querySelector('.mt-history-addtx').addEventListener('click', () => openAddTransactionForToken(mt.coingeckoId));
+
+            document.querySelectorAll('#manualTokenList .mt-chip-editable').forEach(c => {
+                c.classList.toggle('active', c.dataset.id === coingeckoId);
+            });
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         // -----------------------------------------------------------------
         //  MANUAL TOKEN UI LOGIC
         // -----------------------------------------------------------------
         let lastCheckedToken = null;
+        let selectedTxType = 'buy';
+
+        function setTxType(type) {
+            selectedTxType = type;
+            document.querySelectorAll('.mt-tx-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.txtype === type);
+            });
+            const isSwap = type === 'swap';
+            const usesTxValue = type === 'buy' || type === 'sell' || isSwap;
+            document.getElementById('swapFields').classList.toggle('show', isSwap);
+            document.getElementById('txValueField').classList.toggle('show', usesTxValue);
+            if (!usesTxValue) document.getElementById('manualTokenTxValue').value = '';
+            document.getElementById('manualTokenAmount')
+                .setAttribute('placeholder', t(isSwap ? 'txAmountSoldPlaceholder' : 'txAmountPlaceholder'));
+            if (isSwap) { renderSwapHoldings(); updateSwapDirection(); }
+        }
+
+        // -----------------------------------------------------------------
+        //  BUY / SELL / SWAP — two-way sync between Amount and Transaction value (USD)
+        //  Typing an amount fills in the USD value (amount × price/unit) and
+        //  vice-versa, using the price/unit field (or the last looked-up price
+        //  as a fallback) as the conversion rate. For a swap, "amount" and
+        //  "value" refer to the sold side (the token in the Amount field),
+        //  same as the price/unit field already does.
+        // -----------------------------------------------------------------
+        let txFieldsSyncing = false;
+
+        function txValueFieldsActive() {
+            return selectedTxType === 'buy' || selectedTxType === 'sell' || selectedTxType === 'swap';
+        }
+
+        function currentUnitPriceForTxFields() {
+            const priceInput = document.getElementById('manualTokenTxPrice');
+            const fromField = priceInput.value === '' ? NaN : parseFloat(priceInput.value);
+            if (Number.isFinite(fromField) && fromField > 0) return fromField;
+            if (lastCheckedToken && Number.isFinite(lastCheckedToken.price) && lastCheckedToken.price > 0) {
+                return lastCheckedToken.price;
+            }
+            return null;
+        }
+
+        function syncTxValueFromAmount() {
+            if (txFieldsSyncing || !txValueFieldsActive()) return;
+            const amountInput = document.getElementById('manualTokenAmount');
+            const valueInput = document.getElementById('manualTokenTxValue');
+            const amount = parseFloat(amountInput.value);
+            const unitPrice = currentUnitPriceForTxFields();
+            txFieldsSyncing = true;
+            if (Number.isFinite(amount) && amount >= 0 && unitPrice != null) {
+                valueInput.value = roundForInput(amount * unitPrice);
+            } else if (amountInput.value === '') {
+                valueInput.value = '';
+            }
+            txFieldsSyncing = false;
+        }
+
+        function syncAmountFromTxValue() {
+            if (txFieldsSyncing || !txValueFieldsActive()) return;
+            const amountInput = document.getElementById('manualTokenAmount');
+            const valueInput = document.getElementById('manualTokenTxValue');
+            const value = parseFloat(valueInput.value);
+            const unitPrice = currentUnitPriceForTxFields();
+            txFieldsSyncing = true;
+            if (Number.isFinite(value) && value >= 0 && unitPrice != null) {
+                amountInput.value = roundForInput(value / unitPrice);
+            } else if (valueInput.value === '') {
+                amountInput.value = '';
+            }
+            txFieldsSyncing = false;
+        }
+
+        // Price/unit changed — recompute whichever of amount/value should follow the other.
+        // If an amount is already entered, the value follows it; otherwise, if a value is
+        // already entered, the amount follows that instead.
+        function syncTxFieldsFromPrice() {
+            if (txFieldsSyncing || !txValueFieldsActive()) return;
+            const amountInput = document.getElementById('manualTokenAmount');
+            const valueInput = document.getElementById('manualTokenTxValue');
+            if (amountInput.value !== '') syncTxValueFromAmount();
+            else if (valueInput.value !== '') syncAmountFromTxValue();
+        }
+
+        function roundForInput(n) {
+            if (!Number.isFinite(n)) return '';
+            // Keep enough precision for small token amounts without ugly float noise.
+            const rounded = Math.round(n * 1e8) / 1e8;
+            return String(rounded);
+        }
+
+        // Fills the "Check" result card and the transaction form for a token, and remembers
+        // it in lastCheckedToken so handleManualTokenAdd() knows what to log the transaction
+        // against. Shared by a fresh CoinGecko search and by "+ Add transaction" on a token
+        // that's already in the portfolio.
+        function showTokenCheckResult(data, defaultTxType) {
+            const style = tokenStyle(data.symbol);
+            const iconEl = document.getElementById('mtIcon');
+            const nameEl = document.getElementById('mtName');
+            const symbolEl = document.getElementById('mtSymbol');
+            const priceEl = document.getElementById('mtPrice');
+            const changeEl = document.getElementById('mtChange');
+
+            if (data.icon) {
+                iconEl.style.background = 'var(--surface-2)';
+                iconEl.style.display = 'flex';
+                iconEl.style.alignItems = 'center';
+                iconEl.style.justifyContent = 'center';
+                iconEl.textContent = '';
+                iconEl.innerHTML = iconImg(data.icon);
+            } else {
+                iconEl.style.background = `linear-gradient(135deg, ${style.color1}, ${style.color2})`;
+                iconEl.style.display = 'block';
+                iconEl.textContent = style.letter;
+            }
+
+            nameEl.textContent = data.name;
+            symbolEl.textContent = `${data.symbol} ${data.marketCapRank ? `· #${data.marketCapRank}` : ''}`;
+
+            if (data.price !== null && data.price !== undefined) {
+                priceEl.textContent = formatPrice(data.price);
+                if (data.change24h !== null && data.change24h !== undefined) {
+                    const cls = data.change24h >= 0 ? 'pos' : 'neg';
+                    changeEl.textContent = fmtPct(data.change24h);
+                    changeEl.className = `mt-change ${cls}`;
+                } else {
+                    changeEl.textContent = '—';
+                    changeEl.className = 'mt-change';
+                }
+            } else {
+                priceEl.textContent = '—';
+                changeEl.textContent = '—';
+                changeEl.className = 'mt-change';
+            }
+
+            document.getElementById('manualTokenResult').classList.add('show');
+            document.getElementById('manualTokenAmountRow').style.display = 'flex';
+            setTxType(defaultTxType || 'buy');
+            document.getElementById('manualTokenDate').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('manualTokenTxPrice').value = (data.price != null) ? data.price : '';
+            document.getElementById('manualTokenTxValue').value = '';
+            document.getElementById('manualTokenNote').value = '';
+            document.getElementById('manualTokenSymbol').value = data.symbol;
+
+            lastCheckedToken = {
+                id: data.id,
+                symbol: data.symbol,
+                name: data.name,
+                icon: data.icon,
+                price: data.price,
+                change24h: data.change24h,
+            };
+
+            if (selectedTxType === 'swap') { renderSwapHoldings(); updateSwapDirection(); }
+            document.getElementById('manualTokenAmount').focus();
+        }
+
+        // Opens the transaction form for a token already in the portfolio, without a fresh
+        // CoinGecko symbol search — used by the "+ Add transaction" button on a token chip /
+        // its history panel. Refreshes the live price first so the suggested price/unit and
+        // 24h change aren't stale.
+        async function openAddTransactionForToken(coingeckoId) {
+            const mt = manualTokens.find(t => t.coingeckoId === coingeckoId);
+            if (!mt) return;
+
+            document.getElementById('tokenCard').classList.add('show');
+            clearManualTokenMsg();
+            setManualTokenMsg(`Loading current ${mt.symbol} price…`, 'info');
+
+            let price = mt.price, change24h = mt.change24h;
+            try {
+                const fresh = await fetchTokenPrice(coingeckoId);
+                if (fresh.price != null) { price = fresh.price; change24h = fresh.change24h; }
+            } catch (err) {
+                console.warn('Could not refresh price for new transaction:', err);
+                // Non-fatal — fall back to the last known price so the form still opens.
+            }
+
+            showTokenCheckResult({ id: mt.coingeckoId, symbol: mt.symbol, name: mt.name, icon: mt.icon, price, change24h }, 'buy');
+            setManualTokenMsg(`${mt.name} (${mt.symbol}) — log a new transaction below.`, 'info');
+            document.getElementById('manualTokenResult').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
 
         async function handleManualTokenCheck() {
+
             const input = document.getElementById('manualTokenSymbol');
             const btn = document.getElementById('manualTokenCheckBtn');
             const resultEl = document.getElementById('manualTokenResult');
@@ -4098,64 +4740,8 @@
                 }
 
                 const data = await searchTokenOnCoingecko(symbol);
-
-                // Show result
-                const style = tokenStyle(data.symbol);
-                const iconEl = document.getElementById('mtIcon');
-                const nameEl = document.getElementById('mtName');
-                const symbolEl = document.getElementById('mtSymbol');
-                const priceEl = document.getElementById('mtPrice');
-                const changeEl = document.getElementById('mtChange');
-
-                if (data.icon) {
-                    iconEl.style.background = 'var(--surface-2)';
-                    iconEl.style.display = 'flex';
-                    iconEl.style.alignItems = 'center';
-                    iconEl.style.justifyContent = 'center';
-                    iconEl.textContent = '';
-                    iconEl.innerHTML = iconImg(data.icon);
-                } else {
-                    iconEl.style.background = `linear-gradient(135deg, ${style.color1}, ${style.color2})`;
-                    iconEl.style.display = 'block';
-                    iconEl.textContent = style.letter;
-                }
-
-                nameEl.textContent = data.name;
-                symbolEl.textContent = `${data.symbol} ${data.marketCapRank ? `· #${data.marketCapRank}` : ''}`;
-
-                if (data.price !== null && data.price !== undefined) {
-                    priceEl.textContent = formatPrice(data.price);
-                    if (data.change24h !== null && data.change24h !== undefined) {
-                        const cls = data.change24h >= 0 ? 'pos' : 'neg';
-                        changeEl.textContent = fmtPct(data.change24h);
-                        changeEl.className = `mt-change ${cls}`;
-                    } else {
-                        changeEl.textContent = '—';
-                        changeEl.className = 'mt-change';
-                    }
-                } else {
-                    priceEl.textContent = '—';
-                    changeEl.textContent = '—';
-                    changeEl.className = 'mt-change';
-                }
-
-                resultEl.classList.add('show');
-                amountRow.style.display = 'flex';
-
-                // Store checked token data
-                lastCheckedToken = {
-                    id: data.id,
-                    symbol: data.symbol,
-                    name: data.name,
-                    icon: data.icon,
-                    price: data.price,
-                    change24h: data.change24h,
-                };
-
-                // Focus amount input
-                document.getElementById('manualTokenAmount').focus();
-
-                setManualTokenMsg(`Found ${data.name} (${data.symbol}) — enter the amount you hold.`, 'info');
+                showTokenCheckResult(data, 'buy');
+                setManualTokenMsg(`Found ${data.name} (${data.symbol}) — log a transaction below.`, 'info');
 
             } catch (err) {
                 setManualTokenMsg(err.message, 'error');
@@ -4168,51 +4754,198 @@
             }
         }
 
-        function handleManualTokenAdd() {
+        // Tokens the person currently holds: manual ledger tokens (with known CoinGecko ids)
+        // plus on-chain tokens from the loaded portfolio, largest first, one entry per symbol.
+        function getHeldTokens() {
+            const map = new Map();
+            for (const mt of manualTokens) {
+                if (!(mt.amount > 0)) continue;
+                const sym = (mt.symbol || '').toUpperCase();
+                map.set(sym, { symbol: sym, name: mt.name || sym, icon: mt.icon || null, coingeckoId: mt.coingeckoId, usd: mt.amount * (mt.price || 0) });
+            }
+            for (const tk of (portfolioData.tokens || [])) {
+                const sym = (tk.symbol || '').toUpperCase();
+                if (!sym || map.has(sym) || !(tk.rawAmount > 0 || tk.usd > 0)) continue;
+                map.set(sym, { symbol: sym, name: tk.name || sym, icon: null, coingeckoId: null, usd: tk.usd || 0 });
+            }
+            return [...map.values()].sort((a, b) => b.usd - a.usd);
+        }
+
+        // Fills the "Token received" suggestions (datalist for typing + clickable chips).
+        function renderSwapHoldings() {
+            const fromSym = lastCheckedToken ? lastCheckedToken.symbol.toUpperCase() : null;
+            const held = getHeldTokens().filter(h => h.symbol !== fromSym);
+            document.getElementById('swapTokenList').innerHTML = held
+                .map(h => `<option value="${escapeHtml(h.symbol)}">${escapeHtml(h.name)}</option>`).join('');
+            const box = document.getElementById('swapHoldings');
+            const current = document.getElementById('swapToSymbol').value.trim().toUpperCase();
+            box.innerHTML = held.length
+                ? `<span class="swap-holdings-label">${t('swapHoldingsLabel')}</span>` + held.slice(0, 14).map(h =>
+                    `<button class="swap-chip${h.symbol === current ? ' active' : ''}" type="button" data-sym="${escapeHtml(h.symbol)}" title="${escapeHtml(h.name)}">${escapeHtml(h.symbol)}</button>`).join('')
+                : '';
+            box.classList.toggle('show', held.length > 0);
+        }
+
+        function updateSwapDirection() {
+            const from = lastCheckedToken ? lastCheckedToken.symbol.toUpperCase() : '—';
+            const to = document.getElementById('swapToSymbol').value.trim().toUpperCase() || '—';
+            document.getElementById('swapDirectionText').textContent = `${from} → ${to}`;
+            document.querySelectorAll('#swapHoldings .swap-chip').forEach(c => c.classList.toggle('active', c.dataset.sym === to));
+        }
+
+        // Resolves the received token: a held manual token is looked up by its known CoinGecko
+        // id (exact match); anything else is searched by symbol.
+        async function resolveSwapToken(sym) {
+            const up = sym.trim().toUpperCase();
+            const held = getHeldTokens().find(h => h.symbol === up && h.coingeckoId);
+            if (held) {
+                let price = null, change24h = null;
+                try {
+                    const p = await fetchTokenPrice(held.coingeckoId);
+                    price = p.price; change24h = p.change24h;
+                } catch (err) { console.warn('Price lookup failed for swap token:', err); }
+                return { id: held.coingeckoId, symbol: held.symbol, name: held.name, icon: held.icon, price, change24h };
+            }
+            return searchTokenOnCoingecko(sym);
+        }
+
+        // Flips the swap: the received token becomes the sold one and vice-versa, and the two
+        // amounts trade places. Date and note are kept.
+        async function reverseSwap() {
+            if (!lastCheckedToken) return;
             const amountInput = document.getElementById('manualTokenAmount');
+            const toSymInput = document.getElementById('swapToSymbol');
+            const toAmtInput = document.getElementById('swapToAmount');
+            const dateInput = document.getElementById('manualTokenDate');
+            const noteInput = document.getElementById('manualTokenNote');
+            const toSym = toSymInput.value.trim();
+            if (!toSym) { setManualTokenMsg(t('swapNeedToken'), 'error'); toSymInput.focus(); return; }
+
+            const oldFrom = lastCheckedToken;
+            const keep = { sold: amountInput.value, received: toAmtInput.value, date: dateInput.value, note: noteInput.value };
+            const btn = document.getElementById('swapReverseBtn');
+            btn.disabled = true;
+            let data;
+            try {
+                data = await resolveSwapToken(toSym);
+            } catch (err) {
+                setManualTokenMsg(err.message, 'error');
+                return;
+            } finally {
+                btn.disabled = false;
+            }
+            if (data.id === oldFrom.id) { setManualTokenMsg(t('swapSameToken'), 'error'); return; }
+
+            showTokenCheckResult(data, 'swap'); // makes the received token the new "sold" token
+            amountInput.value = keep.received;
+            toAmtInput.value = keep.sold;
+            toSymInput.value = oldFrom.symbol;
+            dateInput.value = keep.date || dateInput.value;
+            noteInput.value = keep.note;
+            syncTxValueFromAmount(); // reflect the swapped amount in the USD value field too
+            renderSwapHoldings();
+            updateSwapDirection();
+            setManualTokenMsg(`${data.symbol.toUpperCase()} → ${oldFrom.symbol.toUpperCase()}`, 'info');
+        }
+
+        function resetSwapFields() {
+            document.getElementById('swapToSymbol').value = '';
+            document.getElementById('swapToAmount').value = '';
+        }
+
+        async function handleManualTokenAdd() {
+            const amountInput = document.getElementById('manualTokenAmount');
+            const dateInput = document.getElementById('manualTokenDate');
+            const priceInput = document.getElementById('manualTokenTxPrice');
+            const noteInput = document.getElementById('manualTokenNote');
             const amount = parseFloat(amountInput.value);
-            const msgEl = document.getElementById('manualTokenMsg');
+            const priceUsd = priceInput.value === '' ? null : parseFloat(priceInput.value);
 
             if (!lastCheckedToken) {
                 setManualTokenMsg('Please check a token first.', 'error');
                 return;
             }
-
-            if (!Number.isFinite(amount) || amount < 0) {
-                setManualTokenMsg('Please enter a valid amount (0 or greater — use 0 to just watch the price).', 'error');
+            if (!Number.isFinite(amount) || amount <= 0) {
+                setManualTokenMsg('Please enter an amount greater than 0.', 'error');
                 amountInput.focus();
                 return;
             }
+            if (priceInput.value !== '' && (!Number.isFinite(priceUsd) || priceUsd < 0)) {
+                setManualTokenMsg('Price/unit must be a positive number, or left blank.', 'error');
+                priceInput.focus();
+                return;
+            }
 
-            // Add the token (if editing an existing entry, addManualToken() below
-            // matches on coingeckoId and updates it in place instead of duplicating)
-            const wasEditing = manualTokens.some(t => t.coingeckoId === lastCheckedToken.id);
-            addManualToken(
-                lastCheckedToken.symbol,
-                amount,
-                {
-                    id: lastCheckedToken.id,
-                    symbol: lastCheckedToken.symbol,
-                    name: lastCheckedToken.name,
-                    icon: lastCheckedToken.icon,
-                    price: lastCheckedToken.price,
-                    change24h: lastCheckedToken.change24h,
+            const tok = { ...lastCheckedToken };
+            const when = dateInput.value || todayIso();
+            const planned = when > todayIso();
+            const type = selectedTxType;
+
+            if (type === 'swap') {
+                const toSymInput = document.getElementById('swapToSymbol');
+                const toAmtInput = document.getElementById('swapToAmount');
+                const toSym = toSymInput.value.trim();
+                const toAmt = parseFloat(toAmtInput.value);
+                if (!toSym) { setManualTokenMsg(t('swapNeedToken'), 'error'); toSymInput.focus(); return; }
+                if (!Number.isFinite(toAmt) || toAmt <= 0) { setManualTokenMsg(t('swapNeedAmount'), 'error'); toAmtInput.focus(); return; }
+
+                const addBtn = document.getElementById('manualTokenAddBtn');
+                addBtn.disabled = true;
+                let toData;
+                try {
+                    toData = await resolveSwapToken(toSym);
+                } catch (err) {
+                    setManualTokenMsg(err.message, 'error');
+                    return;
+                } finally {
+                    addBtn.disabled = false;
                 }
-            );
+                if (toData.id === tok.id) { setManualTokenMsg(t('swapSameToken'), 'error'); toSymInput.focus(); return; }
 
-            // Reset UI
-            setManualTokenMsg(wasEditing ? `${lastCheckedToken.symbol.toUpperCase()} updated!` : `${lastCheckedToken.symbol.toUpperCase()} added to your portfolio!`, 'success');
+                addManualSwap(
+                    { id: tok.id, symbol: tok.symbol, name: tok.name, icon: tok.icon, price: tok.price, change24h: tok.change24h },
+                    { id: toData.id, symbol: toData.symbol, name: toData.name, icon: toData.icon, price: toData.price, change24h: toData.change24h },
+                    amount, toAmt, when, priceUsd, noteInput.value
+                );
+                const vars = { from: tok.symbol.toUpperCase(), to: toData.symbol.toUpperCase(), date: fmtTxDate(when) };
+                setManualTokenMsg(t(planned ? 'swapPlanned' : 'swapLogged', vars), 'success');
+            } else if ((type === 'buy' || type === 'sell') && tok.id !== USDC_ID) {
+                // Buy/sell always run against USDC (1 USDC = 1 USD): a buy spends USDC, a sell receives it.
+                const unitPrice = priceUsd != null ? priceUsd : (tok.price ?? null);
+                if (!(unitPrice > 0)) { setManualTokenMsg(t('usdcNeedPrice'), 'error'); priceInput.focus(); return; }
+                const tokData = { id: tok.id, symbol: tok.symbol, name: tok.name, icon: tok.icon, price: tok.price, change24h: tok.change24h };
+                const usdcAmt = amount * unitPrice;
+                if (type === 'buy') addManualSwap(USDC_TOKEN, tokData, usdcAmt, amount, when, 1, noteInput.value, 'buy');
+                else addManualSwap(tokData, USDC_TOKEN, amount, usdcAmt, when, unitPrice, noteInput.value, 'sell');
+                setManualTokenMsg(
+                    planned
+                        ? t('txPlanned', { type: TX_TYPE_LABELS[type], date: fmtTxDate(when) })
+                        : t('txSettledUsdc', { type: TX_TYPE_LABELS[type], amount: formatTokenAmount(amount), symbol: tok.symbol.toUpperCase(), delta: (type === 'buy' ? '−' : '+') + formatTokenAmount(usdcAmt) }),
+                    'success'
+                );
+            } else {
+                addManualTransaction(
+                    { id: tok.id, symbol: tok.symbol, name: tok.name, icon: tok.icon, price: tok.price, change24h: tok.change24h },
+                    type, amount, dateInput.value, priceUsd, noteInput.value
+                );
+                setManualTokenMsg(
+                    planned
+                        ? t('txPlanned', { type: TX_TYPE_LABELS[type], date: fmtTxDate(when) })
+                        : `${TX_TYPE_LABELS[type]} of ${amount} ${tok.symbol.toUpperCase()} logged.`,
+                    'success'
+                );
+            }
+
             document.getElementById('manualTokenSymbol').value = '';
-            document.getElementById('manualTokenAmount').value = '';
+            amountInput.value = '';
+            priceInput.value = '';
+            noteInput.value = '';
+            document.getElementById('manualTokenTxValue').value = '';
+            resetSwapFields();
             document.getElementById('manualTokenResult').classList.remove('show');
             document.getElementById('manualTokenAmountRow').style.display = 'none';
-            document.getElementById('manualTokenAddBtn').textContent = t('addToPortfolioBtn');
+            renderManualTokenHistory(tok.id); // open the history so the new entry is visible
             lastCheckedToken = null;
-
-            // Refresh view if portfolio is showing
-            if (document.getElementById('summary').classList.contains('show')) {
-                refreshView();
-            }
         }
 
         function handleManualTokenCancel() {
@@ -4222,83 +4955,11 @@
             document.getElementById('manualTokenMsg').textContent = '';
             document.getElementById('manualTokenSymbol').value = '';
             document.getElementById('manualTokenAmount').value = '';
-            document.getElementById('manualTokenAddBtn').textContent = t('addToPortfolioBtn');
+            document.getElementById('manualTokenTxPrice').value = '';
+            document.getElementById('manualTokenTxValue').value = '';
+            document.getElementById('manualTokenNote').value = '';
+            resetSwapFields();
             lastCheckedToken = null;
-        }
-
-        // Populates the add-token form with an existing manual token's data so its
-        // amount (or price/icon, via a re-check) can be edited. Re-uses the same
-        // "Check" result panel and Add button — since addManualToken() matches on
-        // coingeckoId, submitting just updates the existing entry instead of adding
-        // a duplicate row.
-        function editManualToken(coingeckoId) {
-            const mt = manualTokens.find(t => t.coingeckoId === coingeckoId);
-            if (!mt) return;
-
-            // Make sure the add-token card is open and scrolled into view.
-            document.getElementById('tokenCard').classList.add('show');
-
-            const style = tokenStyle(mt.symbol);
-            const iconEl = document.getElementById('mtIcon');
-            const nameEl = document.getElementById('mtName');
-            const symbolEl = document.getElementById('mtSymbol');
-            const priceEl = document.getElementById('mtPrice');
-            const changeEl = document.getElementById('mtChange');
-
-            if (mt.icon) {
-                iconEl.style.background = 'var(--surface-2)';
-                iconEl.style.display = 'flex';
-                iconEl.style.alignItems = 'center';
-                iconEl.style.justifyContent = 'center';
-                iconEl.textContent = '';
-                iconEl.innerHTML = iconImg(mt.icon);
-            } else {
-                iconEl.style.background = `linear-gradient(135deg, ${style.color1}, ${style.color2})`;
-                iconEl.style.display = 'block';
-                iconEl.textContent = style.letter;
-            }
-
-            nameEl.textContent = mt.name;
-            symbolEl.textContent = mt.symbol;
-
-            if (mt.price !== null && mt.price !== undefined) {
-                priceEl.textContent = formatPrice(mt.price);
-                if (mt.change24h !== null && mt.change24h !== undefined) {
-                    const cls = mt.change24h >= 0 ? 'pos' : 'neg';
-                    changeEl.textContent = fmtPct(mt.change24h);
-                    changeEl.className = `mt-change ${cls}`;
-                } else {
-                    changeEl.textContent = '—';
-                    changeEl.className = 'mt-change';
-                }
-            } else {
-                priceEl.textContent = '—';
-                changeEl.textContent = '—';
-                changeEl.className = 'mt-change';
-            }
-
-            document.getElementById('manualTokenSymbol').value = mt.symbol;
-            document.getElementById('manualTokenResult').classList.add('show');
-            document.getElementById('manualTokenAmountRow').style.display = 'flex';
-
-            const amountInput = document.getElementById('manualTokenAmount');
-            amountInput.value = mt.amount;
-            document.getElementById('manualTokenAddBtn').textContent = t('saveChangesBtn');
-
-            lastCheckedToken = {
-                id: mt.coingeckoId,
-                symbol: mt.symbol,
-                name: mt.name,
-                icon: mt.icon,
-                price: mt.price,
-                change24h: mt.change24h,
-            };
-
-            setManualTokenMsg(`Editing ${mt.symbol.toUpperCase()} — update the amount and click "Save changes".`, 'info');
-
-            document.getElementById('tokenCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
-            amountInput.focus();
-            amountInput.select();
         }
 
         function setManualTokenMsg(text, type) {
@@ -4328,6 +4989,7 @@
             const idsToFetch = [];
 
             for (const id of coinIds) {
+                if (id === USDC_ID) { map[id] = { price: 1, change24h: 0 }; continue; } // USDC = USD
                 const cached = tokenPriceCache[id];
                 if (isFresh(cached, CACHE_TTL_MS.tokenPrice, now)) {
                     map[id] = { price: cached.price, change24h: cached.change24h };
@@ -5983,7 +6645,7 @@
 
         // Every chart is drawn from CoinGecko history: current holdings × historical prices
         // (amounts held constant — not the wallet's real past balances).
-        //   24h → hourly points · 1W → every 12h · 1M → daily · 1Y → every 2 weeks
+        //   24h → every 2h · 1W → every 12h · 1M → daily · 1Y → every 2 weeks
         function renderSnapshotChart(addresses, scope) {
             const container = document.getElementById('snapshotChart');
             const svg = document.getElementById('snapshotSvg');
@@ -6005,12 +6667,15 @@
             d365: { query: 'vs_currency=usd&days=365&interval=daily' },
         };
         const HIST_RANGES = {
-            '24h': { kind: 'h30',  windowMs: DAY,       stepMs: HOUR,       ttlMs: HOUR,      label: 'Last 24 hours, hourly' },
+            '24h': { kind: 'h30',  windowMs: DAY,       stepMs: 2 * HOUR,   ttlMs: 2 * HOUR,  label: 'Last 24 hours, every 2h' },
             '1w':  { kind: 'h30',  windowMs: 7 * DAY,   stepMs: 12 * HOUR,  ttlMs: 12 * HOUR, label: 'Last 7 days, every 12h' },
             '1m':  { kind: 'h30',  windowMs: 30 * DAY,  stepMs: DAY,        ttlMs: DAY,       label: 'Last 30 days, daily' },
             '1y':  { kind: 'd365', windowMs: 365 * DAY, stepMs: 14 * DAY,   ttlMs: DAY,       label: 'Last 12 months, every 2 weeks' },
         };
-        const HIST_MAX_TOKENS = 10; // only the 10 biggest positions get a history request
+        // History requests go to the biggest tokens only: as many as needed to cover 95% of the
+        // portfolio's value, but never more than HIST_MAX_TOKENS (hard cap).
+        const HIST_COVERAGE_TARGET = 0.95;
+        const HIST_MAX_TOKENS = 7;
         const CG_PLATFORM = { pulsechain: 'pulsechain', ethereum: 'ethereum', base: 'base',
             arbitrum: 'arbitrum-one', bsc: 'binance-smart-chain' };
         const CG_SYMBOL_IDS = { ETH: 'ethereum', WETH: 'ethereum', WBTC: 'wrapped-bitcoin', USDC: 'usd-coin',
@@ -6047,7 +6712,7 @@
         // The network is used only when the saved copy is older than ttlMs. A 404 (token not on CoinGecko)
         // is remembered too, so it isn't asked again every refresh, and a 429 starts a shared
         // cooldown (see cgFetch) during which no CoinGecko request is made at all.
-        async function fetchPriceHistory(src, kind, ttlMs) {
+        async function fetchPriceHistory(src, kind, ttlMs, info) {
             const cfg = HIST_KINDS[kind];
             const ckey = `${src.key}|${kind}`;
             const hit = (lsGetJSON(HIST_CACHE_KEY, {}) || {})[ckey];
@@ -6055,7 +6720,9 @@
             const stored = hit && Array.isArray(hit.prices) ? hit.prices.map(p => [p[0] * 1000, p[1]]) : null;
             if (stored && isFresh(hit, ttlMs)) return stored;
             try {
+                const t0 = performance.now();
                 const resp = await cgFetch(`https://api.coingecko.com/api/v3${src.path}?${cfg.query}`);
+                if (info) info.networkMs = performance.now() - t0; // lets the caller pace itself
                 if (resp.status === 404) {
                     const entries = {};
                     for (const k of Object.keys(HIST_KINDS)) entries[`${src.key}|${k}`] = stampNow({ notFound: true });
@@ -6148,9 +6815,15 @@
 
             const allTokens = mergeManualTokensIntoPortfolio(portfolioData).tokens;
             const totalUsd = allTokens.reduce((sum, t) => sum + (t.usd || 0), 0);
-            const jobs = allTokens
-                .filter(t => t.rawAmount > 0 && t.usd > 0)
-                .slice(0, HIST_MAX_TOKENS) // already sorted by USD value
+            const selected = [];
+            let coveredSoFar = 0;
+            for (const t of allTokens) { // already sorted by USD value, biggest first
+                if (!(t.rawAmount > 0 && t.usd > 0)) continue;
+                if (selected.length >= HIST_MAX_TOKENS || coveredSoFar >= HIST_COVERAGE_TARGET * totalUsd) break;
+                selected.push(t);
+                coveredSoFar += t.usd;
+            }
+            const jobs = selected
                 .map(t => ({ t, src: historySourceFor(t) }))
                 .filter(j => j.src);
 
@@ -6162,8 +6835,12 @@
             async function worker() {
                 while (next < jobs.length) {
                     const job = jobs[next++];
-                    if (!pending.has(job.src.key)) pending.set(job.src.key, fetchPriceHistory(job.src, def.kind, def.ttlMs));
+                    const info = {};
+                    if (!pending.has(job.src.key)) pending.set(job.src.key, fetchPriceHistory(job.src, def.kind, def.ttlMs, info));
                     results.set(job.t, await pending.get(job.src.key));
+                    // Half speed: after a real network request, wait as long as it took before the
+                    // next one (saved copies and cooldown skips are not slowed down).
+                    if (info.networkMs > 10) await new Promise(r => setTimeout(r, info.networkMs));
                     if (!stillCurrent()) return;
                 }
             }
@@ -6916,7 +7593,26 @@
         document.getElementById('manualTokenAmount').addEventListener('keydown', e => {
             if (e.key === 'Enter') handleManualTokenAdd();
         });
+        document.getElementById('manualTokenAmount').addEventListener('input', syncTxValueFromAmount);
+        document.getElementById('manualTokenTxValue').addEventListener('input', syncAmountFromTxValue);
+        document.getElementById('manualTokenTxValue').addEventListener('keydown', e => {
+            if (e.key === 'Enter') handleManualTokenAdd();
+        });
+        document.getElementById('manualTokenTxPrice').addEventListener('input', syncTxFieldsFromPrice);
         document.getElementById('manualTokenCancelBtn').addEventListener('click', handleManualTokenCancel);
+        document.getElementById('mtTxTypeToggle').querySelectorAll('.mt-tx-btn').forEach(btn => {
+            btn.addEventListener('click', () => setTxType(btn.dataset.txtype));
+        });
+
+        document.getElementById('swapReverseBtn').addEventListener('click', reverseSwap);
+        document.getElementById('swapToSymbol').addEventListener('input', updateSwapDirection);
+        document.getElementById('swapHoldings').addEventListener('click', e => {
+            const chip = e.target.closest('.swap-chip');
+            if (!chip) return;
+            document.getElementById('swapToSymbol').value = chip.dataset.sym;
+            updateSwapDirection();
+            document.getElementById('swapToAmount').focus();
+        });
 
         // Render manual token chips on load
         renderManualTokenChips();
@@ -7009,7 +7705,10 @@
             customTokens = loadCustomTokensFromStorage();
             renderCustomTokenChips();
 
-            manualTokens = loadManualTokensFromStorage();
+            manualTransactions = loadManualTransactionsFromStorage();
+            manualTokenPrices = loadManualTokenPricesFromStorage();
+            rebuildManualTokens();
+            renderManualTokenHistory(null);
             renderManualTokenChips();
 
             manualMergeMode = loadManualMergeModeFromStorage();
@@ -7156,7 +7855,32 @@
                 tokenEmptyHint: 'Tokens you add here are saved in this browser only and are included whenever balances are checked.',
                 manualTokenDivider: 'or manually add from any network',
                 manualTokenSymbolPlaceholder: 'Token symbol (e.g. BTC, DOGE, SOL)',
-                manualTokenHint2: "Use this for tokens you hold on an exchange (Binance, Coinbase…) or on a blockchain this app doesn't scan directly — enter the amount you hold and its live price gets tracked here alongside your wallet balances.",
+                manualTokenHint2: "Use this for tokens you hold on an exchange (Binance, Coinbase…) or on a blockchain this app doesn't scan directly — log a buy, sell, deposit or withdrawal and its live price gets tracked here alongside your wallet balances. Click a token chip below to see or edit its transaction history.",
+                txTypeBuy: 'Buy',
+                txTypeSell: 'Sell',
+                txTypeDeposit: 'Deposit',
+                txTypeWithdrawal: 'Withdrawal',
+                txTypeSwap: 'Swap',
+                usdcNeedPrice: 'Enter a price per unit — buys and sells are settled in USDC at that price.',
+                txSettledUsdc: '{type} of {amount} {symbol} logged — USDC {delta}.',
+                swapReverseBtn: 'Reverse',
+                swapReverseTitle: 'Reverse swap direction',
+                swapHoldingsLabel: 'Your tokens:',
+                txAmountSoldPlaceholder: 'Amount sold',
+                swapToSymbolPlaceholder: 'Token received (e.g. ETH)',
+                swapToAmountPlaceholder: 'Amount received',
+                txPlannedBadge: 'planned',
+                swapNeedToken: 'Enter the symbol of the token you receive.',
+                swapNeedAmount: 'Enter the amount you receive (greater than 0).',
+                swapSameToken: 'Swap needs two different tokens.',
+                swapLogged: 'Swap logged: {from} → {to}.',
+                swapPlanned: 'Swap planned for {date}: {from} → {to}. It will count once that date arrives.',
+                txPlanned: '{type} planned for {date}. It will count once that date arrives.',
+                txAmountPlaceholder: 'Amount',
+                txValuePlaceholder: 'Transaction value USD',
+                txPricePlaceholder: 'Price/unit USD (optional)',
+                txNotePlaceholder: 'Note (optional)',
+                addTransactionBtn: 'Add transaction',
                 manualMergeLabel: 'If a manual token matches one already in your portfolio',
                 keepSeparateBtn: 'Keep separate',
                 keepSeparateTitle: 'Show manually added tokens as their own separate row',
@@ -7251,7 +7975,32 @@
                 tokenEmptyHint: 'Tokeny dodane tutaj są zapisywane wyłącznie w tej przeglądarce i uwzględniane przy każdym sprawdzaniu sald.',
                 manualTokenDivider: 'lub dodaj ręcznie z dowolnej sieci',
                 manualTokenSymbolPlaceholder: 'Symbol tokena (np. BTC, DOGE, SOL)',
-                manualTokenHint2: 'Użyj tego dla tokenów trzymanych na giełdzie (Binance, Coinbase…) lub na blockchainie, którego ta aplikacja nie skanuje bezpośrednio — podaj posiadaną ilość, a jego aktualna cena będzie śledzona tutaj razem z saldami portfela.',
+                manualTokenHint2: 'Użyj tego dla tokenów trzymanych na giełdzie (Binance, Coinbase…) lub na blockchainie, którego ta aplikacja nie skanuje bezpośrednio — zapisz kupno, sprzedaż, wpłatę lub wypłatę, a jego aktualna cena będzie śledzona tutaj razem z saldami portfela. Kliknij token poniżej, aby zobaczyć lub edytować historię transakcji.',
+                txTypeBuy: 'Kupno',
+                txTypeSell: 'Sprzedaż',
+                txTypeDeposit: 'Wpłata',
+                txTypeWithdrawal: 'Wypłata',
+                txTypeSwap: 'Wymiana',
+                usdcNeedPrice: 'Podaj cenę za sztukę — kupno i sprzedaż rozliczane są w USDC po tej cenie.',
+                txSettledUsdc: '{type}: {amount} {symbol} zapisano — saldo USDC {delta}.',
+                swapReverseBtn: 'Odwróć',
+                swapReverseTitle: 'Odwróć kierunek wymiany',
+                swapHoldingsLabel: 'Twoje tokeny:',
+                txAmountSoldPlaceholder: 'Sprzedana ilość',
+                swapToSymbolPlaceholder: 'Otrzymany token (np. ETH)',
+                swapToAmountPlaceholder: 'Otrzymana ilość',
+                txPlannedBadge: 'zaplanowana',
+                swapNeedToken: 'Podaj symbol otrzymywanego tokena.',
+                swapNeedAmount: 'Podaj otrzymaną ilość (większą od 0).',
+                swapSameToken: 'Wymiana wymaga dwóch różnych tokenów.',
+                swapLogged: 'Zapisano wymianę: {from} → {to}.',
+                swapPlanned: 'Zaplanowano wymianę na {date}: {from} → {to}. Uwzględnimy ją, gdy nadejdzie ta data.',
+                txPlanned: 'Zaplanowano: {type} na {date}. Uwzględnimy ją, gdy nadejdzie ta data.',
+                txAmountPlaceholder: 'Ilość',
+                txValuePlaceholder: 'Wartość transakcji USD',
+                txPricePlaceholder: 'Cena/szt. USD (opcjonalnie)',
+                txNotePlaceholder: 'Notatka (opcjonalnie)',
+                addTransactionBtn: 'Dodaj transakcję',
                 manualMergeLabel: 'Jeśli ręcznie dodany token pasuje do tokena już będącego w portfelu',
                 keepSeparateBtn: 'Trzymaj osobno',
                 keepSeparateTitle: 'Pokazuj ręcznie dodane tokeny jako osobny wiersz',
@@ -7391,7 +8140,8 @@
                 selectedNetwork: lsGetRaw('pulsefolio_selected_network' + suffix),
                 combinedMode: lsGetJSON('pulsefolio_combined_mode' + suffix, null),
                 otherNetworks: lsGetJSON('pulsefolio_other_networks' + suffix, null),
-                manualTokens: lsGetJSON('pulsefolio_manual_tokens' + suffix, []),
+                manualTransactions: lsGetJSON('pulsefolio_manual_tx' + suffix, []),
+                manualTokenPrices: lsGetJSON('pulsefolio_manual_tx_prices' + suffix, {}),
                 manualMergeMode: lsGetRaw('pulsefolio_manual_merge_mode' + suffix),
                 wrapMergeEnabled: lsGetJSON('pulsefolio_wrap_merge_enabled' + suffix, null),
                 hideManualTokens: lsGetJSON('pulsefolio_hide_manual_tokens' + suffix, null),
@@ -7453,7 +8203,27 @@
             if (d.selectedNetwork) lsSetRaw('pulsefolio_selected_network' + suffix, d.selectedNetwork);
             if (d.combinedMode !== null && d.combinedMode !== undefined) lsSetJSON('pulsefolio_combined_mode' + suffix, d.combinedMode);
             if (Array.isArray(d.otherNetworks)) lsSetJSON('pulsefolio_other_networks' + suffix, d.otherNetworks);
-            if (Array.isArray(d.manualTokens)) lsSetJSON('pulsefolio_manual_tokens' + suffix, d.manualTokens);
+            if (Array.isArray(d.manualTransactions)) {
+                lsSetJSON('pulsefolio_manual_tx' + suffix, d.manualTransactions);
+                if (d.manualTokenPrices && typeof d.manualTokenPrices === 'object') {
+                    lsSetJSON('pulsefolio_manual_tx_prices' + suffix, d.manualTokenPrices);
+                }
+            } else if (Array.isArray(d.manualTokens)) {
+                // Backup made by an older version (single amount per token, no transaction
+                // history) — convert each into one 'deposit' transaction so it still imports.
+                const today = new Date().toISOString().slice(0, 10);
+                const txs = d.manualTokens.map(mt => ({
+                    id: 'tx_' + Math.random().toString(36).slice(2) + Date.now().toString(36),
+                    coingeckoId: mt.coingeckoId, symbol: (mt.symbol || '').toUpperCase(),
+                    name: mt.name || mt.symbol, icon: mt.icon || null, type: 'deposit',
+                    amount: mt.amount || 0, date: today, priceUsd: mt.price ?? null,
+                    note: 'Imported from an older backup', addedAt: mt.addedAt || Date.now(),
+                }));
+                lsSetJSON('pulsefolio_manual_tx' + suffix, txs);
+                const prices = {};
+                for (const mt of d.manualTokens) if (mt.coingeckoId && mt.price != null) prices[mt.coingeckoId] = { price: mt.price, change24h: mt.change24h ?? null };
+                lsSetJSON('pulsefolio_manual_tx_prices' + suffix, prices);
+            }
             if (d.manualMergeMode) lsSetRaw('pulsefolio_manual_merge_mode' + suffix, d.manualMergeMode);
             if (d.wrapMergeEnabled !== null && d.wrapMergeEnabled !== undefined) lsSetJSON('pulsefolio_wrap_merge_enabled' + suffix, d.wrapMergeEnabled);
             if (d.hideManualTokens !== null && d.hideManualTokens !== undefined) lsSetJSON('pulsefolio_hide_manual_tokens' + suffix, d.hideManualTokens);
