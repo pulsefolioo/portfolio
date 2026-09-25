@@ -2155,7 +2155,12 @@
             padding: 7px 0;
             border-top: 1px solid var(--border);
             font-size: clamp(11px, 0.8vw, 13px);
+            cursor: pointer;
+            border-radius: 7px;
+            transition: background 0.15s ease;
         }
+        .mt-history-row:hover { background: var(--surface-2); }
+        .mt-history-row .mt-history-remove { cursor: pointer; }
         .mt-history-row:first-of-type { border-top: none; }
         .mt-history-type {
             font-weight: 700;
@@ -2177,6 +2182,50 @@
             padding: 2px 4px;
         }
         .mt-history-remove:hover { color: #ef4444; }
+        .mt-pl-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 5px;
+            font-size: 0.82em;
+            font-weight: 700;
+        }
+        .mt-pl-badge.pos { color: var(--green); }
+        .mt-pl-badge.neg { color: var(--red); }
+        .mt-pl-badge.flat { color: var(--text-secondary); }
+        .mt-pl-summary {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .mt-pl-item {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            padding: 7px 9px;
+            min-width: 0;
+        }
+        .mt-pl-label {
+            display: block;
+            color: var(--text-muted);
+            font-size: 10px;
+            margin-bottom: 2px;
+        }
+        .mt-pl-value {
+            display: block;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .mt-pl-value.pos { color: var(--green); }
+        .mt-pl-value.neg { color: var(--red); }
+        .mt-pl-value.flat { color: var(--text-primary); }
+        @media (max-width: 420px) {
+            .mt-pl-summary { grid-template-columns: 1fr; }
+        }
+
         .mt-history-total {
             margin-top: 8px;
             padding-top: 8px;
@@ -3975,6 +4024,85 @@
         function todayIso() { return new Date().toISOString().slice(0, 10); }
         function isPlannedTx(tx) { return (tx.date || '') > todayIso(); }
 
+        // Calculates cost basis and P/L for one manually tracked token.
+        // Cost basis uses a weighted-average acquisition price from buy/deposit/swap-buy
+        // transactions. Sells/withdrawals remove cost basis at the current weighted average.
+        // A transaction without a recorded acquisition price makes the corresponding cost
+        // basis portion unknown, so P/L is shown only when the full current position has a
+        // known basis. This keeps the result conservative instead of inventing a purchase price.
+        function calculateManualTokenPL(coingeckoId) {
+            const txs = manualTransactions
+                .filter(tx => tx.coingeckoId === coingeckoId && !isPlannedTx(tx))
+                .sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.addedAt || 0) - (b.addedAt || 0));
+
+            let qty = 0;
+            let costBasis = 0;
+            let unknownQty = 0;
+
+            for (const tx of txs) {
+                const amount = Number(tx.amount) || 0;
+                if (amount <= 0) continue;
+                const isOut = tx.type === 'sell' || tx.type === 'withdrawal';
+                const isAcquisition = tx.type === 'buy' || tx.type === 'deposit' || tx.type === 'swap' || tx.type === 'airdrop';
+
+                if (isOut) {
+                    const knownQty = Math.max(0, qty - unknownQty);
+                    const avgKnownCost = knownQty > 0 ? costBasis / knownQty : 0;
+                    const removeKnown = Math.min(amount, knownQty);
+                    costBasis = Math.max(0, costBasis - removeKnown * avgKnownCost);
+                    const removeUnknown = Math.min(Math.max(0, amount - removeKnown), unknownQty);
+                    unknownQty -= removeUnknown;
+                    qty = Math.max(0, qty - amount);
+                    continue;
+                }
+
+                if (!isAcquisition) continue;
+                qty += amount;
+
+                // Airdrops have no purchase cost unless a price was explicitly recorded.
+                const price = Number(tx.priceUsd);
+                if (Number.isFinite(price) && price >= 0 && tx.type !== 'airdrop') {
+                    costBasis += amount * price;
+                } else if (Number.isFinite(price) && price >= 0 && tx.type === 'airdrop' && price > 0) {
+                    costBasis += amount * price;
+                } else if (tx.type !== 'airdrop') {
+                    unknownQty += amount;
+                }
+            }
+
+            const mt = manualTokens.find(t => t.coingeckoId === coingeckoId);
+            const currentAmount = mt ? Number(mt.amount) || 0 : qty;
+            const currentPrice = mt && Number.isFinite(Number(mt.price)) ? Number(mt.price) : null;
+            const basisKnown = unknownQty <= Math.max(1e-12, currentAmount * 1e-9);
+            const avgBuyPrice = currentAmount > 0 && basisKnown ? costBasis / currentAmount : null;
+            const costValue = basisKnown ? costBasis : null;
+            const currentValue = currentPrice != null ? currentAmount * currentPrice : null;
+            const pnlUsd = basisKnown && currentValue != null ? currentValue - costBasis : null;
+            const pnlPct = basisKnown && costBasis > 0 && currentValue != null ? (pnlUsd / costBasis) * 100 : null;
+
+            return {
+                currentAmount,
+                avgBuyPrice: Number.isFinite(avgBuyPrice) ? avgBuyPrice : null,
+                costBasis: costValue,
+                currentValue,
+                pnlUsd: Number.isFinite(pnlUsd) ? pnlUsd : null,
+                pnlPct: Number.isFinite(pnlPct) ? pnlPct : null,
+                basisKnown,
+                unknownQty,
+            };
+        }
+
+        function formatPL(value) {
+            if (value == null || !Number.isFinite(value)) return '—';
+            const sign = value > 0 ? '+' : value < 0 ? '−' : '';
+            return `${sign}${fmtUSD(Math.abs(value))}`;
+        }
+
+        function plClass(value) {
+            if (value == null || !Number.isFinite(value)) return '';
+            return value > 0 ? 'pos' : value < 0 ? 'neg' : 'flat';
+        }
+
         function rebuildManualTokens() {
             const byId = new Map();
             for (const tx of manualTransactions) {
@@ -4441,6 +4569,8 @@
                 const style = tokenStyle(mt.symbol);
                 const iconHtml = mt.icon ? iconImg(mt.icon) : '';
                 const txCount = manualTransactions.filter(tx => tx.coingeckoId === mt.coingeckoId).length;
+                const pl = calculateManualTokenPL(mt.coingeckoId);
+                const plBadge = pl.pnlUsd != null ? `<span class=\"mt-pl-badge ${plClass(pl.pnlUsd)}\">P/L ${formatPL(pl.pnlUsd)}${pl.pnlPct != null ? ` (${pl.pnlPct >= 0 ? '+' : ''}${pl.pnlPct.toFixed(1)}%)` : ''}</span>` : '';
                 return `
               <div class="token-chip mt-chip-editable${mt.coingeckoId === openManualHistoryId ? ' active' : ''}" data-id="${escapeHtml(mt.coingeckoId)}" title="Click to view ${escapeHtml(mt.name)} (${escapeHtml(mt.symbol)}) transaction history · ${fmtUSD(mt.amount * (mt.price || 0))}">
                 <span class="mt-chip-icon" style="background: ${mt.icon ? 'var(--surface-2)' : `linear-gradient(135deg, ${style.color1}, ${style.color2})`}; display: flex; align-items: center; justify-content: center;">${mt.icon ? '' : escapeHtml(style.letter)}${iconHtml}</span>
@@ -4509,7 +4639,7 @@
                 const typeLabel = tx.swapId ? `${tx.swapKind ? TX_TYPE_LABELS[tx.swapKind] : t('txTypeSwap')} ⇄ ${escapeHtml(tx.swapWith || '')}` : (TX_TYPE_LABELS[tx.type] || tx.type);
                 const plannedBadge = isPlannedTx(tx) ? ` <span class="mt-history-planned">${t('txPlannedBadge')}</span>` : '';
                 return `
-                <div class="mt-history-row${isPlannedTx(tx) ? ' planned' : ''}">
+                <div class="mt-history-row${isPlannedTx(tx) ? ' planned' : ''}" data-txid="${escapeHtml(tx.id)}" title="Click to edit transaction">
                     <span class="mt-history-type ${tx.type}">${typeLabel}</span>
                     <span class="mt-history-amount">${sign}${formatTokenAmount(tx.amount)} ${escapeHtml(mt.symbol)}${priceStr}${plannedBadge}${tx.note ? ` — <span class="mt-history-note">${escapeHtml(tx.note)}</span>` : ''}</span>
                     <span class="mt-history-date">${fmtTxDate(tx.date)}</span>
@@ -4524,10 +4654,31 @@
                 </div>
                 ${rows}
                 <div class="mt-history-total">Net amount: ${formatTokenAmount(mt.amount)} ${escapeHtml(mt.symbol)} ${mt.price ? `(${fmtUSD(mt.amount * mt.price)})` : ''}</div>
+                ${(() => {
+                    const pl = calculateManualTokenPL(mt.coingeckoId);
+                    const avg = pl.avgBuyPrice != null ? formatPrice(pl.avgBuyPrice) : '—';
+                    const pnl = pl.pnlUsd != null ? formatPL(pl.pnlUsd) : (pl.basisKnown ? '—' : 'insufficient buy price data');
+                    const cls = plClass(pl.pnlUsd);
+                    const pct = pl.pnlPct != null ? `${pl.pnlPct >= 0 ? '+' : ''}${pl.pnlPct.toFixed(2)}%` : '—';
+                    return `<div class="mt-pl-summary">
+                        <div class="mt-pl-item"><span class="mt-pl-label">Avg. buy price</span><span class="mt-pl-value">${escapeHtml(avg)}</span></div>
+                        <div class="mt-pl-item"><span class="mt-pl-label">P/L</span><span class="mt-pl-value ${cls}">${escapeHtml(pnl)}</span></div>
+                        <div class="mt-pl-item"><span class="mt-pl-label">P/L %</span><span class="mt-pl-value ${cls}">${escapeHtml(pct)}</span></div>
+                    </div>`;
+                })()}
             `;
             panel.classList.add('show');
+            panel.querySelectorAll('.mt-history-row[data-txid]').forEach(row => {
+                row.addEventListener('click', (e) => {
+                    if (e.target.closest('.mt-history-remove')) return;
+                    openEditTransaction(row.dataset.txid);
+                });
+            });
             panel.querySelectorAll('.mt-history-remove').forEach(btn => {
-                btn.addEventListener('click', () => removeManualTransaction(btn.dataset.txid));
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    removeManualTransaction(btn.dataset.txid);
+                });
             });
             panel.querySelector('.mt-history-addtx').addEventListener('click', () => openAddTransactionForToken(mt.coingeckoId));
 
@@ -4701,6 +4852,7 @@
         // its history panel. Refreshes the live price first so the suggested price/unit and
         // 24h change aren't stale.
         async function openAddTransactionForToken(coingeckoId) {
+            clearTransactionEditState();
             const mt = manualTokens.find(t => t.coingeckoId === coingeckoId);
             if (!mt) return;
 
@@ -4856,7 +5008,200 @@
             document.getElementById('swapToAmount').value = '';
         }
 
+        // Transaction currently being edited. For swaps, editing one leg edits the whole swap.
+        let editingTxId = null;
+        let editingSwapId = null;
+
+        function setTransactionFormMode(editing) {
+            const btn = document.getElementById('manualTokenAddBtn');
+            const cancelBtn = document.getElementById('manualTokenCancelBtn');
+            if (editing) {
+                btn.textContent = t('editTransactionBtn');
+                cancelBtn.textContent = t('cancelBtn');
+                btn.dataset.i18n = '';
+            } else {
+                btn.textContent = t('addTransactionBtn');
+                btn.dataset.i18n = 'addTransactionBtn';
+                cancelBtn.textContent = t('cancelBtn');
+            }
+        }
+
+        function clearTransactionEditState() {
+            editingTxId = null;
+            editingSwapId = null;
+            setTransactionFormMode(false);
+        }
+
+        // Opens an existing ledger entry in the same transaction form used for new entries.
+        function openEditTransaction(txId) {
+            const tx = manualTransactions.find(x => x.id === txId);
+            if (!tx) return;
+
+            const related = tx.swapId
+                ? manualTransactions.filter(x => x.swapId === tx.swapId).sort((a, b) => a.addedAt - b.addedAt)
+                : [tx];
+
+            editingTxId = tx.id;
+            editingSwapId = tx.swapId || null;
+
+            const isTrade = tx.swapId && tx.swapKind;
+            const isPlainSwap = tx.swapId && !tx.swapKind;
+
+            if (isPlainSwap) {
+                const from = related.find(x => x.type === 'sell') || related[0];
+                const to = related.find(x => x.type === 'buy') || related[1];
+                if (!from || !to) return;
+
+                lastCheckedToken = {
+                    id: from.coingeckoId, symbol: from.symbol, name: from.name,
+                    icon: from.icon, price: null, change24h: null
+                };
+                setTxType('swap');
+                document.getElementById('manualTokenAmount').value = roundForInput(from.amount);
+                document.getElementById('swapToSymbol').value = to.symbol;
+                document.getElementById('swapToAmount').value = roundForInput(to.amount);
+                document.getElementById('manualTokenDate').value = from.date || todayIso();
+                document.getElementById('manualTokenTxPrice').value = from.priceUsd ?? '';
+                document.getElementById('manualTokenTxValue').value =
+                    from.priceUsd != null ? roundForInput(from.amount * from.priceUsd) : '';
+                document.getElementById('manualTokenNote').value = from.note || '';
+                showTokenCheckResult({
+                    id: from.coingeckoId, symbol: from.symbol, name: from.name,
+                    icon: from.icon, price: from.priceUsd, change24h: null
+                }, 'swap');
+                // showTokenCheckResult resets form values; restore edit values.
+                document.getElementById('manualTokenAmount').value = roundForInput(from.amount);
+                document.getElementById('swapToSymbol').value = to.symbol;
+                document.getElementById('swapToAmount').value = roundForInput(to.amount);
+                document.getElementById('manualTokenDate').value = from.date || todayIso();
+                document.getElementById('manualTokenTxPrice').value = from.priceUsd ?? '';
+                document.getElementById('manualTokenNote').value = from.note || '';
+                syncTxValueFromAmount();
+                renderSwapHoldings();
+                updateSwapDirection();
+            } else if (isTrade) {
+                // A buy/sell is stored as a linked token leg + USDC leg.
+                const tokenLeg = related.find(x => x.coingeckoId !== USDC_ID) || tx;
+                const type = tx.swapKind;
+                lastCheckedToken = {
+                    id: tokenLeg.coingeckoId, symbol: tokenLeg.symbol, name: tokenLeg.name,
+                    icon: tokenLeg.icon, price: null, change24h: null
+                };
+                showTokenCheckResult({
+                    id: tokenLeg.coingeckoId, symbol: tokenLeg.symbol, name: tokenLeg.name,
+                    icon: tokenLeg.icon, price: tokenLeg.priceUsd, change24h: null
+                }, type);
+                document.getElementById('manualTokenAmount').value = roundForInput(tokenLeg.amount);
+                document.getElementById('manualTokenDate').value = tokenLeg.date || todayIso();
+                document.getElementById('manualTokenTxPrice').value = tokenLeg.priceUsd ?? '';
+                document.getElementById('manualTokenNote').value = tokenLeg.note || '';
+                syncTxValueFromAmount();
+            } else {
+                showTokenCheckResult({
+                    id: tx.coingeckoId, symbol: tx.symbol, name: tx.name,
+                    icon: tx.icon, price: tx.priceUsd, change24h: null
+                }, tx.type);
+                document.getElementById('manualTokenAmount').value = roundForInput(tx.amount);
+                document.getElementById('manualTokenDate').value = tx.date || todayIso();
+                document.getElementById('manualTokenTxPrice').value = tx.priceUsd ?? '';
+                document.getElementById('manualTokenNote').value = tx.note || '';
+                if (tx.type === 'buy' || tx.type === 'sell') syncTxValueFromAmount();
+            }
+
+            setTransactionFormMode(true);
+            document.getElementById('tokenCard').classList.add('show');
+            setManualTokenMsg(t('editingTransactionMsg'), 'info');
+            document.getElementById('manualTokenResult').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function updateExistingTransactionFromForm() {
+            const target = manualTransactions.find(x => x.id === editingTxId);
+            if (!target) return false;
+
+            const amount = parseFloat(document.getElementById('manualTokenAmount').value);
+            const date = document.getElementById('manualTokenDate').value || todayIso();
+            const priceRaw = document.getElementById('manualTokenTxPrice').value;
+            const priceUsd = priceRaw === '' ? null : parseFloat(priceRaw);
+            const note = document.getElementById('manualTokenNote').value.trim().slice(0, 80) || null;
+
+            if (!Number.isFinite(amount) || amount <= 0) {
+                setManualTokenMsg('Please enter an amount greater than 0.', 'error');
+                return false;
+            }
+            if (priceRaw !== '' && (!Number.isFinite(priceUsd) || priceUsd < 0)) {
+                setManualTokenMsg('Price/unit must be a positive number, or left blank.', 'error');
+                return false;
+            }
+
+            const related = target.swapId
+                ? manualTransactions.filter(x => x.swapId === target.swapId)
+                : [target];
+
+            if (target.swapId && target.swapKind) {
+                const tokenLeg = related.find(x => x.coingeckoId !== USDC_ID);
+                const usdcLeg = related.find(x => x.coingeckoId === USDC_ID);
+                if (!tokenLeg || !usdcLeg) return false;
+                const unitPrice = priceUsd != null ? priceUsd : tokenLeg.priceUsd;
+                if (!(unitPrice > 0)) {
+                    setManualTokenMsg(t('usdcNeedPrice'), 'error');
+                    return false;
+                }
+                const usdcAmount = amount * unitPrice;
+                tokenLeg.amount = amount;
+                tokenLeg.priceUsd = unitPrice;
+                tokenLeg.date = date;
+                tokenLeg.note = note;
+                usdcLeg.amount = usdcAmount;
+                usdcLeg.priceUsd = 1;
+                usdcLeg.date = date;
+                usdcLeg.note = note;
+            } else if (target.swapId) {
+                const from = related.find(x => x.type === 'sell');
+                const to = related.find(x => x.type === 'buy');
+                if (!from || !to) return false;
+                const toAmount = parseFloat(document.getElementById('swapToAmount').value);
+                if (!Number.isFinite(toAmount) || toAmount <= 0) {
+                    setManualTokenMsg(t('swapNeedAmount'), 'error');
+                    return false;
+                }
+                const toSymbol = document.getElementById('swapToSymbol').value.trim().toUpperCase();
+                if (!toSymbol) {
+                    setManualTokenMsg(t('swapNeedToken'), 'error');
+                    return false;
+                }
+                from.amount = amount;
+                from.priceUsd = priceUsd;
+                from.date = date;
+                from.note = note;
+                to.amount = toAmount;
+                to.date = date;
+                to.note = note;
+                to.priceUsd = priceUsd != null ? (amount * priceUsd) / toAmount : to.priceUsd;
+            } else {
+                target.amount = amount;
+                target.date = date;
+                target.priceUsd = priceUsd;
+                target.note = note;
+            }
+
+            saveManualTransactionsToStorage(manualTransactions);
+            rebuildManualTokens();
+            renderManualTokenChips();
+            renderManualTokenHistory(openManualHistoryId);
+            if (document.getElementById('summary').classList.contains('show')) refreshView();
+            return true;
+        }
+
         async function handleManualTokenAdd() {
+            if (editingTxId) {
+                if (updateExistingTransactionFromForm()) {
+                    const id = openManualHistoryId;
+                    clearTransactionEditState();
+                    handleManualTokenCancel();
+                    renderManualTokenHistory(id);
+                }
+                return;
+            }
             const amountInput = document.getElementById('manualTokenAmount');
             const dateInput = document.getElementById('manualTokenDate');
             const priceInput = document.getElementById('manualTokenTxPrice');
@@ -4952,6 +5297,7 @@
         }
 
         function handleManualTokenCancel() {
+            clearTransactionEditState();
             document.getElementById('manualTokenResult').classList.remove('show');
             document.getElementById('manualTokenAmountRow').style.display = 'none';
             document.getElementById('manualTokenMsg').className = 'manual-token-msg';
@@ -6646,8 +6992,10 @@
             return { pctChange };
         }
 
-        // Every chart is drawn from CoinGecko history: current holdings × historical prices
-        // (amounts held constant — not the wallet's real past balances).
+        // Chart history uses CoinGecko historical prices. For manually recorded assets,
+        // balances are reconstructed from the real transaction dates; on-chain-only
+        // assets remain based on the current balance because their transaction ledger
+        // is not available here.
         //   24h → every 2h · 1W → every 12h · 1M → daily · 1Y → every 2 weeks
         function renderSnapshotChart(addresses, scope) {
             const container = document.getElementById('snapshotChart');
@@ -6660,7 +7008,7 @@
         }
 
         // =================================================================
-        //  CHART DATA — CoinGecko price history × current holdings
+        //  CHART DATA — CoinGecko price history × transaction-dated holdings
         // =================================================================
         const HIST_CACHE_KEY = 'pulsefolio_hist_cache_v2';
         const HOUR = 3600 * 1000, DAY = 24 * HOUR;
@@ -6759,7 +7107,7 @@
 
         // ---- saved chart points (per wallet/network context + range) ----
         // Lets a chart appear instantly on load, and survives a failed CoinGecko request.
-        const CHART_CACHE_KEY = 'pulsefolio_chart_cache_v1';
+        const CHART_CACHE_KEY = 'pulsefolio_chart_cache_v2';
         function chartCacheKey(rangeKey) {
             return lastChartAddresses ? `${getChartContextKey(lastChartAddresses, lastChartScope)}|${rangeKey}` : null;
         }
@@ -6783,7 +7131,7 @@
         function chartMetaText(def, pct, count, coverage, savedTs) {
             const tail = savedTs
                 ? 'saved ' + new Date(savedTs).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-                : 'current holdings × CoinGecko prices';
+                : 'transaction dates where available × historical prices';
             return `${def.label} · ${pct >= 0 ? '+' : ''}${pct.toFixed(1)}% · ` +
                 `${count} token${count === 1 ? '' : 's'} (${coverage}% of value) · ${tail}`;
         }
@@ -6816,19 +7164,73 @@
             chartHasData = true;
             syncChartVisibility();
 
-            const allTokens = mergeManualTokensIntoPortfolio(portfolioData).tokens;
-            const totalUsd = allTokens.reduce((sum, t) => sum + (t.usd || 0), 0);
-            const selected = [];
-            let coveredSoFar = 0;
-            for (const t of allTokens) { // already sorted by USD value, biggest first
-                if (!(t.rawAmount > 0 && t.usd > 0)) continue;
-                if (selected.length >= HIST_MAX_TOKENS || coveredSoFar >= HIST_COVERAGE_TARGET * totalUsd) break;
-                selected.push(t);
-                coveredSoFar += t.usd;
+            // -------------------------------------------------------------
+            // Transaction-aware portfolio history
+            // -------------------------------------------------------------
+            // IMPORTANT: do NOT use mergeManualTokensIntoPortfolio() here. That display
+            // helper deliberately folds equivalents such as manual WETH into on-chain ETH.
+            // For the history chart that loses the distinction between a real wallet balance
+            // (constant, because its transaction ledger is unavailable) and a manual balance
+            // (which must change on its actual transaction dates). Using the merged list could
+            // therefore double-count a manual position and/or make it appear before purchase.
+            const onChainTokens = Array.isArray(portfolioData?.tokens) ? portfolioData.tokens : [];
+            const activeManualTokens = hideManualTokens ? [] : manualTokens;
+            const totalUsd = onChainTokens.reduce((sum, t) => sum + (t.usd || 0), 0) +
+                activeManualTokens.reduce((sum, mt) => sum + ((mt.amount || 0) * (mt.price || 0)), 0);
+
+            // Manual transactions contain the real acquisition/sale dates and amounts.
+            // For those assets we reconstruct the balance at every chart timestamp,
+            // instead of multiplying today's balance by historical prices. Assets that
+            // come only from an on-chain wallet still use the current balance because
+            // their transaction history is not available in the app's ledger.
+            const manualById = new Map();
+            for (const tx of manualTransactions) {
+                if (!tx || !tx.coingeckoId) continue;
+                if (!manualById.has(tx.coingeckoId)) manualById.set(tx.coingeckoId, []);
+                manualById.get(tx.coingeckoId).push(tx);
             }
-            const jobs = selected
-                .map(t => ({ t, src: historySourceFor(t) }))
-                .filter(j => j.src);
+
+            // Build chart candidates from the raw on-chain list plus manual tokens BEFORE
+            // any equivalent-asset folding. This keeps each manual ledger independently
+            // reconstructable while still allowing CoinGecko to deduplicate identical price
+            // sources later through candidateMap.
+            const candidateMap = new Map();
+            for (const t of onChainTokens) {
+                const src = historySourceFor(t);
+                if (!src) continue;
+                candidateMap.set(src.key, { t, src, manualId: null, txs: [] });
+            }
+            for (const mt of activeManualTokens) {
+                const t = {
+                    symbol: (mt.symbol || '').toUpperCase(),
+                    name: mt.name || mt.symbol || mt.coingeckoId,
+                    rawAmount: Number(mt.amount) || 0,
+                    usd: (Number(mt.amount) || 0) * (Number(mt.price) || 0),
+                    address: `manual_${mt.coingeckoId}`,
+                    network: selectedNetwork,
+                    manuallyAdded: true,
+                };
+                const src = historySourceFor(t);
+                if (!src) continue;
+                candidateMap.set(`manual:${mt.coingeckoId}`, {
+                    t, src, manualId: mt.coingeckoId, txs: manualById.get(mt.coingeckoId) || []
+                });
+            }
+
+            let candidates = [...candidateMap.values()];
+            // Prefer assets that currently have value, then assets with recent/large
+            // historical ledger activity. Keep the existing hard request cap so CoinGecko
+            // remains lightweight, but never drop a transaction-backed asset just because
+            // its current balance is zero.
+            candidates.sort((a, b) => {
+                const av = a.t.usd || 0;
+                const bv = b.t.usd || 0;
+                if (bv !== av) return bv - av;
+                return (b.txs?.length || 0) - (a.txs?.length || 0);
+            });
+            const selected = candidates.slice(0, HIST_MAX_TOKENS);
+
+            const jobs = selected.map(entry => ({ ...entry }));
 
             // Small concurrency (CoinGecko keyless limits are low); each source is fetched once,
             // and only when its saved copy is older than this range's refresh interval.
@@ -6840,7 +7242,7 @@
                     const job = jobs[next++];
                     const info = {};
                     if (!pending.has(job.src.key)) pending.set(job.src.key, fetchPriceHistory(job.src, def.kind, def.ttlMs, info));
-                    results.set(job.t, await pending.get(job.src.key));
+                    results.set(job.src.key, await pending.get(job.src.key));
                     // Half speed: after a real network request, wait as long as it took before the
                     // next one (saved copies and cooldown skips are not slowed down).
                     if (info.networkMs > 10) await new Promise(r => setTimeout(r, info.networkMs));
@@ -6850,38 +7252,93 @@
             await Promise.all([worker(), worker(), worker()]);
             if (!stillCurrent()) return;
 
-            // Keep tokens whose history looks like the same asset that is currently priced.
-            // The live price is appended as the newest point, so the right edge of the chart is
-            // current even when the saved history is up to a day old.
             const now = Date.now();
+            const rangeStart = now - def.windowMs;
             const used = [];
-            for (const { t } of jobs) {
-                let series = results.get(t);
-                if (!series) continue;
-                const cur = t.usd / t.rawAmount;
+            for (const job of jobs) {
+                let series = results.get(job.src.key);
+                if (!series || !series.length) continue;
+                const curPrice = job.t.usd > 0 && job.t.rawAmount > 0 ? job.t.usd / job.t.rawAmount : null;
                 const last = series[series.length - 1];
-                if (cur > 0 && (last[1] / cur > 3 || last[1] / cur < 1 / 3)) continue;
-                if (cur > 0 && last[0] < now - 5 * 60 * 1000) series = [...series, [now, cur]];
-                used.push({ t, series });
+                if (curPrice > 0 && last && (last[1] / curPrice > 3 || last[1] / curPrice < 1 / 3)) continue;
+                if (curPrice > 0 && last[0] < now - 5 * 60 * 1000) series = [...series, [now, curPrice]];
+                used.push({ ...job, series });
             }
 
-            const valueAt = (ts, tol) => {
-                let value = 0, any = false;
-                for (const { t, series } of used) {
-                    const pr = priceAtTime(series, ts, tol);
-                    if (pr != null) { value += pr * t.rawAmount; any = true; }
+            // A transaction dated in YYYY-MM-DD is effective from the start of that day.
+            // This makes a buy/sell visible on the actual transaction date rather than
+            // shifting it to the next chart bucket.
+            function txTimestamp(tx) {
+                const d = String(tx.date || '').slice(0, 10);
+                const parsed = Date.parse(`${d}T00:00:00`);
+                return Number.isFinite(parsed) ? parsed : 0;
+            }
+            function amountAt(entry, ts) {
+                if (!entry.txs || !entry.txs.length) return entry.t.rawAmount || 0;
+                let amount = 0;
+                for (const tx of entry.txs) {
+                    if (txTimestamp(tx) > ts) continue;
+                    if (isPlannedTx(tx) && txTimestamp(tx) > now) continue;
+                    const sign = (tx.type === 'sell' || tx.type === 'withdrawal') ? -1 : 1;
+                    amount += sign * Number(tx.amount || 0);
                 }
-                return any ? value : null;
-            };
+                // Protect the chart from tiny floating point negatives after a full exit.
+                return Math.max(0, amount);
+            }
 
             const tol = Math.min(def.stepMs / 2, 12 * HOUR);
-            const steps = Math.round(def.windowMs / def.stepMs);
+            const valueAt = (ts, tol) => {
+                let value = 0;
+                let hasHolding = false;
+                for (const entry of used) {
+                    const amount = amountAt(entry, ts);
+                    if (!(amount > 0)) continue;
+                    hasHolding = true;
+                    const pr = priceAtTime(entry.series, ts, tol);
+                    if (pr != null) value += pr * amount;
+                }
+                // No asset was held at this timestamp = a genuine $0 portfolio value.
+                // If an asset was held but its price history has no point yet, the value
+                // is unknown and we omit that point rather than inventing a price.
+                if (!hasHolding) return 0;
+                return value > 0 ? value : null;
+            };
+
+            // The selected range is a real calendar window and must remain intact.
+            // In particular, 1Y must show the full last 12 months even when the first
+            // recorded transaction happened only recently. Before a first purchase, a
+            // transaction-backed asset has a zero balance, so the chart naturally starts
+            // from $0 instead of collapsing the whole axis to the transaction day.
+            const relevantTxTimes = used
+                .flatMap(entry => entry.txs || [])
+                .map(txTimestamp)
+                .filter(ts => ts >= rangeStart && ts <= now);
+            const effectiveStart = rangeStart;
+            const steps = Math.max(1, Math.ceil((now - effectiveStart) / def.stepMs));
             const points = [];
             for (let k = steps; k >= 0; k--) {
-                const ts = now - k * def.stepMs;
+                const ts = Math.min(now, effectiveStart + (steps - k) * def.stepMs);
                 const value = valueAt(ts, tol);
                 if (value != null) points.push({ ts, value });
             }
+            // Always include the exact current endpoint and exact transaction dates so a
+            // transaction between regular buckets is visible on the chart. The regular
+            // points still cover the entire selected range.
+            const exactTimes = new Set([now]);
+            for (const ts of relevantTxTimes) if (ts >= effectiveStart && ts <= now) exactTimes.add(ts);
+            for (const ts of exactTimes) {
+                const value = valueAt(ts, tol);
+                if (value != null) points.push({ ts, value });
+            }
+            points.sort((a, b) => a.ts - b.ts);
+            const dedupedPoints = [];
+            for (const p of points) {
+                const last = dedupedPoints[dedupedPoints.length - 1];
+                if (last && last.ts === p.ts) last.value = p.value;
+                else dedupedPoints.push(p);
+            }
+            points.length = 0;
+            points.push(...dedupedPoints);
 
             if (points.length < 2) {
                 // Refresh failed. Keep whatever is already on screen (e.g. the saved chart).
@@ -7885,6 +8342,8 @@
                 txPricePlaceholder: 'Price/unit USD (optional)',
                 txNotePlaceholder: 'Note (optional)',
                 addTransactionBtn: 'Add transaction',
+                editTransactionBtn: 'Save changes',
+                editingTransactionMsg: 'Editing transaction — change the fields and save.',
                 manualMergeLabel: 'If a manual token matches one already in your portfolio',
                 keepSeparateBtn: 'Keep separate',
                 keepSeparateTitle: 'Show manually added tokens as their own separate row',
@@ -8006,6 +8465,8 @@
                 txPricePlaceholder: 'Cena/szt. USD (opcjonalnie)',
                 txNotePlaceholder: 'Notatka (opcjonalnie)',
                 addTransactionBtn: 'Dodaj transakcję',
+                editTransactionBtn: 'Zapisz zmiany',
+                editingTransactionMsg: 'Edycja transakcji — zmień pola i zapisz.',
                 manualMergeLabel: 'Jeśli ręcznie dodany token pasuje do tokena już będącego w portfelu',
                 keepSeparateBtn: 'Trzymaj osobno',
                 keepSeparateTitle: 'Pokazuj ręcznie dodane tokeny jako osobny wiersz',
