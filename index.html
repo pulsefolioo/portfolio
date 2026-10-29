@@ -802,6 +802,81 @@
         .token-card.show {
             display: block;
         }
+
+        /* ---------- transaction modal (opened from + / ⋮ in the actions column) ---------- */
+        .tx-modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 10040;
+            background: rgba(0, 0, 0, 0.62);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+        }
+        .tx-modal-backdrop.show { display: block; }
+        body.tx-modal-open { overflow: hidden; }
+        /* Address editor uses the same centered popup and backdrop as token/transaction dialogs. */
+        .search-card.modal-mode.show {
+            display: block !important;
+            position: fixed;
+            z-index: 10050;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(720px, calc(100vw - 24px));
+            max-height: calc(100vh - 24px);
+            max-height: calc(100dvh - 24px);
+            overflow-y: auto;
+            margin: 0;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+        }
+        .token-card.modal-mode.show {
+            position: fixed;
+            z-index: 10050;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(520px, calc(100vw - 24px));
+            max-height: calc(100vh - 24px);
+            max-height: calc(100dvh - 24px);
+            overflow-y: auto;
+            margin: 0;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+        }
+        /* Wider layout for the full token manager on desktop; keep it responsive on small screens. */
+        .token-card.modal-mode.missing-token-popup.show {
+            width: min(860px, calc(100vw - 40px));
+        }
+        @media (max-width: 600px) {
+            .token-card.modal-mode.missing-token-popup.show {
+                width: calc(100vw - 24px);
+            }
+        }
+        /* In the modal hide everything that belongs to "Missing a token? Add it" */
+        .token-card.modal-mode .token-add-row,
+        .token-card.modal-mode #tokenMsg,
+        .token-card.modal-mode #customTokenChips,
+        .token-card.modal-mode .token-empty-hint,
+        .token-card.modal-mode .manual-token-divider,
+        .token-card.modal-mode .manual-merge-row,
+        .token-card.modal-mode #manualTokenList,
+        .token-card.modal-mode > .manual-token-row:not(#manualTokenAmountRow) {
+            display: none !important;
+        }
+        /* The dedicated "Missing a token? Add it" popup shows the complete token manager. */
+        .token-card.modal-mode.missing-token-popup .token-add-row,
+        .token-card.modal-mode.missing-token-popup #tokenMsg,
+        .token-card.modal-mode.missing-token-popup #customTokenChips,
+        .token-card.modal-mode.missing-token-popup .token-empty-hint,
+        .token-card.modal-mode.missing-token-popup .manual-token-divider,
+        .token-card.modal-mode.missing-token-popup .manual-merge-row,
+        .token-card.modal-mode.missing-token-popup #manualTokenList,
+        .token-card.modal-mode.missing-token-popup > .manual-token-row {
+            display: revert !important;
+        }
+        .token-card.modal-mode.missing-token-popup #tokenMsg:not(.show) { display: none !important; }
+        .token-card.modal-mode.missing-token-popup #customTokenChips:empty,
+        .token-card.modal-mode.missing-token-popup #manualTokenList:empty { display: none !important; }
         .token-add-row {
             display: flex;
             gap: 8px;
@@ -2592,6 +2667,73 @@
             font-variant-numeric: tabular-nums;
         }
 
+        /* ---------- actions column (portfolio table) ---------- */
+        .token-table th.col-actions, .token-table td.col-actions {
+            text-align: center;
+            width: 1%;
+            white-space: nowrap;
+        }
+        .row-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .row-action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-primary);
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+            transition: all 0.15s ease;
+        }
+        .row-action-btn:hover, .row-action-btn.open {
+            background: var(--surface-2);
+            border-color: var(--border);
+            color: var(--cyan);
+        }
+        .row-action-btn svg { width: 16px; height: 16px; }
+        .row-action-btn.row-more {
+            width: auto;
+            min-width: 28px;
+            height: 28px;
+            padding: 0 9px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .row-menu {
+            position: fixed;
+            z-index: 10000;
+            min-width: 190px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+            padding: 4px;
+        }
+        .row-menu button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font: inherit;
+            font-size: 13px;
+            padding: 9px 12px;
+            border-radius: 7px;
+            cursor: pointer;
+        }
+        .row-menu button:hover { background: rgba(0, 212, 255, 0.12); color: var(--cyan); }
+
         /* ---------- extra small screens ---------- */
         @media (max-width: 400px) {
             .addr-row {
@@ -2721,6 +2863,48 @@
         }
         ::-webkit-scrollbar-thumb:hover {
             background: var(--text-muted);
+        }
+
+        /* Token contract input: use the available modal width instead of staying narrow. */
+        .token-card.modal-mode.missing-token-popup.show .token-add-row {
+            display: flex;
+            width: 100%;
+            align-items: stretch;
+        }
+        .token-card.modal-mode.missing-token-popup.show .token-add-row input {
+            flex: 1 1 auto;
+            width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+        }
+        .token-card.modal-mode.missing-token-popup.show .token-add-row #addTokenBtn {
+            flex: 0 0 auto;
+        }
+        /* Added-token chips should size to their contents, not stretch to fill the row. */
+        #customTokenChips .token-chip,
+        #manualTokenList .token-chip {
+            display: inline-flex;
+            flex: 0 0 auto;
+            width: fit-content;
+            max-width: 100%;
+            box-sizing: border-box;
+            align-self: flex-start;
+        }
+        #customTokenChips .token-chip {
+            white-space: nowrap;
+        }
+        #manualTokenList .token-chip > span:not(.mt-chip-icon),
+        #manualTokenList .token-chip .mt-chip-name {
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+        @media (max-width: 600px) {
+            .token-card.modal-mode.missing-token-popup.show .token-add-row {
+                flex-wrap: nowrap;
+            }
+            .token-card.modal-mode.missing-token-popup.show .token-add-row input {
+                min-width: 0;
+            }
         }
     </style>
 </head>
@@ -2890,9 +3074,10 @@
             </div>
         </div>
 
-        <div class="token-card" id="tokenCard">
+        <div class="tx-modal-backdrop" id="txModalBackdrop"></div>
+        <div class="token-card" id="tokenCard" role="dialog" aria-modal="false">
             <div class="search-card-head">
-                <div class="search-label" data-i18n="missingTokenLabel">Missing a token? Add it</div>
+                <div class="search-label" id="tokenCardTitle" data-i18n="missingTokenLabel">Missing a token? Add it</div>
                 <button class="btn-collapse show" id="closeTokenCardBtn" type="button" title="Close" aria-label="Close" data-i18n-title="closeTitle" data-i18n-aria="closeTitle"><svg class="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="M6 6l12 12"></path></svg></button>
             </div>
             <div class="token-add-row">
@@ -5294,6 +5479,7 @@
             document.getElementById('manualTokenAmountRow').style.display = 'none';
             renderManualTokenHistory(tok.id); // open the history so the new entry is visible
             lastCheckedToken = null;
+            if (isTxModalOpen()) closeTxModal(); // popup: done once the transaction is saved
         }
 
         function handleManualTokenCancel() {
@@ -6352,6 +6538,158 @@
             return result;
         }
 
+        // ---------- actions column helpers ----------
+        // Finds the manually tracked token (transaction ledger) behind a portfolio row:
+        // manual rows carry their CoinGecko id in the address ("manual_<id>"); on-chain rows
+        // that had manual amounts summed into them are matched by symbol.
+        function findManualTokenForRow(addr, symbol) {
+            if (addr && addr.startsWith('manual_')) {
+                const id = addr.slice('manual_'.length);
+                const hit = manualTokens.find(m => m.coingeckoId === id);
+                if (hit) return hit;
+            }
+            const sym = (symbol || '').toUpperCase();
+            return manualTokens.find(m => m.symbol.toUpperCase() === sym) || null;
+        }
+
+        // ---------- transaction modal (CoinGecko-style popup) ----------
+        function isTxModalOpen() {
+            return document.getElementById('tokenCard').classList.contains('modal-mode');
+        }
+        function openTxModal(mode, symbol) {
+            const card = document.getElementById('tokenCard');
+            card.classList.add('modal-mode', 'show');
+            document.getElementById('txModalBackdrop').classList.add('show');
+            document.body.classList.add('tx-modal-open');
+            const key = mode === 'view' ? 'txModalHistoryTitle' : (mode === 'missing' ? 'missingTokenLabel' : 'txModalTitle');
+            card.classList.toggle('missing-token-popup', mode === 'missing');
+            const title = document.getElementById('tokenCardTitle');
+            title.dataset.i18n = key;
+            title.textContent = t(key) + (symbol ? ' · ' + symbol : '');
+            card.scrollTop = 0;
+        }
+        // Only resets the modal's look (backdrop, title, scroll lock); safe to call repeatedly.
+        function resetTxModalUi() {
+            const card = document.getElementById('tokenCard');
+            card.classList.remove('modal-mode', 'show', 'missing-token-popup');
+            document.getElementById('txModalBackdrop').classList.remove('show');
+            document.body.classList.remove('tx-modal-open');
+            const title = document.getElementById('tokenCardTitle');
+            if (title.dataset.i18n !== 'missingTokenLabel') {
+                title.dataset.i18n = 'missingTokenLabel';
+                title.textContent = t('missingTokenLabel');
+            }
+        }
+        function closeTxModal() {
+            const card = document.getElementById('tokenCard');
+            const wasModal = card.classList.contains('modal-mode');
+            card.classList.remove('show');
+            resetTxModalUi();
+            if (wasModal) {
+                handleManualTokenCancel();
+                renderManualTokenHistory(null);
+            }
+        }
+        function isAddressModalOpen() {
+            return document.getElementById('searchCard').classList.contains('modal-mode');
+        }
+        function openAddressModal() {
+            const card = document.getElementById('searchCard');
+            // Close the other popup first so only one modal is active at a time.
+            if (isTxModalOpen()) closeTxModal();
+            card.style.display = 'block';
+            card.classList.add('modal-mode', 'show');
+            document.getElementById('txModalBackdrop').classList.add('show');
+            document.body.classList.add('tx-modal-open');
+            document.getElementById('collapseSearchBtn').classList.add('show');
+            card.scrollTop = 0;
+        }
+        function closeAddressModal() {
+            const card = document.getElementById('searchCard');
+            card.classList.remove('modal-mode', 'show');
+            document.getElementById('txModalBackdrop').classList.remove('show');
+            document.body.classList.remove('tx-modal-open');
+            const saved = loadAddressesFromStorage();
+            if (saved && saved.length) setPortfolioBarVisible(true, saved);
+            else card.style.display = 'block';
+        }
+        function closeActivePopup() {
+            if (isAddressModalOpen()) closeAddressModal();
+            else if (isTxModalOpen()) closeTxModal();
+        }
+        (function initTxModal() {
+            document.getElementById('txModalBackdrop').addEventListener('click', closeActivePopup);
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeActivePopup();
+            });
+            // If anything else hides a popup, drop the shared backdrop and scroll lock.
+            new MutationObserver(() => {
+                const card = document.getElementById('tokenCard');
+                if (card.classList.contains('modal-mode') && !card.classList.contains('show')) resetTxModalUi();
+            }).observe(document.getElementById('tokenCard'), { attributes: true, attributeFilter: ['class'] });
+        })();
+
+        // "+" in the actions column: open the "Add transaction" popup for this row's token.
+        function addTransactionForRow(addr, symbol) {
+            openTxModal('add', symbol);
+            const mt = findManualTokenForRow(addr, symbol);
+            if (mt) {
+                openAddTransactionForToken(mt.coingeckoId);
+                return;
+            }
+            // On-chain token with no ledger yet — look it up on CoinGecko by symbol.
+            clearTransactionEditState();
+            document.getElementById('manualTokenSymbol').value = symbol;
+            handleManualTokenCheck();
+        }
+
+        // "Wyświetl transakcje": open the transaction history popup for this row's token.
+        function viewTransactionsForRow(addr, symbol) {
+            const mt = findManualTokenForRow(addr, symbol);
+            openTxModal('view', symbol);
+            if (mt) {
+                renderManualTokenHistory(mt.coingeckoId);
+            } else {
+                renderManualTokenHistory(null);
+                setManualTokenMsg(t('noTransactionsForToken', { s: symbol }), 'info');
+            }
+        }
+
+        let rowMenuEl = null, rowMenuBtn = null;
+        function closeRowMenu() {
+            if (rowMenuEl) { rowMenuEl.remove(); rowMenuEl = null; }
+            if (rowMenuBtn) { rowMenuBtn.classList.remove('open'); rowMenuBtn = null; }
+        }
+        function openRowMenu(btn) {
+            const same = rowMenuBtn === btn;
+            closeRowMenu();
+            if (same) return;
+            rowMenuBtn = btn;
+            btn.classList.add('open');
+            const menu = document.createElement('div');
+            menu.className = 'row-menu';
+            menu.setAttribute('role', 'menu');
+            menu.innerHTML = `<button type="button" role="menuitem">${t('viewTransactions')}</button>`;
+            document.body.appendChild(menu);
+            const r = btn.getBoundingClientRect();
+            const w = menu.offsetWidth, h = menu.offsetHeight;
+            let left = Math.min(Math.max(8, r.right - w), window.innerWidth - w - 8);
+            let top = r.bottom + 4;
+            if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 4);
+            menu.style.left = left + 'px';
+            menu.style.top = top + 'px';
+            menu.querySelector('button').addEventListener('click', () => {
+                const addr = btn.dataset.addr, symbol = btn.dataset.symbol;
+                closeRowMenu();
+                viewTransactionsForRow(addr, symbol);
+            });
+            rowMenuEl = menu;
+        }
+        document.addEventListener('click', (e) => { if (rowMenuEl && !e.target.closest('.row-menu')) closeRowMenu(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeRowMenu(); });
+        window.addEventListener('scroll', closeRowMenu, true);
+        window.addEventListener('resize', closeRowMenu);
+
         function renderTokens(tokens) {
             const list = document.getElementById('tokenList');
 
@@ -6383,8 +6721,10 @@
                     headerHtml += `<th class="${cls}" data-sort="${col}">${label}${arrow}</th>`;
                 }
             }
+            headerHtml += `<th class="col-actions unsortable">${t('colActions')}</th>`;
             headerHtml += '</tr></thead>';
 
+            const lblAddTx = t('addTransaction'), lblMore = t('viewTransactions');
             let bodyHtml = '<tbody>';
             for (const t of tokens) {
                 const priceDisplay = t.noPrice ? '—' : formatPrice(t.price);
@@ -6449,7 +6789,13 @@
                     return '';
                 }).join('');
 
-                bodyHtml += `<tr>${cells}</tr>`;
+                const actionsCell = `<td class="col-actions">
+                    <div class="row-actions">
+                        <button class="row-action-btn row-add-tx" type="button" data-addr="${escapeHtml(t.address || '')}" data-symbol="${escapeHtml(t.symbol)}" title="${lblAddTx}" aria-label="${lblAddTx}">+</button>
+                        <button class="row-action-btn row-more" type="button" data-addr="${escapeHtml(t.address || '')}" data-symbol="${escapeHtml(t.symbol)}" title="${lblMore}" aria-label="${lblMore}">⋮</button>
+                    </div>
+                </td>`;
+                bodyHtml += `<tr>${cells}${actionsCell}</tr>`;
             }
             bodyHtml += '</tbody>';
 
@@ -6466,6 +6812,21 @@
                     }
                     saveSortConfig();
                     refreshView();
+                });
+            });
+
+            list.querySelectorAll('.row-add-tx').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeRowMenu();
+                    addTransactionForRow(btn.dataset.addr, btn.dataset.symbol);
+                });
+            });
+            list.querySelectorAll('.row-more').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeRowMenu();
+                    viewTransactionsForRow(btn.dataset.addr, btn.dataset.symbol);
                 });
             });
 
@@ -7782,34 +8143,25 @@
         });
 
         document.getElementById('editPortfolioBtn').addEventListener('click', () => {
-            const searchCard = document.getElementById('searchCard');
-            const isEditOpen = searchCard.style.display === 'block';
-            if (isEditOpen) {
-                // Second click — same as the ✕ collapse button: close the editor and go
-                // back to the saved-portfolio summary instead of leaving it open.
-                const saved = loadAddressesFromStorage();
-                if (saved && saved.length) setPortfolioBarVisible(true, saved);
-            } else {
-                setPortfolioBarVisible(false);
-                document.getElementById('tokenCard').classList.remove('show');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
+            if (isAddressModalOpen()) { closeAddressModal(); return; }
+            openAddressModal();
         });
 
         document.getElementById('toggleTokenCardBtn').addEventListener('click', () => {
-            document.getElementById('tokenCard').classList.toggle('show');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if (isTxModalOpen()) { closeTxModal(); return; }
+            if (isAddressModalOpen()) closeAddressModal();
+            openTxModal('missing');
         });
 
         document.getElementById('closeTokenCardBtn').addEventListener('click', () => {
+            if (isTxModalOpen()) { closeTxModal(); return; }
             document.getElementById('tokenCard').classList.remove('show');
         });
 
         document.getElementById('collapseSearchBtn').addEventListener('click', () => {
+            if (isAddressModalOpen()) { closeAddressModal(); return; }
             const saved = loadAddressesFromStorage();
-            if (saved && saved.length) {
-                setPortfolioBarVisible(true, saved);
-            }
+            if (saved && saved.length) setPortfolioBarVisible(true, saved);
         });
 
         document.getElementById('newPortfolioBtn').addEventListener('click', () => {
@@ -8059,7 +8411,7 @@
             if (e.key === 'Enter') handleManualTokenAdd();
         });
         document.getElementById('manualTokenTxPrice').addEventListener('input', syncTxFieldsFromPrice);
-        document.getElementById('manualTokenCancelBtn').addEventListener('click', handleManualTokenCancel);
+        document.getElementById('manualTokenCancelBtn').addEventListener('click', () => { if (isTxModalOpen()) closeTxModal(); else handleManualTokenCancel(); });
         document.getElementById('mtTxTypeToggle').querySelectorAll('.mt-tx-btn').forEach(btn => {
             btn.addEventListener('click', () => setTxType(btn.dataset.txtype));
         });
@@ -8378,6 +8730,13 @@
                 colPrice: 'Price',
                 colAmount: 'Amount',
                 colValue: 'Value',
+                colActions: 'Actions',
+                addTransaction: 'Add transaction',
+                txModalTitle: 'Add transaction',
+                txModalHistoryTitle: 'Transactions',
+                rowMore: 'More actions',
+                viewTransactions: 'View transactions',
+                noTransactionsForToken: 'No transactions logged for {s} yet — use + to add one.',
                 noTokensFound: 'No tokens with a recognized USD value for this address.',
                 noFarmPositions: 'No active positions in farms or staking.',
                 athModeText: 'Value at ATH 🚀',
@@ -8501,6 +8860,13 @@
                 colPrice: 'Cena',
                 colAmount: 'Ilość',
                 colValue: 'Wartość',
+                colActions: 'Działania',
+                addTransaction: 'Dodaj transakcję',
+                txModalTitle: 'Dodaj transakcję',
+                txModalHistoryTitle: 'Transakcje',
+                rowMore: 'Więcej działań',
+                viewTransactions: 'Wyświetl transakcje',
+                noTransactionsForToken: 'Brak zapisanych transakcji dla {s} — użyj +, aby dodać.',
                 noTokensFound: 'Brak tokenów o rozpoznanej wartości USD dla tego adresu.',
                 noFarmPositions: 'Brak aktywnych pozycji farm lub staking.',
                 athModeText: 'Wartość przy ATH 🚀',
