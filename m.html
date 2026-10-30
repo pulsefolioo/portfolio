@@ -397,6 +397,12 @@
             border-bottom: 1px solid var(--border);
             background: var(--surface);
         }
+        /* switcher now lives inside the address editor card */
+        .search-card .portfolio-switch-bar {
+            padding: 0 0 12px;
+            margin-bottom: 14px;
+            background: transparent;
+        }
         .portfolio-switch-left {
             display: flex;
             align-items: center;
@@ -802,6 +808,86 @@
         .token-card.show {
             display: block;
         }
+
+        /* "Edit addresses" and "Missing a token? Add it" open as popups */
+        .cm-backdrop {
+            display: none;
+            position: fixed; inset: 0; z-index: 9980;
+            background: rgba(0, 0, 0, 0.62);
+            backdrop-filter: blur(2px);
+        }
+        .cm-backdrop.show { display: block; }
+        .token-card.show, .search-card.as-modal {
+            position: fixed; z-index: 9990;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: min(720px, calc(100vw - 24px));
+            max-height: 90vh; overflow-y: auto;
+            margin: 0;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+        }
+        /* …styled like the transaction popups (.pf-modal) */
+        .token-card.show, .search-card.as-modal {
+            width: min(560px, calc(100vw - 24px));
+            padding: 18px 20px 20px;
+            border-radius: 16px;
+        }
+        .token-card.show .search-card-head, .search-card.as-modal .search-card-head {
+            margin-bottom: 14px;
+            flex-wrap: nowrap;
+        }
+        .token-card.show .search-card-head .search-label, .search-card.as-modal .search-card-head .search-label {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 17px; font-weight: 700;
+            color: var(--text-primary);
+            text-transform: none; letter-spacing: 0;
+        }
+        .token-card.show .btn-collapse, .search-card.as-modal .btn-collapse {
+            width: 30px; height: 30px; border: none; background: transparent;
+            border-radius: 8px; color: var(--text-secondary);
+        }
+        .token-card.show .btn-collapse:hover, .search-card.as-modal .btn-collapse:hover {
+            background: var(--surface-2); color: var(--text-primary);
+        }
+        .token-card.show .token-add-row input, .token-card.show .manual-token-row input,
+        .search-card.as-modal .addr-row input, .search-card.as-modal .network-selector select {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: inherit; font-size: 14px;
+            padding: 10px 12px;
+            color-scheme: dark;
+            outline: none;
+        }
+        :root.light .token-card.show input, :root.light .search-card.as-modal input { color-scheme: light; }
+        .search-card.as-modal .network-selector select { padding: 7px 10px; font-size: 13px; }
+        .token-card.show .token-add-row input:focus, .token-card.show .manual-token-row input:focus,
+        .search-card.as-modal .addr-row input:focus, .search-card.as-modal .network-selector select:focus {
+            border-color: var(--cyan);
+        }
+        .token-card.show .token-add-row input::placeholder, .token-card.show .manual-token-row input::placeholder,
+        .search-card.as-modal .addr-row input::placeholder { font-family: inherit; }
+        .token-card.show .btn-grad, .search-card.as-modal .btn-grad {
+            background: var(--cyan); border: 1px solid var(--cyan); color: #04141a;
+            border-radius: 10px; box-shadow: none;
+            font-family: inherit; font-size: 13.5px; font-weight: 600; padding: 10px 18px;
+        }
+        .token-card.show .btn-grad:hover:not(:disabled), .search-card.as-modal .btn-grad:hover:not(:disabled) {
+            filter: brightness(1.08); transform: none; box-shadow: none;
+        }
+        .token-card.show .btn-bar, .search-card.as-modal .btn-bar, .search-card.as-modal .btn-add-addr {
+            background: var(--surface-2); border: 1px solid var(--border); color: var(--text-primary);
+            border-radius: 10px; font-family: inherit; font-size: 13.5px; font-weight: 600;
+        }
+        .token-card.show .btn-bar:hover, .search-card.as-modal .btn-bar:hover, .search-card.as-modal .btn-add-addr:hover {
+            border-color: var(--text-secondary);
+        }
+        .token-card.show .mt-tx-toggle {
+            background: var(--surface-2); border: 1px solid var(--border);
+            border-radius: 12px; padding: 4px; gap: 4px;
+        }
+        .token-card.show .mt-tx-btn { border-radius: 9px; font-size: 12.5px; padding: 8px 6px; }
+        .token-card.show .token-empty-hint, .search-card.as-modal .other-networks-selector-hint { color: var(--text-secondary); }
         .token-add-row {
             display: flex;
             gap: 8px;
@@ -2592,6 +2678,192 @@
             font-variant-numeric: tabular-nums;
         }
 
+        /* ---------- actions column (portfolio table) ---------- */
+        .token-table th.col-actions, .token-table td.col-actions {
+            text-align: center;
+            width: 1%;
+            white-space: nowrap;
+        }
+        .row-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .row-action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-primary);
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+            transition: all 0.15s ease;
+        }
+        .row-action-btn:hover, .row-action-btn.open {
+            background: var(--surface-2);
+            border-color: var(--border);
+            color: var(--cyan);
+        }
+        .row-action-btn svg { width: 16px; height: 16px; }
+        .row-menu {
+            position: fixed;
+            z-index: 10000;
+            min-width: 190px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+            padding: 4px;
+        }
+        .row-menu button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font: inherit;
+            font-size: 13px;
+            padding: 9px 12px;
+            border-radius: 7px;
+            cursor: pointer;
+        }
+        .row-menu button:hover { background: rgba(0, 212, 255, 0.12); color: var(--cyan); }
+
+        /* ---------- transaction popups ---------- */
+        .pf-overlay {
+            position: fixed; inset: 0; z-index: 10001;
+            background: rgba(0, 0, 0, 0.62);
+            display: flex; align-items: center; justify-content: center;
+            padding: 16px;
+            backdrop-filter: blur(2px);
+        }
+        .pf-modal {
+            width: min(440px, 100%);
+            max-height: 92vh; overflow-y: auto;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+            padding: 18px 20px 20px;
+            color: var(--text-primary);
+        }
+        .pf-modal.wide { width: min(560px, 100%); }
+        .pf-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+        .pf-title { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 700; }
+        .pf-x {
+            width: 30px; height: 30px; border-radius: 8px; border: none; background: transparent;
+            color: var(--text-secondary); font-size: 22px; line-height: 1; cursor: pointer;
+        }
+        .pf-x:hover { background: var(--surface-2); color: var(--text-primary); }
+        .pf-token {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--surface-2); border: 1px solid var(--border);
+            border-radius: 12px; padding: 10px 12px; margin-bottom: 14px;
+        }
+        .pf-token-icon {
+            width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 14px; color: #fff;
+        }
+        .pf-token-icon img { width: 100%; height: 100%; object-fit: cover; }
+        .pf-token-name { font-weight: 600; font-size: 14px; }
+        .pf-token-name span { color: var(--text-secondary); font-weight: 500; margin-left: 4px; }
+        .pf-token-price { color: var(--text-secondary); font-size: 12px; margin-top: 2px; }
+        .pf-token-price b { color: var(--text-primary); font-weight: 600; }
+        .pf-tabs {
+            display: flex; gap: 4px; padding: 4px; margin-bottom: 14px;
+            background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px;
+        }
+        .pf-tab {
+            flex: 1 1 auto; border: none; background: transparent; color: var(--text-secondary);
+            font: inherit; font-size: 12.5px; font-weight: 600; padding: 8px 6px;
+            border-radius: 9px; cursor: pointer; white-space: nowrap;
+        }
+        .pf-tab:hover:not(:disabled) { color: var(--text-primary); }
+        .pf-tab.active { background: var(--bg); color: var(--cyan); box-shadow: 0 0 0 1px var(--border); }
+        .pf-tab.active[data-type="buy"], .pf-tab.active[data-type="deposit"], .pf-tab.active[data-type="airdrop"] { color: var(--green); }
+        .pf-tab.active[data-type="sell"], .pf-tab.active[data-type="withdrawal"] { color: var(--red); }
+        .pf-tab:disabled { cursor: default; }
+        .pf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .pf-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+        .pf-field.full { grid-column: 1 / -1; }
+        .pf-field > span { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+        .pf-field input {
+            width: 100%; box-sizing: border-box;
+            background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
+            color: var(--text-primary); font: inherit; font-size: 14px; padding: 10px 12px;
+            color-scheme: dark; outline: none;
+        }
+        :root.light .pf-field input { color-scheme: light; }
+        .pf-field input:focus { border-color: var(--cyan); }
+        .pf-total {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: 14px; padding: 12px 14px;
+            background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px;
+            font-size: 13px; color: var(--text-secondary);
+        }
+        .pf-total strong { font-family: 'Space Grotesk', sans-serif; font-size: 18px; color: var(--text-primary); }
+        .pf-msg { display: none; margin-top: 12px; font-size: 12.5px; padding: 9px 12px; border-radius: 9px; }
+        .pf-msg.show { display: block; }
+        .pf-msg.error { color: var(--red); background: rgba(255, 84, 112, 0.1); border: 1px solid rgba(255, 84, 112, 0.3); }
+        .pf-loading { color: var(--text-secondary); font-size: 13px; padding: 18px 0; text-align: center; }
+        .pf-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+        .pf-btn {
+            border: 1px solid var(--border); background: var(--surface-2); color: var(--text-primary);
+            font: inherit; font-size: 13.5px; font-weight: 600; padding: 10px 18px; border-radius: 10px; cursor: pointer;
+        }
+        .pf-btn:hover:not(:disabled) { border-color: var(--text-secondary); }
+        .pf-btn.primary { background: var(--cyan); border-color: var(--cyan); color: #04141a; }
+        .pf-btn.primary:hover:not(:disabled) { filter: brightness(1.08); }
+        .pf-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .pf-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+        .pf-summary > div { background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; min-width: 0; }
+        .pf-summary span { display: block; font-size: 10.5px; color: var(--text-muted); margin-bottom: 2px; }
+        .pf-summary b { font-family: 'Space Grotesk', sans-serif; font-size: 13px; white-space: nowrap; }
+        .pf-summary b small { font-size: 11px; font-weight: 500; }
+        .pf-summary b.pos { color: var(--green); }
+        .pf-summary b.neg { color: var(--red); }
+        .pf-list { border: 1px solid var(--border); border-radius: 12px; max-height: 46vh; overflow-y: auto; }
+        .pf-row {
+            display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+            border-top: 1px solid var(--border); font-size: 13px;
+        }
+        .pf-row:first-child { border-top: none; }
+        .pf-row:hover { background: var(--surface-2); }
+        .pf-row-type { min-width: 88px; font-weight: 600; white-space: nowrap; }
+        .pf-row-type.buy, .pf-row-type.deposit, .pf-row-type.airdrop { color: var(--green); }
+        .pf-row-type.sell, .pf-row-type.withdrawal { color: var(--red); }
+        .pf-row-main { flex: 1; min-width: 0; }
+        .pf-row-main em { color: var(--text-muted); }
+        .pf-row-date { color: var(--text-secondary); white-space: nowrap; font-size: 12px; }
+        .pf-planned { font-size: 10.5px; padding: 1px 6px; border-radius: 6px; background: rgba(255, 193, 7, 0.16); color: #ffc107; margin-left: 4px; }
+        .pf-icon-btn {
+            width: 26px; height: 26px; border-radius: 7px; border: none; background: transparent;
+            color: var(--text-secondary); font-size: 15px; cursor: pointer; flex-shrink: 0;
+        }
+        .pf-icon-btn:hover { background: var(--surface); color: var(--cyan); }
+        .pf-row-del:hover { color: var(--red); }
+        .pf-empty { padding: 22px 12px; text-align: center; color: var(--text-muted); font-size: 13px; }
+        .pf-toast {
+            position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 10002;
+            background: var(--surface-2); border: 1px solid var(--border); color: var(--text-primary);
+            padding: 10px 18px; border-radius: 10px; font-size: 13px; box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+        }
+        @media (max-width: 480px) {
+            .pf-grid { grid-template-columns: 1fr; }
+            .pf-row { flex-wrap: wrap; }
+            .pf-row-type { min-width: 0; }
+            .pf-summary { grid-template-columns: 1fr 1fr 1fr; }
+            .pf-tab { font-size: 11.5px; padding: 8px 3px; }
+        }
+
         /* ---------- extra small screens ---------- */
         @media (max-width: 400px) {
             .addr-row {
@@ -2820,17 +3092,7 @@
         <div id="settingsOverlay" class="settings-overlay"></div>
     </header>
 
-    <div class="portfolio-switch-bar" id="portfolioSwitchBar">
-        <div class="portfolio-switch-left">
-            <span class="icon-txt" aria-hidden="true">💼</span>
-            <select id="portfolioSelect" class="portfolio-select" aria-label="Select portfolio"></select>
-        </div>
-        <div class="portfolio-switch-actions">
-            <button class="btn-icon-sm" id="renamePortfolioBtn" type="button" title="Rename portfolio" aria-label="Rename portfolio" data-i18n-title="renamePortfolio" data-i18n-aria="renamePortfolio">✎</button>
-            <button class="btn-icon-sm" id="deletePortfolioBtn" type="button" title="Delete portfolio" aria-label="Delete portfolio" data-i18n-title="deletePortfolio" data-i18n-aria="deletePortfolio">🗑</button>
-            <button class="btn-icon-sm" id="addPortfolioBtn" type="button" title="Create new portfolio" aria-label="Create new portfolio" data-i18n-title="createPortfolio" data-i18n-aria="createPortfolio">+</button>
-        </div>
-    </div>
+    <div class="cm-backdrop" id="cardBackdrop"></div>
 
     <main>
 
@@ -2839,6 +3101,18 @@
                 <div class="search-label" data-i18n="walletAddressesLabel">Wallet addresses — PulseChain / Ethereum</div>
                 <button class="btn-collapse" id="collapseSearchBtn" type="button" title="Collapse — back to saved portfolio" aria-label="Collapse" data-i18n-title="collapseTitle"><svg class="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="M6 6l12 12"></path></svg></button>
             </div>
+
+        <div class="portfolio-switch-bar" id="portfolioSwitchBar">
+            <div class="portfolio-switch-left">
+                <span class="icon-txt" aria-hidden="true">💼</span>
+                <select id="portfolioSelect" class="portfolio-select" aria-label="Select portfolio"></select>
+            </div>
+            <div class="portfolio-switch-actions">
+                <button class="btn-icon-sm" id="renamePortfolioBtn" type="button" title="Rename portfolio" aria-label="Rename portfolio" data-i18n-title="renamePortfolio" data-i18n-aria="renamePortfolio">✎</button>
+                <button class="btn-icon-sm" id="deletePortfolioBtn" type="button" title="Delete portfolio" aria-label="Delete portfolio" data-i18n-title="deletePortfolio" data-i18n-aria="deletePortfolio">🗑</button>
+                <button class="btn-icon-sm" id="addPortfolioBtn" type="button" title="Create new portfolio" aria-label="Create new portfolio" data-i18n-title="createPortfolio" data-i18n-aria="createPortfolio">+</button>
+            </div>
+        </div>
 
             <div class="network-selector">
                 <span style="color: var(--text-secondary); font-size: clamp(12px, 0.9vw, 14px);" data-i18n="networkLabel">Network:</span>
@@ -6352,6 +6626,397 @@
             return result;
         }
 
+        // ---------- actions column helpers ----------
+        // Finds the manually tracked token (transaction ledger) behind a portfolio row:
+        // manual rows carry their CoinGecko id in the address ("manual_<id>"); on-chain rows
+        // that had manual amounts summed into them are matched by symbol.
+        function findManualTokenForRow(addr, symbol) {
+            if (addr && addr.startsWith('manual_')) {
+                const id = addr.slice('manual_'.length);
+                const hit = manualTokens.find(m => m.coingeckoId === id);
+                if (hit) return hit;
+            }
+            const sym = (symbol || '').toUpperCase();
+            return manualTokens.find(m => m.symbol.toUpperCase() === sym) || null;
+        }
+
+        // ---------- transaction popups (CoinGecko-style) ----------
+        // "+" opens a small "Add transaction" popup; the ⋮ menu opens a popup with the token's
+        // transaction list. Neither touches the "Missing a token? Add it" card — they write to the
+        // same ledger (addManualTransaction / addManualSwap) so everything stays in sync.
+        let pfOverlay = null;
+        let pfCtx = null;
+
+        function pfTypeLabel(type) {
+            const key = { buy: 'txTypeBuy', sell: 'txTypeSell', deposit: 'txTypeDeposit', withdrawal: 'txTypeWithdrawal', airdrop: 'txTypeAirdrop' }[type];
+            return key ? t(key) : type;
+        }
+
+        function pfClose() {
+            if (pfOverlay) { pfOverlay.remove(); pfOverlay = null; }
+            pfCtx = null;
+            document.body.style.overflow = '';
+        }
+
+        // Puts html into the (single) popup, creating the overlay if needed.
+        function pfShow(html, wide) {
+            if (!pfOverlay) {
+                pfOverlay = document.createElement('div');
+                pfOverlay.className = 'pf-overlay';
+                pfOverlay.innerHTML = '<div class="pf-modal" role="dialog" aria-modal="true"></div>';
+                pfOverlay.addEventListener('mousedown', (e) => { if (e.target === pfOverlay) pfClose(); });
+                document.body.appendChild(pfOverlay);
+                document.body.style.overflow = 'hidden';
+            }
+            const box = pfOverlay.querySelector('.pf-modal');
+            box.classList.toggle('wide', !!wide);
+            box.innerHTML = html;
+            box.querySelectorAll('[data-pf-close]').forEach(b => b.addEventListener('click', pfClose));
+            return box;
+        }
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && pfOverlay) pfClose(); });
+
+        function pfToast(text) {
+            const el = document.createElement('div');
+            el.className = 'pf-toast';
+            el.textContent = text;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 2600);
+        }
+
+        function pfTokenIconHtml(tok) {
+            const style = tokenStyle(tok.symbol || '?');
+            return tok.icon
+                ? `<span class="pf-token-icon" style="background:var(--surface-2)">${iconImg(tok.icon)}</span>`
+                : `<span class="pf-token-icon" style="background:linear-gradient(135deg, ${style.color1}, ${style.color2})">${escapeHtml(style.letter)}</span>`;
+        }
+
+        // ----- Add / edit transaction popup -----
+        async function openTxModal({ coingeckoId, symbol, addr, editTx, listCtx } = {}) {
+            closeRowMenu();
+            const ctx = pfCtx = { kind: 'tx', type: 'buy', tok: null, editTx: editTx || null, listCtx: listCtx || null };
+            const sym = (symbol || '').toUpperCase();
+
+            if (editTx) {
+                const related = editTx.swapId ? manualTransactions.filter(x => x.swapId === editTx.swapId) : [editTx];
+                const leg = (editTx.swapId && editTx.swapKind)
+                    ? (related.find(x => x.coingeckoId !== USDC_ID) || editTx)
+                    : editTx;
+                ctx.editTx = editTx;
+                ctx.type = leg.type;
+                ctx.tok = {
+                    id: leg.coingeckoId, symbol: leg.symbol, name: leg.name, icon: resolveIcon(leg.symbol, leg.icon),
+                    price: leg.coingeckoId === USDC_ID ? 1 : ((manualTokenPrices[leg.coingeckoId] || {}).price ?? null),
+                    change24h: null,
+                };
+                ctx.editLeg = leg;
+            } else {
+                const mt = manualTokens.find(m => m.coingeckoId === coingeckoId) || findManualTokenForRow(addr, sym);
+                if (mt) {
+                    ctx.tok = { id: mt.coingeckoId, symbol: mt.symbol, name: mt.name, icon: mt.icon, price: mt.price, change24h: mt.change24h };
+                    ctx.needsFreshPrice = true;
+                }
+            }
+
+            if (!ctx.tok) {
+                // On-chain token with no ledger yet → resolve it on CoinGecko by symbol.
+                pfShow(`<div class="pf-head"><div class="pf-title">${t('addTransaction')}</div><button class="pf-x" type="button" data-pf-close aria-label="${t('pfClose')}">×</button></div>
+                        <div class="pf-loading">${t('pfLoadingToken', { s: escapeHtml(sym) })}</div>`);
+                try {
+                    ctx.tok = await searchTokenOnCoingecko(sym);
+                } catch (err) {
+                    if (pfCtx !== ctx) return;
+                    pfShow(`<div class="pf-head"><div class="pf-title">${t('addTransaction')}</div><button class="pf-x" type="button" data-pf-close aria-label="${t('pfClose')}">×</button></div>
+                            <div class="pf-msg error show">${escapeHtml(err.message)}</div>
+                            <div class="pf-actions"><button class="pf-btn" type="button" data-pf-close>${t('pfCancel')}</button></div>`);
+                    return;
+                }
+                if (pfCtx !== ctx) return;
+            }
+
+            pfRenderTxForm(ctx);
+
+            if (ctx.needsFreshPrice && ctx.tok.id !== USDC_ID) {
+                try {
+                    const fresh = await fetchTokenPrice(ctx.tok.id);
+                    if (pfCtx !== ctx || fresh.price == null) return;
+                    ctx.tok.price = fresh.price;
+                    ctx.tok.change24h = fresh.change24h;
+                    const priceEl = document.getElementById('pfPrice');
+                    const livePrice = document.getElementById('pfLivePrice');
+                    if (livePrice) livePrice.textContent = formatPrice(fresh.price);
+                    if (priceEl && !ctx.priceTouched) { priceEl.value = roundForInput(fresh.price); pfUpdateTotal(); }
+                } catch (err) { /* non-fatal: keep last known price */ }
+            }
+        }
+
+        function pfRenderTxForm(ctx) {
+            const tok = ctx.tok;
+            const editing = !!ctx.editTx;
+            const plainSwap = editing && ctx.editTx.swapId && !ctx.editTx.swapKind;
+            const tabs = editing
+                ? `<div class="pf-tabs"><button type="button" class="pf-tab active" data-type="${ctx.type}" disabled>${pfTypeLabel(ctx.type)}</button></div>`
+                : `<div class="pf-tabs">${['buy', 'sell', 'deposit', 'withdrawal', 'airdrop'].map(ty =>
+                    `<button type="button" class="pf-tab${ty === ctx.type ? ' active' : ''}" data-type="${ty}">${pfTypeLabel(ty)}</button>`).join('')}</div>`;
+            const leg = ctx.editLeg;
+            const initPrice = editing
+                ? (leg && leg.priceUsd != null ? roundForInput(leg.priceUsd) : '')
+                : (Number.isFinite(tok.price) && tok.price > 0 ? roundForInput(tok.price) : '');
+            const initQty = editing ? roundForInput(leg.amount) : '';
+            const initDate = editing ? (leg.date || todayIso()) : todayIso();
+            const initNote = editing ? (leg.note || '') : '';
+
+            const box = pfShow(`
+                <div class="pf-head">
+                    <div class="pf-title">${editing ? t('pfEditTitle') : t('addTransaction')}</div>
+                    <button class="pf-x" type="button" data-pf-close aria-label="${t('pfClose')}">×</button>
+                </div>
+                <div class="pf-token">
+                    ${pfTokenIconHtml(tok)}
+                    <div class="pf-token-meta">
+                        <div class="pf-token-name">${escapeHtml(tok.name || tok.symbol)} <span>${escapeHtml((tok.symbol || '').toUpperCase())}</span></div>
+                        <div class="pf-token-price">${t('pfCurrentPrice')}: <b id="pfLivePrice">${Number.isFinite(tok.price) ? formatPrice(tok.price) : '—'}</b></div>
+                    </div>
+                </div>
+                ${tabs}
+                <div class="pf-grid">
+                    <label class="pf-field"><span>${t('pfQuantity')}</span>
+                        <input id="pfQty" type="number" inputmode="decimal" step="any" min="0" placeholder="0.00" value="${initQty}" autocomplete="off"></label>
+                    <label class="pf-field"><span>${t('pfPricePer')}</span>
+                        <input id="pfPrice" type="number" inputmode="decimal" step="any" min="0" placeholder="0.00" value="${initPrice}" autocomplete="off"></label>
+                    <label class="pf-field"><span>${t('pfDate')}</span>
+                        <input id="pfDate" type="date" value="${initDate}"></label>
+                    <label class="pf-field full"><span>${t('pfNote')}</span>
+                        <input id="pfNote" type="text" maxlength="80" value="${escapeHtml(initNote)}" autocomplete="off"></label>
+                </div>
+                <div class="pf-total"><span id="pfTotalLabel"></span><strong id="pfTotal">—</strong></div>
+                <div class="pf-msg" id="pfMsg"></div>
+                <div class="pf-actions">
+                    <button class="pf-btn" type="button" id="pfCancelBtn">${t('pfCancel')}</button>
+                    <button class="pf-btn primary" type="button" id="pfSubmit"${plainSwap ? ' disabled' : ''}>${editing ? t('pfSave') : t('addTransaction')}</button>
+                </div>`);
+
+            const qty = box.querySelector('#pfQty'), price = box.querySelector('#pfPrice');
+            qty.addEventListener('input', pfUpdateTotal);
+            price.addEventListener('input', () => { ctx.priceTouched = true; pfUpdateTotal(); });
+            box.querySelectorAll('.pf-tab').forEach(b => b.addEventListener('click', () => {
+                if (editing) return;
+                ctx.type = b.dataset.type;
+                box.querySelectorAll('.pf-tab').forEach(x => x.classList.toggle('active', x === b));
+                pfUpdateTotal();
+            }));
+            box.querySelector('#pfCancelBtn').addEventListener('click', () => pfCancelTx(ctx));
+            box.querySelector('#pfSubmit').addEventListener('click', pfSubmitTx);
+            box.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); pfSubmitTx(); } });
+            pfUpdateTotal();
+            qty.focus();
+        }
+
+        function pfUpdateTotal() {
+            const ctx = pfCtx;
+            if (!ctx || ctx.kind !== 'tx') return;
+            const q = parseFloat(document.getElementById('pfQty').value);
+            const p = parseFloat(document.getElementById('pfPrice').value);
+            const label = { buy: 'pfTotalSpent', sell: 'pfTotalReceived' }[ctx.type] || 'pfTotalValue';
+            document.getElementById('pfTotalLabel').textContent = t(label);
+            document.getElementById('pfTotal').textContent = (Number.isFinite(q) && Number.isFinite(p) && q > 0 && p >= 0) ? fmtUSD(q * p) : '—';
+        }
+
+        function pfSetMsg(text, type) {
+            const el = document.getElementById('pfMsg');
+            if (!el) return;
+            el.textContent = text || '';
+            el.className = 'pf-msg' + (text ? ' show ' + (type || 'error') : '');
+        }
+
+        function pfCancelTx(ctx) {
+            const lc = ctx.listCtx;
+            if (lc) openTxListModal(lc); else pfClose();
+        }
+
+        function pfSubmitTx() {
+            const ctx = pfCtx;
+            if (!ctx || ctx.kind !== 'tx' || !ctx.tok) return;
+            const tok = ctx.tok, type = ctx.type;
+            const qty = parseFloat(document.getElementById('pfQty').value);
+            const priceRaw = document.getElementById('pfPrice').value;
+            const priceUsd = priceRaw === '' ? null : parseFloat(priceRaw);
+            const when = document.getElementById('pfDate').value || todayIso();
+            const note = document.getElementById('pfNote').value.trim().slice(0, 80);
+
+            if (!Number.isFinite(qty) || qty <= 0) { pfSetMsg(t('pfNeedQty')); document.getElementById('pfQty').focus(); return; }
+            if (priceRaw !== '' && (!Number.isFinite(priceUsd) || priceUsd < 0)) { pfSetMsg(t('pfBadPrice')); document.getElementById('pfPrice').focus(); return; }
+
+            if (ctx.editTx) {
+                if (!pfApplyEdit(ctx, qty, priceUsd, when, note)) return;
+            } else {
+                const tokData = { id: tok.id, symbol: tok.symbol, name: tok.name, icon: tok.icon, price: tok.price, change24h: tok.change24h };
+                if ((type === 'buy' || type === 'sell') && tok.id !== USDC_ID) {
+                    // Buys/sells settle against USDC (1 USDC = 1 USD), same as the main form.
+                    const unit = priceUsd != null ? priceUsd : (tok.price ?? null);
+                    if (!(unit > 0)) { pfSetMsg(t('usdcNeedPrice')); document.getElementById('pfPrice').focus(); return; }
+                    const usdcAmt = qty * unit;
+                    if (type === 'buy') addManualSwap(USDC_TOKEN, tokData, usdcAmt, qty, when, 1, note, 'buy');
+                    else addManualSwap(tokData, USDC_TOKEN, qty, usdcAmt, when, unit, note, 'sell');
+                } else {
+                    addManualTransaction(tokData, type, qty, when, priceUsd, note);
+                }
+            }
+
+            pfToast(ctx.editTx ? t('pfSaved') : t('pfAdded'));
+            const lc = ctx.listCtx;
+            if (lc) openTxListModal({ coingeckoId: ctx.tok.id, symbol: ctx.tok.symbol, addr: lc.addr }); else pfClose();
+        }
+
+        // Applies an edit to the ledger (single entry, or the token leg + USDC leg of a USDC-settled trade).
+        function pfApplyEdit(ctx, qty, priceUsd, when, note) {
+            const target = manualTransactions.find(x => x.id === ctx.editTx.id);
+            if (!target) return false;
+            if (target.swapId && !target.swapKind) return false; // token↔token swaps aren't editable here
+            if (target.swapId) {
+                const related = manualTransactions.filter(x => x.swapId === target.swapId);
+                const tokenLeg = related.find(x => x.coingeckoId !== USDC_ID);
+                const usdcLeg = related.find(x => x.coingeckoId === USDC_ID);
+                if (!tokenLeg || !usdcLeg) return false;
+                const unit = priceUsd != null ? priceUsd : tokenLeg.priceUsd;
+                if (!(unit > 0)) { pfSetMsg(t('usdcNeedPrice')); return false; }
+                tokenLeg.amount = qty; tokenLeg.priceUsd = unit; tokenLeg.date = when; tokenLeg.note = note || null;
+                usdcLeg.amount = qty * unit; usdcLeg.priceUsd = 1; usdcLeg.date = when; usdcLeg.note = note || null;
+            } else {
+                target.amount = qty; target.priceUsd = priceUsd; target.date = when; target.note = note || null;
+            }
+            saveManualTransactionsToStorage(manualTransactions);
+            rebuildManualTokens();
+            renderManualTokenChips();
+            if (document.getElementById('summary').classList.contains('show')) refreshView();
+            return true;
+        }
+
+        // ----- Transaction list popup -----
+        function openTxListModal({ coingeckoId, symbol, addr } = {}) {
+            closeRowMenu();
+            const mt = (coingeckoId && manualTokens.find(m => m.coingeckoId === coingeckoId)) || (!coingeckoId ? findManualTokenForRow(addr, symbol) : null);
+            const id = mt ? mt.coingeckoId : (coingeckoId || null);
+            const sym = ((mt && mt.symbol) || symbol || '').toUpperCase();
+            const ctx = pfCtx = { kind: 'list', id, symbol: sym, addr };
+
+            const txs = id ? manualTransactions
+                .filter(x => x.coingeckoId === id)
+                .sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.addedAt || 0) - (a.addedAt || 0)) : [];
+
+            const rows = txs.map(x => {
+                const plainSwap = x.swapId && !x.swapKind;
+                const sign = (x.type === 'sell' || x.type === 'withdrawal') ? '−' : '+';
+                const priceStr = x.type === 'airdrop'
+                    ? (x.priceUsd != null ? ` (${fmtUSD(x.amount * x.priceUsd)})` : '')
+                    : (x.priceUsd != null ? ` @ ${formatPrice(x.priceUsd)}` : '');
+                const label = x.swapId
+                    ? (plainSwap ? `${t('txTypeSwap')} ⇄ ${escapeHtml(x.swapWith || '')}` : `${pfTypeLabel(x.type)} ⇄ ${escapeHtml(x.swapWith || '')}`)
+                    : pfTypeLabel(x.type);
+                const planned = isPlannedTx(x) ? ` <span class="pf-planned">${t('txPlannedBadge')}</span>` : '';
+                return `<div class="pf-row" data-txid="${escapeHtml(x.id)}">
+                    <span class="pf-row-type ${x.type}">${label}</span>
+                    <span class="pf-row-main">${sign}${formatTokenAmount(x.amount)} ${escapeHtml(x.symbol)}${priceStr}${planned}${x.note ? `<em> — ${escapeHtml(x.note)}</em>` : ''}</span>
+                    <span class="pf-row-date">${fmtTxDate(x.date)}</span>
+                    ${plainSwap ? '' : `<button class="pf-icon-btn pf-row-edit" type="button" title="${t('pfEditTitle')}" aria-label="${t('pfEditTitle')}">✎</button>`}
+                    <button class="pf-icon-btn pf-row-del" type="button" title="${t('pfDelete')}" aria-label="${t('pfDelete')}">×</button>
+                </div>`;
+            }).join('') || `<div class="pf-empty">${t('pfNoTx')}</div>`;
+
+            let summary = '';
+            if (mt) {
+                const pl = calculateManualTokenPL(mt.coingeckoId);
+                const avg = pl.avgBuyPrice != null ? formatPrice(pl.avgBuyPrice) : '—';
+                const pnl = pl.pnlUsd != null ? formatPL(pl.pnlUsd) : '—';
+                const pct = pl.pnlPct != null ? `${pl.pnlPct >= 0 ? '+' : ''}${pl.pnlPct.toFixed(2)}%` : '—';
+                const cls = plClass(pl.pnlUsd);
+                summary = `<div class="pf-summary">
+                    <div><span>${t('pfNetAmount')}</span><b>${formatTokenAmount(mt.amount)} ${escapeHtml(mt.symbol)}</b></div>
+                    <div><span>${t('pfAvgBuy')}</span><b>${escapeHtml(avg)}</b></div>
+                    <div><span>P/L</span><b class="${cls}">${escapeHtml(pnl)} <small>${escapeHtml(pct)}</small></b></div>
+                </div>`;
+            }
+
+            const tokForIcon = mt || { symbol: sym, icon: txs[0] ? resolveIcon(sym, txs[0].icon) : null };
+            const box = pfShow(`
+                <div class="pf-head">
+                    <div class="pf-title">${t('pfTxTitle')}</div>
+                    <button class="pf-x" type="button" data-pf-close aria-label="${t('pfClose')}">×</button>
+                </div>
+                <div class="pf-token">
+                    ${pfTokenIconHtml(tokForIcon)}
+                    <div class="pf-token-meta">
+                        <div class="pf-token-name">${escapeHtml((mt && mt.name) || sym)} <span>${escapeHtml(sym)}</span></div>
+                        <div class="pf-token-price">${txs.length} ${t('pfTxCount')}</div>
+                    </div>
+                </div>
+                ${summary}
+                <div class="pf-list">${rows}</div>
+                <div class="pf-actions">
+                    <button class="pf-btn" type="button" data-pf-close>${t('pfClose')}</button>
+                    <button class="pf-btn primary" type="button" id="pfListAdd">+ ${t('addTransaction')}</button>
+                </div>`, true);
+
+            box.querySelector('#pfListAdd').addEventListener('click', () => {
+                openTxModal({ coingeckoId: id, symbol: sym, addr, listCtx: { coingeckoId: id, symbol: sym, addr } });
+            });
+            box.querySelectorAll('.pf-row[data-txid]').forEach(row => {
+                const tx = manualTransactions.find(x => x.id === row.dataset.txid);
+                const edit = row.querySelector('.pf-row-edit');
+                if (edit && tx) edit.addEventListener('click', () => openTxModal({ editTx: tx, listCtx: { coingeckoId: id, symbol: sym, addr } }));
+                row.querySelector('.pf-row-del').addEventListener('click', () => {
+                    if (!confirm(t('pfConfirmDelete'))) return;
+                    removeManualTransaction(row.dataset.txid);
+                    openTxListModal({ coingeckoId: id, symbol: sym, addr });
+                });
+            });
+        }
+
+        function addTransactionForRow(addr, symbol) {
+            const mt = findManualTokenForRow(addr, symbol);
+            openTxModal({ coingeckoId: mt ? mt.coingeckoId : null, symbol, addr });
+        }
+
+        function viewTransactionsForRow(addr, symbol) {
+            const mt = findManualTokenForRow(addr, symbol);
+            openTxListModal({ coingeckoId: mt ? mt.coingeckoId : null, symbol, addr });
+        }
+
+        let rowMenuEl = null, rowMenuBtn = null;
+        function closeRowMenu() {
+            if (rowMenuEl) { rowMenuEl.remove(); rowMenuEl = null; }
+            if (rowMenuBtn) { rowMenuBtn.classList.remove('open'); rowMenuBtn = null; }
+        }
+        function openRowMenu(btn) {
+            const same = rowMenuBtn === btn;
+            closeRowMenu();
+            if (same) return;
+            rowMenuBtn = btn;
+            btn.classList.add('open');
+            const menu = document.createElement('div');
+            menu.className = 'row-menu';
+            menu.setAttribute('role', 'menu');
+            menu.innerHTML = `<button type="button" role="menuitem">${t('viewTransactions')}</button>`;
+            document.body.appendChild(menu);
+            const r = btn.getBoundingClientRect();
+            const w = menu.offsetWidth, h = menu.offsetHeight;
+            let left = Math.min(Math.max(8, r.right - w), window.innerWidth - w - 8);
+            let top = r.bottom + 4;
+            if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 4);
+            menu.style.left = left + 'px';
+            menu.style.top = top + 'px';
+            menu.querySelector('button').addEventListener('click', () => {
+                const addr = btn.dataset.addr, symbol = btn.dataset.symbol;
+                closeRowMenu();
+                viewTransactionsForRow(addr, symbol);
+            });
+            rowMenuEl = menu;
+        }
+        document.addEventListener('click', (e) => { if (rowMenuEl && !e.target.closest('.row-menu')) closeRowMenu(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeRowMenu(); });
+        window.addEventListener('scroll', closeRowMenu, true);
+        window.addEventListener('resize', closeRowMenu);
+
         function renderTokens(tokens) {
             const list = document.getElementById('tokenList');
 
@@ -6383,8 +7048,10 @@
                     headerHtml += `<th class="${cls}" data-sort="${col}">${label}${arrow}</th>`;
                 }
             }
+            headerHtml += `<th class="col-actions unsortable">${t('colActions')}</th>`;
             headerHtml += '</tr></thead>';
 
+            const lblAddTx = t('addTransaction'), lblMore = t('viewTransactions');
             let bodyHtml = '<tbody>';
             for (const t of tokens) {
                 const priceDisplay = t.noPrice ? '—' : formatPrice(t.price);
@@ -6449,7 +7116,13 @@
                     return '';
                 }).join('');
 
-                bodyHtml += `<tr>${cells}</tr>`;
+                const actionsCell = `<td class="col-actions">
+                    <div class="row-actions">
+                        <button class="row-action-btn row-add-tx" type="button" data-addr="${escapeHtml(t.address || '')}" data-symbol="${escapeHtml(t.symbol)}" title="${lblAddTx}" aria-label="${lblAddTx}">+</button>
+                        <button class="row-action-btn row-more" type="button" data-addr="${escapeHtml(t.address || '')}" data-symbol="${escapeHtml(t.symbol)}" title="${lblMore}" aria-label="${lblMore}">⋮</button>
+                    </div>
+                </td>`;
+                bodyHtml += `<tr>${cells}${actionsCell}</tr>`;
             }
             bodyHtml += '</tbody>';
 
@@ -6466,6 +7139,21 @@
                     }
                     saveSortConfig();
                     refreshView();
+                });
+            });
+
+            list.querySelectorAll('.row-add-tx').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeRowMenu();
+                    addTransactionForRow(btn.dataset.addr, btn.dataset.symbol);
+                });
+            });
+            list.querySelectorAll('.row-more').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeRowMenu();
+                    viewTransactionsForRow(btn.dataset.addr, btn.dataset.symbol);
                 });
             });
 
@@ -7583,6 +8271,7 @@
         }
 
         function setPortfolioBarVisible(visible, addresses = []) {
+            document.getElementById('searchCard').classList.remove('as-modal');
             document.getElementById('searchCard').style.display = visible ? 'none' : 'block';
             document.getElementById('portfolioSwitchBar').style.display = visible ? 'none' : 'flex';
 
@@ -7792,18 +8481,41 @@
             } else {
                 setPortfolioBarVisible(false);
                 document.getElementById('tokenCard').classList.remove('show');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                const savedNow = loadAddressesFromStorage();
+                if (savedNow && savedNow.length) searchCard.classList.add('as-modal');
             }
         });
 
         document.getElementById('toggleTokenCardBtn').addEventListener('click', () => {
             document.getElementById('tokenCard').classList.toggle('show');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
 
         document.getElementById('closeTokenCardBtn').addEventListener('click', () => {
             document.getElementById('tokenCard').classList.remove('show');
         });
+
+        // Popup behaviour for the address editor and the "Missing a token?" card: a shared
+        // backdrop follows their open state; clicking it or pressing Esc closes the popup.
+        (function setupCardPopups() {
+            const backdrop = document.getElementById('cardBackdrop');
+            const tokenCard = document.getElementById('tokenCard');
+            const searchCard = document.getElementById('searchCard');
+            const sync = () => backdrop.classList.toggle('show',
+                tokenCard.classList.contains('show') ||
+                (searchCard.classList.contains('as-modal') && searchCard.style.display !== 'none'));
+            const mo = new MutationObserver(sync);
+            mo.observe(tokenCard, { attributes: true, attributeFilter: ['class'] });
+            mo.observe(searchCard, { attributes: true, attributeFilter: ['class', 'style'] });
+            const closeCardPopups = () => {
+                if (tokenCard.classList.contains('show')) tokenCard.classList.remove('show');
+                if (searchCard.classList.contains('as-modal')) document.getElementById('collapseSearchBtn').click();
+            };
+            backdrop.addEventListener('mousedown', closeCardPopups);
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !pfOverlay && backdrop.classList.contains('show')) closeCardPopups();
+            });
+            sync();
+        })();
 
         document.getElementById('collapseSearchBtn').addEventListener('click', () => {
             const saved = loadAddressesFromStorage();
@@ -8378,6 +9090,35 @@
                 colPrice: 'Price',
                 colAmount: 'Amount',
                 colValue: 'Value',
+                colActions: 'Actions',
+                addTransaction: 'Add transaction',
+                rowMore: 'More actions',
+                viewTransactions: 'View transactions',
+                noTransactionsForToken: 'No transactions logged for {s} yet — use + to add one.',
+                pfEditTitle: "Edit transaction",
+                pfCurrentPrice: "Current price",
+                pfQuantity: "Quantity",
+                pfPricePer: "Price per coin (USD)",
+                pfDate: "Date",
+                pfNote: "Note (optional)",
+                pfTotalSpent: "Total spent",
+                pfTotalReceived: "Total received",
+                pfTotalValue: "Total value",
+                pfCancel: "Cancel",
+                pfSave: "Save changes",
+                pfClose: "Close",
+                pfLoadingToken: "Looking up {s}…",
+                pfNeedQty: "Enter a quantity greater than 0.",
+                pfBadPrice: "Price must be a positive number, or left blank.",
+                pfAdded: "Transaction added.",
+                pfSaved: "Changes saved.",
+                pfTxTitle: "Transactions",
+                pfTxCount: "transactions",
+                pfNoTx: "No transactions yet.",
+                pfNetAmount: "Net amount",
+                pfAvgBuy: "Avg. buy price",
+                pfDelete: "Delete this transaction",
+                pfConfirmDelete: "Delete this transaction?",
                 noTokensFound: 'No tokens with a recognized USD value for this address.',
                 noFarmPositions: 'No active positions in farms or staking.',
                 athModeText: 'Value at ATH 🚀',
@@ -8501,6 +9242,35 @@
                 colPrice: 'Cena',
                 colAmount: 'Ilość',
                 colValue: 'Wartość',
+                colActions: 'Działania',
+                addTransaction: 'Dodaj transakcję',
+                rowMore: 'Więcej działań',
+                viewTransactions: 'Wyświetl transakcje',
+                noTransactionsForToken: 'Brak zapisanych transakcji dla {s} — użyj +, aby dodać.',
+                pfEditTitle: "Edytuj transakcję",
+                pfCurrentPrice: "Aktualna cena",
+                pfQuantity: "Ilość",
+                pfPricePer: "Cena za monetę (USD)",
+                pfDate: "Data",
+                pfNote: "Notatka (opcjonalnie)",
+                pfTotalSpent: "Wydano łącznie",
+                pfTotalReceived: "Otrzymano łącznie",
+                pfTotalValue: "Wartość łączna",
+                pfCancel: "Anuluj",
+                pfSave: "Zapisz zmiany",
+                pfClose: "Zamknij",
+                pfLoadingToken: "Wyszukiwanie {s}…",
+                pfNeedQty: "Podaj ilość większą od 0.",
+                pfBadPrice: "Cena musi być liczbą dodatnią lub pozostać pusta.",
+                pfAdded: "Dodano transakcję.",
+                pfSaved: "Zapisano zmiany.",
+                pfTxTitle: "Transakcje",
+                pfTxCount: "transakcji",
+                pfNoTx: "Brak transakcji.",
+                pfNetAmount: "Saldo",
+                pfAvgBuy: "Śr. cena zakupu",
+                pfDelete: "Usuń transakcję",
+                pfConfirmDelete: "Usunąć tę transakcję?",
                 noTokensFound: 'Brak tokenów o rozpoznanej wartości USD dla tego adresu.',
                 noFarmPositions: 'Brak aktywnych pozycji farm lub staking.',
                 athModeText: 'Wartość przy ATH 🚀',
