@@ -863,17 +863,17 @@
         .search-card.as-modal .network-selector select { padding: 7px 10px; font-size: 13px; }
         .token-card.show .token-add-row input:focus, .token-card.show .manual-token-row input:focus,
         .search-card.as-modal .addr-row input:focus, .search-card.as-modal .network-selector select:focus {
-            border-color: var(--cyan);
+            border-color: var(--purple);
         }
         .token-card.show .token-add-row input::placeholder, .token-card.show .manual-token-row input::placeholder,
         .search-card.as-modal .addr-row input::placeholder { font-family: inherit; }
         .token-card.show .btn-grad, .search-card.as-modal .btn-grad {
-            background: var(--cyan); border: 1px solid var(--cyan); color: #04141a;
+            background: var(--grad); background-origin: border-box; border: 1px solid transparent; color: #07070a;
             border-radius: 10px; box-shadow: none;
             font-family: inherit; font-size: 13.5px; font-weight: 600; padding: 10px 18px;
         }
         .token-card.show .btn-grad:hover:not(:disabled), .search-card.as-modal .btn-grad:hover:not(:disabled) {
-            filter: brightness(1.08); transform: none; box-shadow: none;
+            filter: none; opacity: 0.9; transform: none; box-shadow: none;
         }
         .token-card.show .btn-bar, .search-card.as-modal .btn-bar, .search-card.as-modal .btn-add-addr {
             background: var(--surface-2); border: 1px solid var(--border); color: var(--text-primary);
@@ -2708,7 +2708,7 @@
         .row-action-btn:hover, .row-action-btn.open {
             background: var(--surface-2);
             border-color: var(--border);
-            color: var(--cyan);
+            color: var(--purple);
         }
         .row-action-btn svg { width: 16px; height: 16px; }
         .row-menu {
@@ -2734,7 +2734,7 @@
             border-radius: 7px;
             cursor: pointer;
         }
-        .row-menu button:hover { background: rgba(0, 212, 255, 0.12); color: var(--cyan); }
+        .row-menu button:hover { background: rgba(139, 59, 255, 0.14); color: var(--purple); }
 
         /* ---------- transaction popups ---------- */
         .pf-overlay {
@@ -2787,7 +2787,7 @@
             border-radius: 9px; cursor: pointer; white-space: nowrap;
         }
         .pf-tab:hover:not(:disabled) { color: var(--text-primary); }
-        .pf-tab.active { background: var(--bg); color: var(--cyan); box-shadow: 0 0 0 1px var(--border); }
+        .pf-tab.active { background: var(--bg); color: var(--purple); box-shadow: 0 0 0 1px var(--border); }
         .pf-tab.active[data-type="buy"], .pf-tab.active[data-type="deposit"], .pf-tab.active[data-type="airdrop"] { color: var(--green); }
         .pf-tab.active[data-type="sell"], .pf-tab.active[data-type="withdrawal"] { color: var(--red); }
         .pf-tab:disabled { cursor: default; }
@@ -2802,7 +2802,7 @@
             color-scheme: dark; outline: none;
         }
         :root.light .pf-field input { color-scheme: light; }
-        .pf-field input:focus { border-color: var(--cyan); }
+        .pf-field input:focus { border-color: var(--purple); }
         .pf-total {
             display: flex; justify-content: space-between; align-items: center;
             margin-top: 14px; padding: 12px 14px;
@@ -2820,8 +2820,8 @@
             font: inherit; font-size: 13.5px; font-weight: 600; padding: 10px 18px; border-radius: 10px; cursor: pointer;
         }
         .pf-btn:hover:not(:disabled) { border-color: var(--text-secondary); }
-        .pf-btn.primary { background: var(--cyan); border-color: var(--cyan); color: #04141a; }
-        .pf-btn.primary:hover:not(:disabled) { filter: brightness(1.08); }
+        .pf-btn.primary { background: var(--grad); background-origin: border-box; border-color: transparent; color: #07070a; }
+        .pf-btn.primary:hover:not(:disabled) { opacity: 0.9; }
         .pf-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .pf-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
         .pf-summary > div { background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; min-width: 0; }
@@ -2848,7 +2848,7 @@
             width: 26px; height: 26px; border-radius: 7px; border: none; background: transparent;
             color: var(--text-secondary); font-size: 15px; cursor: pointer; flex-shrink: 0;
         }
-        .pf-icon-btn:hover { background: var(--surface); color: var(--cyan); }
+        .pf-icon-btn:hover { background: var(--surface); color: var(--purple); }
         .pf-row-del:hover { color: var(--red); }
         .pf-empty { padding: 22px 12px; text-align: center; color: var(--text-muted); font-size: 13px; }
         .pf-toast {
