@@ -2711,6 +2711,7 @@
             color: var(--purple);
         }
         .row-action-btn svg { width: 16px; height: 16px; }
+        .col-actions-label { margin-right: 4px; }
         .row-menu {
             position: fixed;
             z-index: 10000;
@@ -6726,9 +6727,10 @@
                     ctx.tok = await searchTokenOnCoingecko(sym);
                 } catch (err) {
                     if (pfCtx !== ctx) return;
-                    pfShow(`<div class="pf-head"><div class="pf-title">${t('addTransaction')}</div><button class="pf-x" type="button" data-pf-close aria-label="${t('pfClose')}">×</button></div>
+                    const errBox = pfShow(`<div class="pf-head"><div class="pf-title">${t('addTransaction')}</div><button class="pf-x" type="button" data-pf-close aria-label="${t('pfClose')}">×</button></div>
                             <div class="pf-msg error show">${escapeHtml(err.message)}</div>
-                            <div class="pf-actions"><button class="pf-btn" type="button" data-pf-close>${t('pfCancel')}</button></div>`);
+                            <div class="pf-actions"><button class="pf-btn" type="button" id="pfErrBack">${t('pfBack')}</button></div>`);
+                    errBox.querySelector('#pfErrBack').addEventListener('click', () => pfShowPicker(ctx.listCtx));
                     return;
                 }
                 if (pfCtx !== ctx) return;
@@ -6865,7 +6867,9 @@
 
             pfToast(ctx.editTx ? t('pfSaved') : t('pfAdded'));
             const lc = ctx.listCtx;
-            if (lc) openTxListModal({ coingeckoId: ctx.tok.id, symbol: ctx.tok.symbol, addr: lc.addr }); else pfClose();
+            if (lc && lc.all) openTxListModal({ all: true });
+            else if (lc) openTxListModal({ coingeckoId: ctx.tok.id, symbol: ctx.tok.symbol, addr: lc.addr });
+            else pfClose();
         }
 
         // Applies an edit to the ledger (single entry, or the token leg + USDC leg of a USDC-settled trade).
@@ -6893,15 +6897,16 @@
         }
 
         // ----- Transaction list popup -----
-        function openTxListModal({ coingeckoId, symbol, addr } = {}) {
+        function openTxListModal({ coingeckoId, symbol, addr, all } = {}) {
             closeRowMenu();
-            const mt = (coingeckoId && manualTokens.find(m => m.coingeckoId === coingeckoId)) || (!coingeckoId ? findManualTokenForRow(addr, symbol) : null);
+            const mt = all ? null : ((coingeckoId && manualTokens.find(m => m.coingeckoId === coingeckoId)) || (!coingeckoId ? findManualTokenForRow(addr, symbol) : null));
             const id = mt ? mt.coingeckoId : (coingeckoId || null);
             const sym = ((mt && mt.symbol) || symbol || '').toUpperCase();
-            const ctx = pfCtx = { kind: 'list', id, symbol: sym, addr };
+            const ctx = pfCtx = { kind: 'list', id, symbol: sym, addr, all: !!all };
+            const lc = all ? { all: true } : { coingeckoId: id, symbol: sym, addr };
 
-            const txs = id ? manualTransactions
-                .filter(x => x.coingeckoId === id)
+            const txs = (all || id) ? manualTransactions
+                .filter(x => all || x.coingeckoId === id)
                 .sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.addedAt || 0) - (a.addedAt || 0)) : [];
 
             const rows = txs.map(x => {
@@ -6944,9 +6949,9 @@
                     <button class="pf-x" type="button" data-pf-close aria-label="${t('pfClose')}">×</button>
                 </div>
                 <div class="pf-token">
-                    ${pfTokenIconHtml(tokForIcon)}
+                    ${all ? '' : pfTokenIconHtml(tokForIcon)}
                     <div class="pf-token-meta">
-                        <div class="pf-token-name">${escapeHtml((mt && mt.name) || sym)} <span>${escapeHtml(sym)}</span></div>
+                        <div class="pf-token-name">${all ? escapeHtml(t('pfAllTx')) : `${escapeHtml((mt && mt.name) || sym)} <span>${escapeHtml(sym)}</span>`}</div>
                         <div class="pf-token-price">${txs.length} ${t('pfTxCount')}</div>
                     </div>
                 </div>
@@ -6958,18 +6963,47 @@
                 </div>`, true);
 
             box.querySelector('#pfListAdd').addEventListener('click', () => {
-                openTxModal({ coingeckoId: id, symbol: sym, addr, listCtx: { coingeckoId: id, symbol: sym, addr } });
+                if (all) pfShowPicker(lc);
+                else openTxModal({ coingeckoId: id, symbol: sym, addr, listCtx: lc });
             });
             box.querySelectorAll('.pf-row[data-txid]').forEach(row => {
                 const tx = manualTransactions.find(x => x.id === row.dataset.txid);
                 const edit = row.querySelector('.pf-row-edit');
-                if (edit && tx) edit.addEventListener('click', () => openTxModal({ editTx: tx, listCtx: { coingeckoId: id, symbol: sym, addr } }));
+                if (edit && tx) edit.addEventListener('click', () => openTxModal({ editTx: tx, listCtx: lc }));
                 row.querySelector('.pf-row-del').addEventListener('click', () => {
                     if (!confirm(t('pfConfirmDelete'))) return;
                     removeManualTransaction(row.dataset.txid);
-                    openTxListModal({ coingeckoId: id, symbol: sym, addr });
+                    openTxListModal(lc);
                 });
             });
+        }
+
+        // Coin picker used by the header "+" (add a transaction for any coin).
+        function pfShowPicker(listCtx) {
+            closeRowMenu();
+            pfCtx = { kind: 'pick', listCtx: listCtx || null };
+            const box = pfShow(`
+                <div class="pf-head">
+                    <div class="pf-title">${t('addCoinTx')}</div>
+                    <button class="pf-x" type="button" data-pf-close aria-label="${t('pfClose')}">×</button>
+                </div>
+                <label class="pf-field"><span>${t('pfCoinSymbol')}</span>
+                    <input id="pfPickSymbol" type="text" autocomplete="off" autocapitalize="characters" placeholder="BTC, ETH, DOGE…"></label>
+                <div class="pf-msg" id="pfMsg"></div>
+                <div class="pf-actions">
+                    <button class="pf-btn" type="button" id="pfPickCancel">${t('pfCancel')}</button>
+                    <button class="pf-btn primary" type="button" id="pfPickGo">${t('pfFind')}</button>
+                </div>`);
+            const input = box.querySelector('#pfPickSymbol');
+            const go = () => {
+                const sym = input.value.trim();
+                if (!sym) { pfSetMsg(t('pfNeedSymbol')); input.focus(); return; }
+                openTxModal({ symbol: sym, listCtx: listCtx || null });
+            };
+            box.querySelector('#pfPickGo').addEventListener('click', go);
+            box.querySelector('#pfPickCancel').addEventListener('click', () => { if (listCtx) openTxListModal(listCtx); else pfClose(); });
+            input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); go(); } });
+            input.focus();
         }
 
         function addTransactionForRow(addr, symbol) {
@@ -7048,7 +7082,11 @@
                     headerHtml += `<th class="${cls}" data-sort="${col}">${label}${arrow}</th>`;
                 }
             }
-            headerHtml += `<th class="col-actions unsortable">${t('colActions')}</th>`;
+            headerHtml += `<th class="col-actions unsortable"><div class="row-actions">
+                <span class="col-actions-label">${t('colActions')}</span>
+                <button class="row-action-btn head-add-tx" type="button" title="${t('addCoinTx')}" aria-label="${t('addCoinTx')}">+</button>
+                <button class="row-action-btn head-view-all" type="button" title="${t('viewAllTransactions')}" aria-label="${t('viewAllTransactions')}">⋮</button>
+            </div></th>`;
             headerHtml += '</tr></thead>';
 
             const lblAddTx = t('addTransaction'), lblMore = t('viewTransactions');
@@ -7142,6 +7180,10 @@
                 });
             });
 
+            const headAdd = list.querySelector('.head-add-tx');
+            if (headAdd) headAdd.addEventListener('click', (e) => { e.stopPropagation(); pfShowPicker(null); });
+            const headAll = list.querySelector('.head-view-all');
+            if (headAll) headAll.addEventListener('click', (e) => { e.stopPropagation(); openTxListModal({ all: true }); });
             list.querySelectorAll('.row-add-tx').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -9133,6 +9175,13 @@
                 pfAvgBuy: "Avg. buy price",
                 pfDelete: "Delete this transaction",
                 pfConfirmDelete: "Delete this transaction?",
+                addCoinTx: "Add coin (transaction)",
+                viewAllTransactions: "View all transactions",
+                pfAllTx: "All transactions",
+                pfCoinSymbol: "Coin symbol",
+                pfFind: "Find coin",
+                pfNeedSymbol: "Enter a coin symbol.",
+                pfBack: "Back",
                 noTokensFound: 'No tokens with a recognized USD value for this address.',
                 noFarmPositions: 'No active positions in farms or staking.',
                 athModeText: 'Value at ATH 🚀',
@@ -9285,6 +9334,13 @@
                 pfAvgBuy: "Śr. cena zakupu",
                 pfDelete: "Usuń transakcję",
                 pfConfirmDelete: "Usunąć tę transakcję?",
+                addCoinTx: "Dodaj coin (transakcję)",
+                viewAllTransactions: "Podgląd wszystkich transakcji",
+                pfAllTx: "Wszystkie transakcje",
+                pfCoinSymbol: "Symbol monety",
+                pfFind: "Znajdź monetę",
+                pfNeedSymbol: "Podaj symbol monety.",
+                pfBack: "Wstecz",
                 noTokensFound: 'Brak tokenów o rozpoznanej wartości USD dla tego adresu.',
                 noFarmPositions: 'Brak aktywnych pozycji farm lub staking.',
                 athModeText: 'Wartość przy ATH 🚀',
