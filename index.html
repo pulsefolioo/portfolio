@@ -2810,7 +2810,14 @@
             background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px;
             font-size: 13px; color: var(--text-secondary);
         }
-        .pf-total strong { font-family: 'Space Grotesk', sans-serif; font-size: 18px; color: var(--text-primary); }
+        .pf-total input {
+            width: 170px; max-width: 55%; box-sizing: border-box; text-align: right;
+            background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+            color: var(--text-primary); font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 700;
+            padding: 8px 12px; outline: none; color-scheme: dark;
+        }
+        :root.light .pf-total input { color-scheme: light; }
+        .pf-total input:focus { border-color: var(--purple); }
         .pf-msg { display: none; margin-top: 12px; font-size: 12.5px; padding: 9px 12px; border-radius: 9px; }
         .pf-msg.show { display: block; }
         .pf-msg.error { color: var(--red); background: rgba(255, 84, 112, 0.1); border: 1px solid rgba(255, 84, 112, 0.3); }
@@ -6791,7 +6798,7 @@
                     <label class="pf-field full"><span>${t('pfNote')}</span>
                         <input id="pfNote" type="text" maxlength="80" value="${escapeHtml(initNote)}" autocomplete="off"></label>
                 </div>
-                <div class="pf-total"><span id="pfTotalLabel"></span><strong id="pfTotal">—</strong></div>
+                <div class="pf-total"><span id="pfTotalLabel"></span><input id="pfTotal" type="number" inputmode="decimal" step="any" min="0" placeholder="0.00" autocomplete="off"></div>
                 <div class="pf-msg" id="pfMsg"></div>
                 <div class="pf-actions">
                     <button class="pf-btn" type="button" id="pfCancelBtn">${t('pfCancel')}</button>
@@ -6799,8 +6806,10 @@
                 </div>`);
 
             const qty = box.querySelector('#pfQty'), price = box.querySelector('#pfPrice');
-            qty.addEventListener('input', pfUpdateTotal);
-            price.addEventListener('input', () => { ctx.priceTouched = true; pfUpdateTotal(); });
+            ctx.lastEdited = 'price';
+            qty.addEventListener('input', () => pfUpdateTotal('qty'));
+            price.addEventListener('input', () => { ctx.priceTouched = true; pfUpdateTotal('price'); });
+            box.querySelector('#pfTotal').addEventListener('input', () => pfUpdateTotal('total'));
             box.querySelectorAll('.pf-tab').forEach(b => b.addEventListener('click', () => {
                 if (editing) return;
                 ctx.type = b.dataset.type;
@@ -6814,14 +6823,34 @@
             qty.focus();
         }
 
-        function pfUpdateTotal() {
+        // Keeps quantity, price per coin and total in sync. Editing the total (Total spent / received /
+        // value) recalculates the price per coin; editing quantity or price recalculates the total.
+        function pfUpdateTotal(source) {
             const ctx = pfCtx;
             if (!ctx || ctx.kind !== 'tx') return;
-            const q = parseFloat(document.getElementById('pfQty').value);
-            const p = parseFloat(document.getElementById('pfPrice').value);
+            const qtyEl = document.getElementById('pfQty'), priceEl = document.getElementById('pfPrice'), totEl = document.getElementById('pfTotal');
+            const q = parseFloat(qtyEl.value);
+            const p = parseFloat(priceEl.value);
+            const tot = parseFloat(totEl.value);
             const label = { buy: 'pfTotalSpent', sell: 'pfTotalReceived' }[ctx.type] || 'pfTotalValue';
             document.getElementById('pfTotalLabel').textContent = t(label);
-            document.getElementById('pfTotal').textContent = (Number.isFinite(q) && Number.isFinite(p) && q > 0 && p >= 0) ? fmtUSD(q * p) : '—';
+
+            if (source === 'total') {
+                ctx.lastEdited = 'total';
+                if (Number.isFinite(tot) && tot >= 0 && Number.isFinite(q) && q > 0) {
+                    priceEl.value = roundForInput(tot / q);
+                    ctx.priceTouched = true;
+                }
+                return;
+            }
+            if (source === 'price') ctx.lastEdited = 'price';
+            // Quantity changed after the total was typed in: keep the total, move the price.
+            if (source === 'qty' && ctx.lastEdited === 'total' && Number.isFinite(tot) && tot >= 0 && Number.isFinite(q) && q > 0) {
+                priceEl.value = roundForInput(tot / q);
+                ctx.priceTouched = true;
+                return;
+            }
+            totEl.value = (Number.isFinite(q) && Number.isFinite(p) && q > 0 && p >= 0) ? roundForInput(q * p) : '';
         }
 
         function pfSetMsg(text, type) {
