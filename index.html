@@ -6763,10 +6763,8 @@
             const tok = ctx.tok;
             const editing = !!ctx.editTx;
             const plainSwap = editing && ctx.editTx.swapId && !ctx.editTx.swapKind;
-            const tabs = editing
-                ? `<div class="pf-tabs"><button type="button" class="pf-tab active" data-type="${ctx.type}" disabled>${pfTypeLabel(ctx.type)}</button></div>`
-                : `<div class="pf-tabs">${['buy', 'sell', 'deposit', 'withdrawal', 'airdrop'].map(ty =>
-                    `<button type="button" class="pf-tab${ty === ctx.type ? ' active' : ''}" data-type="${ty}">${pfTypeLabel(ty)}</button>`).join('')}</div>`;
+            const tabs = `<div class="pf-tabs">${['buy', 'sell', 'deposit', 'withdrawal', 'airdrop'].map(ty =>
+                    `<button type="button" class="pf-tab${ty === ctx.type ? ' active' : ''}" data-type="${ty}"${plainSwap ? ' disabled' : ''}>${pfTypeLabel(ty)}</button>`).join('')}</div>`;
             const leg = ctx.editLeg;
             const initPrice = editing
                 ? (leg && leg.priceUsd != null ? roundForInput(leg.priceUsd) : '')
@@ -6811,7 +6809,6 @@
             price.addEventListener('input', () => { ctx.priceTouched = true; pfUpdateTotal('price'); });
             box.querySelector('#pfTotal').addEventListener('input', () => pfUpdateTotal('total'));
             box.querySelectorAll('.pf-tab').forEach(b => b.addEventListener('click', () => {
-                if (editing) return;
                 ctx.type = b.dataset.type;
                 box.querySelectorAll('.pf-tab').forEach(x => x.classList.toggle('active', x === b));
                 pfUpdateTotal();
@@ -6865,6 +6862,22 @@
             if (lc) openTxListModal(lc); else pfClose();
         }
 
+        // Creates a ledger entry of the given type. Buys/sells of a non-USDC token settle against
+        // USDC (1 USDC = 1 USD), the same way as the main form. Returns false (with a message) if invalid.
+        function pfCreateTx(tok, type, qty, priceUsd, when, note) {
+            const tokData = { id: tok.id, symbol: tok.symbol, name: tok.name, icon: tok.icon, price: tok.price, change24h: tok.change24h };
+            if ((type === 'buy' || type === 'sell') && tok.id !== USDC_ID) {
+                const unit = priceUsd != null ? priceUsd : (tok.price ?? null);
+                if (!(unit > 0)) { pfSetMsg(t('usdcNeedPrice')); const el = document.getElementById('pfPrice'); if (el) el.focus(); return false; }
+                const usdcAmt = qty * unit;
+                if (type === 'buy') addManualSwap(USDC_TOKEN, tokData, usdcAmt, qty, when, 1, note, 'buy');
+                else addManualSwap(tokData, USDC_TOKEN, qty, usdcAmt, when, unit, note, 'sell');
+            } else {
+                addManualTransaction(tokData, type, qty, when, priceUsd, note);
+            }
+            return true;
+        }
+
         function pfSubmitTx() {
             const ctx = pfCtx;
             if (!ctx || ctx.kind !== 'tx' || !ctx.tok) return;
@@ -6881,17 +6894,7 @@
             if (ctx.editTx) {
                 if (!pfApplyEdit(ctx, qty, priceUsd, when, note)) return;
             } else {
-                const tokData = { id: tok.id, symbol: tok.symbol, name: tok.name, icon: tok.icon, price: tok.price, change24h: tok.change24h };
-                if ((type === 'buy' || type === 'sell') && tok.id !== USDC_ID) {
-                    // Buys/sells settle against USDC (1 USDC = 1 USD), same as the main form.
-                    const unit = priceUsd != null ? priceUsd : (tok.price ?? null);
-                    if (!(unit > 0)) { pfSetMsg(t('usdcNeedPrice')); document.getElementById('pfPrice').focus(); return; }
-                    const usdcAmt = qty * unit;
-                    if (type === 'buy') addManualSwap(USDC_TOKEN, tokData, usdcAmt, qty, when, 1, note, 'buy');
-                    else addManualSwap(tokData, USDC_TOKEN, qty, usdcAmt, when, unit, note, 'sell');
-                } else {
-                    addManualTransaction(tokData, type, qty, when, priceUsd, note);
-                }
+                if (!pfCreateTx(tok, type, qty, priceUsd, when, note)) return;
             }
 
             pfToast(ctx.editTx ? t('pfSaved') : t('pfAdded'));
@@ -6906,6 +6909,21 @@
             const target = manualTransactions.find(x => x.id === ctx.editTx.id);
             if (!target) return false;
             if (target.swapId && !target.swapKind) return false; // token↔token swaps aren't editable here
+
+            // Changed type (e.g. Buy → Deposit, Sell → Buy): replace the old entry (both legs of a
+            // USDC-settled trade) with a new one of the chosen type.
+            if (ctx.type !== ctx.editLeg.type) {
+                const oldEntries = target.swapId ? manualTransactions.filter(x => x.swapId === target.swapId) : [target];
+                const oldTokenLeg = oldEntries.find(x => x.coingeckoId !== USDC_ID) || target;
+                const price = priceUsd != null ? priceUsd : (oldTokenLeg.priceUsd != null && (ctx.type === 'buy' || ctx.type === 'sell') ? oldTokenLeg.priceUsd : null);
+                const backup = manualTransactions.slice();
+                manualTransactions = manualTransactions.filter(x => !oldEntries.includes(x));
+                if (!pfCreateTx(ctx.tok, ctx.type, qty, price, when, note)) {
+                    manualTransactions = backup; // validation failed — leave the ledger untouched
+                    return false;
+                }
+                return true;
+            }
             if (target.swapId) {
                 const related = manualTransactions.filter(x => x.swapId === target.swapId);
                 const tokenLeg = related.find(x => x.coingeckoId !== USDC_ID);
