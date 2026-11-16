@@ -6656,7 +6656,7 @@
         let pfCtx = null;
 
         function pfTypeLabel(type) {
-            const key = { buy: 'txTypeBuy', sell: 'txTypeSell', deposit: 'txTypeDeposit', withdrawal: 'txTypeWithdrawal', airdrop: 'txTypeAirdrop' }[type];
+            const key = { buy: 'txTypeBuy', sell: 'txTypeSell', deposit: 'txTypeDeposit', withdrawal: 'txTypeWithdrawal', airdrop: 'txTypeAirdrop', swap: 'txTypeSwap' }[type];
             return key ? t(key) : type;
         }
 
@@ -6711,13 +6711,25 @@
                     ? (related.find(x => x.coingeckoId !== USDC_ID) || editTx)
                     : editTx;
                 ctx.editTx = editTx;
-                ctx.type = leg.type;
+                if (editTx.swapId && !editTx.swapKind) {
+                    // Plain token↔token swap: edit it from the side that was sold.
+                    const from = related.find(x => x.type === 'sell') || related[0];
+                    ctx.editTo = related.find(x => x.type === 'buy') || related[1];
+                    ctx.type = 'swap';
+                    ctx.oldType = 'swap';
+                    ctx.editLeg = from;
+                    ctx.editTx = from;
+                } else {
+                    ctx.type = leg.type;
+                    ctx.oldType = leg.type;
+                    ctx.editLeg = leg;
+                }
+                const base = ctx.editLeg;
                 ctx.tok = {
-                    id: leg.coingeckoId, symbol: leg.symbol, name: leg.name, icon: resolveIcon(leg.symbol, leg.icon),
-                    price: leg.coingeckoId === USDC_ID ? 1 : ((manualTokenPrices[leg.coingeckoId] || {}).price ?? null),
+                    id: base.coingeckoId, symbol: base.symbol, name: base.name, icon: resolveIcon(base.symbol, base.icon),
+                    price: base.coingeckoId === USDC_ID ? 1 : ((manualTokenPrices[base.coingeckoId] || {}).price ?? null),
                     change24h: null,
                 };
-                ctx.editLeg = leg;
             } else {
                 const mt = manualTokens.find(m => m.coingeckoId === coingeckoId) || findManualTokenForRow(addr, sym);
                 if (mt) {
@@ -6762,9 +6774,12 @@
         function pfRenderTxForm(ctx) {
             const tok = ctx.tok;
             const editing = !!ctx.editTx;
-            const plainSwap = editing && ctx.editTx.swapId && !ctx.editTx.swapKind;
-            const tabs = `<div class="pf-tabs">${['buy', 'sell', 'deposit', 'withdrawal', 'airdrop'].map(ty =>
-                    `<button type="button" class="pf-tab${ty === ctx.type ? ' active' : ''}" data-type="${ty}"${plainSwap ? ' disabled' : ''}>${pfTypeLabel(ty)}</button>`).join('')}</div>`;
+            const tabs = `<div class="pf-tabs">${['buy', 'sell', 'swap', 'deposit', 'withdrawal', 'airdrop'].map(ty =>
+                    `<button type="button" class="pf-tab${ty === ctx.type ? ' active' : ''}" data-type="${ty}">${pfTypeLabel(ty)}</button>`).join('')}</div>`;
+            const held = getHeldTokens().filter(h => h.symbol !== (tok.symbol || '').toUpperCase());
+            const swapList = held.map(h => `<option value="${escapeHtml(h.symbol)}">${escapeHtml(h.name)}</option>`).join('');
+            const initToSym = ctx.editTo ? ctx.editTo.symbol : '';
+            const initToQty = ctx.editTo ? roundForInput(ctx.editTo.amount) : '';
             const leg = ctx.editLeg;
             const initPrice = editing
                 ? (leg && leg.priceUsd != null ? roundForInput(leg.priceUsd) : '')
@@ -6787,7 +6802,7 @@
                 </div>
                 ${tabs}
                 <div class="pf-grid">
-                    <label class="pf-field"><span>${t('pfQuantity')}</span>
+                    <label class="pf-field"><span id="pfQtyLabel">${t('pfQuantity')}</span>
                         <input id="pfQty" type="number" inputmode="decimal" step="any" min="0" placeholder="0.00" value="${initQty}" autocomplete="off"></label>
                     <label class="pf-field"><span>${t('pfPricePer')}</span>
                         <input id="pfPrice" type="number" inputmode="decimal" step="any" min="0" placeholder="0.00" value="${initPrice}" autocomplete="off"></label>
@@ -6796,11 +6811,17 @@
                     <label class="pf-field full"><span>${t('pfNote')}</span>
                         <input id="pfNote" type="text" maxlength="80" value="${escapeHtml(initNote)}" autocomplete="off"></label>
                 </div>
+                <div class="pf-grid pf-swap-fields" id="pfSwapFields" style="display:none">
+                    <label class="pf-field"><span>${t('pfReceivedCoin')}</span>
+                        <input id="pfToSym" type="text" list="pfSwapList" autocomplete="off" autocapitalize="characters" placeholder="ETH" value="${escapeHtml(initToSym)}"><datalist id="pfSwapList">${swapList}</datalist></label>
+                    <label class="pf-field"><span>${t('pfReceivedQty')}</span>
+                        <input id="pfToQty" type="number" inputmode="decimal" step="any" min="0" placeholder="0.00" value="${initToQty}" autocomplete="off"></label>
+                </div>
                 <div class="pf-total"><span id="pfTotalLabel"></span><input id="pfTotal" type="number" inputmode="decimal" step="any" min="0" placeholder="0.00" autocomplete="off"></div>
                 <div class="pf-msg" id="pfMsg"></div>
                 <div class="pf-actions">
                     <button class="pf-btn" type="button" id="pfCancelBtn">${t('pfCancel')}</button>
-                    <button class="pf-btn primary" type="button" id="pfSubmit"${plainSwap ? ' disabled' : ''}>${editing ? t('pfSave') : t('addTransaction')}</button>
+                    <button class="pf-btn primary" type="button" id="pfSubmit">${editing ? t('pfSave') : t('addTransaction')}</button>
                 </div>`);
 
             const qty = box.querySelector('#pfQty'), price = box.querySelector('#pfPrice');
@@ -6811,13 +6832,26 @@
             box.querySelectorAll('.pf-tab').forEach(b => b.addEventListener('click', () => {
                 ctx.type = b.dataset.type;
                 box.querySelectorAll('.pf-tab').forEach(x => x.classList.toggle('active', x === b));
+                pfSyncSwapFields();
                 pfUpdateTotal();
             }));
             box.querySelector('#pfCancelBtn').addEventListener('click', () => pfCancelTx(ctx));
             box.querySelector('#pfSubmit').addEventListener('click', pfSubmitTx);
             box.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); pfSubmitTx(); } });
+            pfSyncSwapFields();
             pfUpdateTotal();
             qty.focus();
+        }
+
+        // Swap shows the "coin received" fields and relabels the quantity as the amount sold.
+        function pfSyncSwapFields() {
+            const ctx = pfCtx;
+            if (!ctx || ctx.kind !== 'tx') return;
+            const isSwap = ctx.type === 'swap';
+            const box = document.getElementById('pfSwapFields');
+            if (box) box.style.display = isSwap ? '' : 'none';
+            const lbl = document.getElementById('pfQtyLabel');
+            if (lbl) lbl.textContent = isSwap ? t('pfSoldQty') : t('pfQuantity');
         }
 
         // Keeps quantity, price per coin and total in sync. Editing the total (Total spent / received /
@@ -6864,8 +6898,14 @@
 
         // Creates a ledger entry of the given type. Buys/sells of a non-USDC token settle against
         // USDC (1 USDC = 1 USD), the same way as the main form. Returns false (with a message) if invalid.
-        function pfCreateTx(tok, type, qty, priceUsd, when, note) {
+        function pfCreateTx(tok, type, qty, priceUsd, when, note, swap) {
             const tokData = { id: tok.id, symbol: tok.symbol, name: tok.name, icon: tok.icon, price: tok.price, change24h: tok.change24h };
+            if (type === 'swap') {
+                const to = swap.toData;
+                addManualSwap(tokData, { id: to.id, symbol: to.symbol, name: to.name, icon: to.icon, price: to.price ?? null, change24h: to.change24h ?? null },
+                    qty, swap.toQty, when, priceUsd, note);
+                return true;
+            }
             if ((type === 'buy' || type === 'sell') && tok.id !== USDC_ID) {
                 const unit = priceUsd != null ? priceUsd : (tok.price ?? null);
                 if (!(unit > 0)) { pfSetMsg(t('usdcNeedPrice')); const el = document.getElementById('pfPrice'); if (el) el.focus(); return false; }
@@ -6878,7 +6918,7 @@
             return true;
         }
 
-        function pfSubmitTx() {
+        async function pfSubmitTx() {
             const ctx = pfCtx;
             if (!ctx || ctx.kind !== 'tx' || !ctx.tok) return;
             const tok = ctx.tok, type = ctx.type;
@@ -6891,10 +6931,37 @@
             if (!Number.isFinite(qty) || qty <= 0) { pfSetMsg(t('pfNeedQty')); document.getElementById('pfQty').focus(); return; }
             if (priceRaw !== '' && (!Number.isFinite(priceUsd) || priceUsd < 0)) { pfSetMsg(t('pfBadPrice')); document.getElementById('pfPrice').focus(); return; }
 
+            let swap = null;
+            if (type === 'swap') {
+                const toSym = document.getElementById('pfToSym').value.trim();
+                const toQty = parseFloat(document.getElementById('pfToQty').value);
+                if (!toSym) { pfSetMsg(t('swapNeedToken')); document.getElementById('pfToSym').focus(); return; }
+                if (!Number.isFinite(toQty) || toQty <= 0) { pfSetMsg(t('swapNeedAmount')); document.getElementById('pfToQty').focus(); return; }
+                let toData;
+                const sameAsEdited = ctx.editTo && ctx.editTo.symbol.toUpperCase() === toSym.toUpperCase();
+                if (sameAsEdited) {
+                    toData = { id: ctx.editTo.coingeckoId, symbol: ctx.editTo.symbol, name: ctx.editTo.name, icon: ctx.editTo.icon, price: null, change24h: null };
+                } else {
+                    const btn = document.getElementById('pfSubmit');
+                    btn.disabled = true;
+                    try {
+                        toData = await resolveSwapToken(toSym);
+                    } catch (err) {
+                        if (pfCtx === ctx) pfSetMsg(err.message);
+                        return;
+                    } finally {
+                        btn.disabled = false;
+                    }
+                    if (pfCtx !== ctx) return; // popup was closed/replaced while looking the token up
+                }
+                if (toData.id === tok.id) { pfSetMsg(t('swapSameToken')); document.getElementById('pfToSym').focus(); return; }
+                swap = { toData, toQty };
+            }
+
             if (ctx.editTx) {
-                if (!pfApplyEdit(ctx, qty, priceUsd, when, note)) return;
+                if (!pfApplyEdit(ctx, qty, priceUsd, when, note, swap)) return;
             } else {
-                if (!pfCreateTx(tok, type, qty, priceUsd, when, note)) return;
+                if (!pfCreateTx(tok, type, qty, priceUsd, when, note, swap)) return;
             }
 
             pfToast(ctx.editTx ? t('pfSaved') : t('pfAdded'));
@@ -6905,20 +6972,39 @@
         }
 
         // Applies an edit to the ledger (single entry, or the token leg + USDC leg of a USDC-settled trade).
-        function pfApplyEdit(ctx, qty, priceUsd, when, note) {
+        function pfApplyEdit(ctx, qty, priceUsd, when, note, swap) {
             const target = manualTransactions.find(x => x.id === ctx.editTx.id);
             if (!target) return false;
-            if (target.swapId && !target.swapKind) return false; // token↔token swaps aren't editable here
+            const isPlainSwap = !!(target.swapId && !target.swapKind);
+
+            // Plain swap stays a swap: update both legs in place (and the received token if it changed).
+            if (isPlainSwap && ctx.type === 'swap') {
+                const related = manualTransactions.filter(x => x.swapId === target.swapId);
+                const from = related.find(x => x.type === 'sell') || related[0];
+                const to = related.find(x => x.type === 'buy') || related[1];
+                if (!from || !to) return false;
+                const td = swap.toData;
+                from.amount = qty; from.priceUsd = priceUsd; from.date = when; from.note = note || null; from.swapWith = td.symbol.toUpperCase();
+                to.coingeckoId = td.id; to.symbol = td.symbol.toUpperCase(); to.name = td.name || td.symbol.toUpperCase();
+                to.icon = td.icon || to.icon || null; to.swapWith = from.symbol;
+                to.amount = swap.toQty; to.date = when; to.note = note || null;
+                to.priceUsd = priceUsd != null ? (qty * priceUsd) / swap.toQty : (td.price ?? null);
+                saveManualTransactionsToStorage(manualTransactions);
+                rebuildManualTokens();
+                renderManualTokenChips();
+                if (document.getElementById('summary').classList.contains('show')) refreshView();
+                return true;
+            }
 
             // Changed type (e.g. Buy → Deposit, Sell → Buy): replace the old entry (both legs of a
             // USDC-settled trade) with a new one of the chosen type.
-            if (ctx.type !== ctx.editLeg.type) {
+            if (ctx.type !== ctx.oldType) {
                 const oldEntries = target.swapId ? manualTransactions.filter(x => x.swapId === target.swapId) : [target];
                 const oldTokenLeg = oldEntries.find(x => x.coingeckoId !== USDC_ID) || target;
                 const price = priceUsd != null ? priceUsd : (oldTokenLeg.priceUsd != null && (ctx.type === 'buy' || ctx.type === 'sell') ? oldTokenLeg.priceUsd : null);
                 const backup = manualTransactions.slice();
                 manualTransactions = manualTransactions.filter(x => !oldEntries.includes(x));
-                if (!pfCreateTx(ctx.tok, ctx.type, qty, price, when, note)) {
+                if (!pfCreateTx(ctx.tok, ctx.type, qty, price, when, note, swap)) {
                     manualTransactions = backup; // validation failed — leave the ledger untouched
                     return false;
                 }
@@ -6970,7 +7056,7 @@
                     <span class="pf-row-type ${x.type}">${label}</span>
                     <span class="pf-row-main">${sign}${formatTokenAmount(x.amount)} ${escapeHtml(x.symbol)}${priceStr}${planned}${x.note ? `<em> — ${escapeHtml(x.note)}</em>` : ''}</span>
                     <span class="pf-row-date">${fmtTxDate(x.date)}</span>
-                    ${plainSwap ? '' : `<button class="pf-icon-btn pf-row-edit" type="button" title="${t('pfEditTitle')}" aria-label="${t('pfEditTitle')}">✎</button>`}
+<button class="pf-icon-btn pf-row-edit" type="button" title="${t('pfEditTitle')}" aria-label="${t('pfEditTitle')}">✎</button>
                     <button class="pf-icon-btn pf-row-del" type="button" title="${t('pfDelete')}" aria-label="${t('pfDelete')}">×</button>
                 </div>`;
             }).join('') || `<div class="pf-empty">${t('pfNoTx')}</div>`;
@@ -9229,6 +9315,9 @@
                 pfFind: "Find coin",
                 pfNeedSymbol: "Enter a coin symbol.",
                 pfBack: "Back",
+                pfSoldQty: "Quantity sold",
+                pfReceivedCoin: "Coin received",
+                pfReceivedQty: "Quantity received",
                 noTokensFound: 'No tokens with a recognized USD value for this address.',
                 noFarmPositions: 'No active positions in farms or staking.',
                 athModeText: 'Value at ATH 🚀',
@@ -9388,6 +9477,9 @@
                 pfFind: "Znajdź monetę",
                 pfNeedSymbol: "Podaj symbol monety.",
                 pfBack: "Wstecz",
+                pfSoldQty: "Sprzedana ilość",
+                pfReceivedCoin: "Otrzymana moneta",
+                pfReceivedQty: "Otrzymana ilość",
                 noTokensFound: 'Brak tokenów o rozpoznanej wartości USD dla tego adresu.',
                 noFarmPositions: 'Brak aktywnych pozycji farm lub staking.',
                 athModeText: 'Wartość przy ATH 🚀',
